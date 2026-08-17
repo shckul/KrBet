@@ -15,32 +15,26 @@ const io = new Server(server, {
     cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
-// ============================================
-// КОНФИГУРАЦИЯ
-// ============================================
 const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
-const ADMIN_CODE = '22092011';
 
 // ============================================
-// ХРАНИЛИЩЕ ДАННЫХ
+// ХРАНИЛИЩЕ
 // ============================================
 const users = new Map();
 const pendingPayments = new Map();
-const onlineUsers = new Map(); // socketId -> userId
+const onlineUsers = new Map();
 
-// Roll game state
 const rollGame = {
     phase: 'waiting',
     bets: [],
     timerSeconds: 30,
     timerInterval: null,
     winnerIndex: -1,
-    forcedWinner: null, // userId, установленный админом
+    forcedWinner: null,
 };
 
-// Crash game state
 const crashGame = {
     phase: 'waiting',
     multiplier: 1.00,
@@ -48,14 +42,12 @@ const crashGame = {
     countdown: 5,
     bets: [],
     history: [],
-    forcedMultiplier: null, // множитель, установленный админом
+    forcedMultiplier: null,
     forceCrashNow: false,
     crashInterval: null,
+    countdownInterval: null,
 };
 
-// ============================================
-// MIDDLEWARE
-// ============================================
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -91,20 +83,12 @@ function getOrCreateUser(userData) {
     } else {
         const user = users.get(userData.id);
         user.lastActive = Date.now();
-        if (userData.username) user.username = userData.username;
-        if (userData.photoUrl) user.photoUrl = userData.photoUrl;
     }
     return users.get(userData.id);
 }
 
-function isAdmin(initData) {
-    // Здесь можно указать свой Telegram ID для дополнительной защиты
-    // Пока достаточно секретного кода
-    return true;
-}
-
 // ============================================
-// API - БАЛАНС
+// API
 // ============================================
 
 app.get('/api/balance', (req, res) => {
@@ -116,20 +100,16 @@ app.get('/api/balance', (req, res) => {
     res.json({ balance: user.balance, stats: user.stats });
 });
 
-// ============================================
-// API - ПОПОЛНЕНИЕ
-// ============================================
-
 app.post('/api/deposit', async (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     const { amount } = req.body;
-    if (!initData || !amount || amount <= 0) return res.status(400).json({ success: false, error: 'Неверные данные' });
+    if (!initData || !amount || amount <= 0) return res.status(400).json({ success: false });
     const userData = getUserFromInitData(initData);
-    if (!userData) return res.status(401).json({ success: false, error: 'Неавторизован' });
-    const user = getOrCreateUser(userData);
+    if (!userData) return res.status(401).json({ success: false });
+    getOrCreateUser(userData);
     try {
         const paymentId = crypto.randomUUID();
-        const payload = JSON.stringify({ userId: user.id, paymentId, amount, type: 'deposit' });
+        const payload = JSON.stringify({ userId: userData.id, paymentId, amount, type: 'deposit' });
         const invoiceResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -143,16 +123,12 @@ app.post('/api/deposit', async (req, res) => {
         });
         const invoiceData = await invoiceResponse.json();
         if (!invoiceData.ok) return res.status(500).json({ success: false, error: 'Ошибка создания платежа' });
-        pendingPayments.set(paymentId, { userId: user.id, amount, status: 'pending', createdAt: Date.now() });
+        pendingPayments.set(paymentId, { userId: userData.id, amount, status: 'pending' });
         res.json({ success: true, invoiceLink: invoiceData.result });
     } catch (e) {
-        res.status(500).json({ success: false, error: 'Серверная ошибка' });
+        res.status(500).json({ success: false });
     }
 });
-
-// ============================================
-// WEBHOOK
-// ============================================
 
 app.post('/api/webhook/payment', async (req, res) => {
     const body = req.body;
@@ -160,123 +136,129 @@ app.post('/api/webhook/payment', async (req, res) => {
         if (body.message?.successful_payment) {
             const payment = body.message.successful_payment;
             const payload = JSON.parse(payment.invoice_payload);
-            const { paymentId, userId, amount, type } = payload;
-            if (type === 'deposit' && pendingPayments.has(paymentId)) {
+            const { paymentId, userId, amount } = payload;
+            if (pendingPayments.has(paymentId)) {
                 const pending = pendingPayments.get(paymentId);
                 if (pending.status === 'pending') {
                     pending.status = 'completed';
                     const user = users.get(userId);
                     if (user) {
                         user.balance += amount;
-                        // Уведомляем если онлайн
                         onlineUsers.forEach((uid, socketId) => {
-                            if (uid === userId) {
-                                io.to(socketId).emit('balance:update', user.balance);
-                            }
+                            if (uid === userId) io.to(socketId).emit('balance:update', user.balance);
                         });
                     }
                 }
             }
         }
         if (body.pre_checkout_query) {
-            const queryId = body.pre_checkout_query.id;
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pre_checkout_query_id: queryId, ok: true }),
+                body: JSON.stringify({ pre_checkout_query_id: body.pre_checkout_query.id, ok: true }),
             });
         }
     } catch (e) {}
     res.sendStatus(200);
 });
 
-// ============================================
-// API - ВЫВОД
-// ============================================
-
 app.post('/api/withdraw', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     const { amount } = req.body;
-    if (!initData || !amount || amount < 100) return res.status(400).json({ success: false, error: 'Минимальный вывод 100 ⭐' });
+    if (!initData || !amount || amount < 100) return res.status(400).json({ success: false });
     const userData = getUserFromInitData(initData);
-    if (!userData) return res.status(401).json({ success: false, error: 'Неавторизован' });
+    if (!userData) return res.status(401).json({ success: false });
     const user = getOrCreateUser(userData);
-    if (user.balance < amount) return res.status(400).json({ success: false, error: 'Недостаточно звезд' });
+    if (user.balance < amount) return res.status(400).json({ success: false });
     user.balance -= amount;
-    res.json({ success: true, balance: user.balance, message: 'Заявка на вывод отправлена' });
+    res.json({ success: true, balance: user.balance });
 });
 
 // ============================================
-// API - АДМИН ПАНЕЛЬ
+// АДМИН API
 // ============================================
 
-// Получить список онлайн игроков
 app.get('/api/admin/players', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
+    
     const players = [];
-    onlineUsers.forEach((userId, socketId) => {
+    const uniqueIds = new Set();
+    
+    onlineUsers.forEach((userId) => {
+        if (uniqueIds.has(userId)) return;
+        uniqueIds.add(userId);
         const user = users.get(userId);
         if (user) {
             players.push({
                 userId: user.id,
-                name: user.firstName,
+                name: user.firstName || 'Player',
                 username: user.username,
                 balance: user.balance,
-                socketId,
             });
         }
     });
+    
+    const adminData = getUserFromInitData(initData);
+    if (adminData && !uniqueIds.has(adminData.id)) {
+        const admin = getOrCreateUser(adminData);
+        players.push({
+            userId: admin.id,
+            name: admin.firstName + ' (Вы)',
+            username: admin.username,
+            balance: admin.balance,
+        });
+    }
+    
     res.json({ success: true, players });
 });
 
-// Начислить/списать звёзды
 app.post('/api/admin/set-balance', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     const { userId, action, amount } = req.body;
     if (!initData || !userId || !action || !amount) return res.status(400).json({ success: false });
-    const user = users.get(userId);
+    
+    const numericUserId = parseInt(userId);
+    const user = users.get(numericUserId);
     if (!user) return res.status(404).json({ success: false, error: 'Игрок не найден' });
+    
     if (action === 'add') user.balance += amount;
     else if (action === 'sub') user.balance -= amount;
-    else return res.status(400).json({ success: false, error: 'Неверное действие' });
+    else return res.status(400).json({ success: false });
+    
     onlineUsers.forEach((uid, socketId) => {
-        if (uid === userId) io.to(socketId).emit('balance:update', user.balance);
+        if (uid === numericUserId) io.to(socketId).emit('balance:update', user.balance);
     });
+    
     res.json({ success: true, balance: user.balance });
 });
 
-// Установить победителя рулетки
 app.post('/api/admin/force-roll-winner', (req, res) => {
     const { userId } = req.body;
-    rollGame.forcedWinner = userId || null;
+    rollGame.forcedWinner = userId ? parseInt(userId) : null;
+    console.log('Forced roll winner:', rollGame.forcedWinner);
     res.json({ success: true, forcedWinner: rollGame.forcedWinner });
 });
 
-// Установить множитель краша
 app.post('/api/admin/force-crash-multiplier', (req, res) => {
     const { multiplier } = req.body;
-    crashGame.forcedMultiplier = multiplier || null;
+    crashGame.forcedMultiplier = multiplier ? parseFloat(multiplier) : null;
+    console.log('Forced crash multiplier:', crashGame.forcedMultiplier);
     res.json({ success: true, forcedMultiplier: crashGame.forcedMultiplier });
 });
 
-// Крашнуть прямо сейчас
 app.post('/api/admin/crash-now', (req, res) => {
     crashGame.forceCrashNow = true;
+    console.log('Force crash now!');
     res.json({ success: true });
 });
 
-// Получить состояние игры
 app.get('/api/admin/game-state', (req, res) => {
     res.json({
         roll: getRollPublicState(),
         crash: getCrashPublicState(),
     });
 });
-
-// ============================================
-// GAME STATE API
-// ============================================
 
 app.get('/api/roll/state', (req, res) => res.json(getRollPublicState()));
 app.get('/api/crash/state', (req, res) => res.json(getCrashPublicState()));
@@ -286,7 +268,6 @@ app.get('/api/crash/state', (req, res) => res.json(getCrashPublicState()));
 // ============================================
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
     let currentUser = null;
 
     socket.on('auth', (initData) => {
@@ -311,13 +292,22 @@ io.on('connection', (socket) => {
         if (rollGame.phase !== 'waiting') return;
         if (currentUser.balance < amount) return;
         if (rollGame.bets.some(b => b.userId === currentUser.id)) return;
+
         currentUser.balance -= amount;
         currentUser.stats.spent += amount;
+
         const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#ff5722','#8bc34a','#3f51b5','#ff9800','#795548','#607d8b'];
         const usedColors = rollGame.bets.map(b => b.color);
         const available = colors.filter(c => !usedColors.includes(c));
         const color = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : '#c9a84c';
-        rollGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, color });
+
+        rollGame.bets.push({
+            userId: currentUser.id,
+            name: currentUser.firstName || 'Player',
+            amount,
+            color,
+        });
+
         socket.emit('balance:update', currentUser.balance);
         io.emit('roll:state', getRollPublicState());
     });
@@ -328,9 +318,18 @@ io.on('connection', (socket) => {
         if (isNaN(amount) || amount < 10) return;
         if (crashGame.phase !== 'waiting') return;
         if (currentUser.balance < amount) return;
+
         currentUser.balance -= amount;
         currentUser.stats.spent += amount;
-        crashGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, cashedOut: false, cashoutMultiplier: 0 });
+
+        crashGame.bets.push({
+            userId: currentUser.id,
+            name: currentUser.firstName || 'Player',
+            amount,
+            cashedOut: false,
+            cashoutMultiplier: 0,
+        });
+
         socket.emit('balance:update', currentUser.balance);
         io.emit('crash:state', getCrashPublicState());
     });
@@ -340,32 +339,32 @@ io.on('connection', (socket) => {
         if (crashGame.phase !== 'flying') return;
         const bet = crashGame.bets.find(b => b.userId === currentUser.id && !b.cashedOut);
         if (!bet) return;
+
         bet.cashedOut = true;
         bet.cashoutMultiplier = crashGame.multiplier;
         const win = Math.floor(bet.amount * crashGame.multiplier);
         currentUser.balance += win;
         currentUser.stats.wins++;
         currentUser.stats.won += win - bet.amount;
+
         socket.emit('balance:update', currentUser.balance);
-        socket.emit('crash:cashedOut', { win, multiplier: crashGame.multiplier });
         io.emit('crash:state', getCrashPublicState());
     });
 
     socket.on('disconnect', () => {
         onlineUsers.delete(socket.id);
-        console.log('User disconnected:', socket.id);
     });
 });
 
 // ============================================
-// ROLL GAME LOOP
+// ROLL LOOP
 // ============================================
 
 function getRollPublicState() {
     return {
         phase: rollGame.phase,
         timerSeconds: rollGame.timerSeconds,
-        bets: rollGame.bets.map(b => ({ name: b.name, amount: b.amount, color: b.color })),
+        bets: rollGame.bets.map(b => ({ name: b.name, amount: b.amount, color: b.color, userId: b.userId })),
         totalBank: rollGame.bets.reduce((sum, b) => sum + b.amount, 0),
     };
 }
@@ -377,6 +376,7 @@ function startRollTimer() {
     rollGame.winnerIndex = -1;
     rollGame.forcedWinner = null;
     io.emit('roll:state', getRollPublicState());
+
     if (rollGame.timerInterval) clearInterval(rollGame.timerInterval);
     rollGame.timerInterval = setInterval(() => {
         rollGame.timerSeconds--;
@@ -392,8 +392,10 @@ function startRollSpin() {
     if (rollGame.bets.length === 0) { setTimeout(() => startRollTimer(), 600); return; }
     rollGame.phase = 'spinning';
     io.emit('roll:state', getRollPublicState());
+
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
     let winnerIndex;
+
     if (rollGame.forcedWinner) {
         winnerIndex = rollGame.bets.findIndex(b => b.userId === rollGame.forcedWinner);
         if (winnerIndex === -1) winnerIndex = Math.floor(Math.random() * rollGame.bets.length);
@@ -405,8 +407,10 @@ function startRollSpin() {
             if (random <= 0) { winnerIndex = i; break; }
         }
     }
+
     rollGame.winnerIndex = winnerIndex;
     const winner = rollGame.bets[winnerIndex];
+
     setTimeout(() => {
         rollGame.phase = 'result';
         const user = users.get(winner.userId);
@@ -422,7 +426,7 @@ function startRollSpin() {
 }
 
 // ============================================
-// CRASH GAME LOOP
+// CRASH LOOP
 // ============================================
 
 function getCrashPublicState() {
@@ -443,10 +447,15 @@ function startCrashTimer() {
     crashGame.forcedMultiplier = null;
     crashGame.forceCrashNow = false;
     io.emit('crash:state', getCrashPublicState());
+
     let countdown = 5;
-    const interval = setInterval(() => {
+    if (crashGame.countdownInterval) clearInterval(crashGame.countdownInterval);
+    crashGame.countdownInterval = setInterval(() => {
         countdown--;
-        if (countdown <= 0) { clearInterval(interval); startCrashFlight(); }
+        if (countdown <= 0) {
+            clearInterval(crashGame.countdownInterval);
+            startCrashFlight();
+        }
         io.emit('crash:countdown', countdown);
     }, 1000);
 }
@@ -454,8 +463,10 @@ function startCrashTimer() {
 function startCrashFlight() {
     crashGame.phase = 'flying';
     crashGame.multiplier = 1.00;
+
     if (crashGame.forcedMultiplier) {
         crashGame.maxMultiplier = crashGame.forcedMultiplier;
+        console.log('Using forced multiplier:', crashGame.maxMultiplier);
     } else {
         const r = Math.random();
         if (r < 0.40) crashGame.maxMultiplier = 1.01 + Math.random() * 0.7;
@@ -463,13 +474,19 @@ function startCrashFlight() {
         else if (r < 0.90) crashGame.maxMultiplier = 2.0 + Math.random() * 2.5;
         else crashGame.maxMultiplier = 3.5 + Math.random() * 6;
     }
+
     const startTime = Date.now();
     io.emit('crash:state', getCrashPublicState());
+
+    if (crashGame.crashInterval) clearInterval(crashGame.crashInterval);
     crashGame.crashInterval = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
         crashGame.multiplier = Math.pow(Math.E, elapsed * 0.12);
+
         if (crashGame.forceCrashNow || crashGame.multiplier >= crashGame.maxMultiplier) {
-            crashGame.multiplier = crashGame.forceCrashNow ? crashGame.multiplier : crashGame.maxMultiplier;
+            if (crashGame.forceCrashNow) {
+                console.log('Force crash now triggered at:', crashGame.multiplier);
+            }
             clearInterval(crashGame.crashInterval);
             crashNow();
             return;
@@ -483,12 +500,14 @@ function crashNow() {
     crashGame.crashedAt = crashGame.multiplier;
     crashGame.history.unshift(crashGame.multiplier);
     if (crashGame.history.length > 15) crashGame.history.pop();
+
     crashGame.bets.forEach(bet => {
         if (!bet.cashedOut) {
             const user = users.get(bet.userId);
             if (user) user.stats.spent += bet.amount;
         }
     });
+
     io.emit('crash:crash', crashGame.multiplier);
     io.emit('crash:state', getCrashPublicState());
     setTimeout(() => startCrashTimer(), 5000);
@@ -502,7 +521,5 @@ startCrashTimer();
 
 server.listen(PORT, () => {
     console.log(`🚀 KR Bet server running on port ${PORT}`);
-    console.log(`📍 WebApp URL: ${WEBAPP_URL}`);
     console.log(`🤖 Bot Token: ${BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
-    console.log(`👑 Admin code: ${ADMIN_CODE}`);
 });
