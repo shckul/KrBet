@@ -48,7 +48,6 @@
         .tab-pane { display: none; flex-direction: column; align-items: center; padding: 12px; min-height: 100%; }
         .tab-pane.active { display: flex; }
 
-        /* Roll */
         .bank-display { font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
         .bank-amount { font-size: 1.4rem; font-weight: 700; color: var(--gold-light); margin-bottom: 8px; }
         .roulette-container { position: relative; width: 290px; height: 290px; margin: 0 auto 10px; }
@@ -72,7 +71,6 @@
         .player-row.crashed { color: var(--danger); }
         .player-color-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
-        /* Crash */
         .crash-display { width: 90%; max-width: 340px; aspect-ratio: 1; background: var(--surface); border-radius: 16px; border: 2px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; position: relative; margin: 12px auto; overflow: hidden; min-width: 260px; min-height: 260px; }
         .crash-grid-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 10% 10%; }
         .crash-graph-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
@@ -90,7 +88,6 @@
         .crash-btn.crashed { background: var(--danger); color: white; pointer-events: none; }
         @keyframes pulse-btn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 
-        /* Mines */
         .mines-settings { display: flex; gap: 10px; align-items: center; margin: 12px 0; flex-wrap: wrap; justify-content: center; }
         .mines-settings label { font-size: 0.85rem; color: var(--text-dim); }
         .mines-settings select { padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: var(--surface); color: white; font-size: 0.9rem; outline: none; font-weight: 600; }
@@ -110,7 +107,6 @@
         .mines-btn.cashout { background: var(--success); color: white; animation: pulse-btn 0.7s ease-in-out infinite; }
         .mines-btn.over { background: #1a1a25; color: #666; pointer-events: none; }
 
-        /* Bet modals */
         .bet-modal { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid rgba(255,255,255,0.06); padding: 24px 20px 30px; border-radius: 20px 20px 0 0; z-index: 150; display: flex; flex-direction: column; gap: 16px; max-width: 480px; margin: 0 auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; }
         .bet-modal.show { transform: translateY(0); pointer-events: auto; }
         .bet-modal input { padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: var(--bg); color: white; font-size: 1.2rem; text-align: center; outline: none; font-weight: 700; }
@@ -144,8 +140,6 @@
         .stat-item { text-align: center; }
         .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--gold-light); }
         .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Balance modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: none; align-items: center; justify-content: center; }
         .modal-overlay.show { display: flex; }
         .modal { background: var(--surface); border-radius: 12px; padding: 24px; width: 85%; max-width: 340px; border: 1px solid rgba(255,255,255,0.06); text-align: center; }
@@ -158,19 +152,15 @@
         .btn-withdraw { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
         .btn-close-modal { background: #222; color: #aaa; margin-top: 8px; }
         .withdraw-note { font-size: 0.7rem; color: #666; margin-top: 8px; }
-
-        /* Notification */
         .notification-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; display: none; align-items: center; justify-content: center; }
         .notification-overlay.show { display: flex; }
         .notification-modal { background: var(--surface); border-radius: 14px; padding: 28px 24px; width: 80%; max-width: 320px; border: 1px solid var(--gold); text-align: center; box-shadow: 0 0 40px rgba(201,168,76,0.15); }
         .notification-modal .notif-icon { font-size: 2.5rem; margin-bottom: 12px; }
         .notification-modal .notif-text { font-size: 0.95rem; color: var(--text); margin-bottom: 20px; line-height: 1.5; font-weight: 500; }
         .notification-modal .notif-btn { padding: 12px 32px; background: var(--gold); color: #0a0a0f; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-
         .result-banner { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1a1a25; border: 1px solid var(--gold); color: var(--gold-light); padding: 12px 24px; border-radius: 8px; font-weight: 700; z-index: 150; text-align: center; pointer-events: none; }
         @keyframes fadeInOut { 0% { opacity: 0; top: 0; } 15% { opacity: 1; top: 20px; } 75% { opacity: 1; top: 20px; } 100% { opacity: 0; top: 0; } }
 
-        /* Admin Panel */
         .admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 400; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
         .admin-overlay.show { display: flex; }
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -279,7 +269,6 @@
     </div>
 </div>
 
-<!-- Crash Bet Modal -->
 <div class="bet-modal" id="bet-modal">
     <input type="number" id="crash-bet-input" placeholder="Сумма ставки" value="10" min="10">
     <div class="quick-bets">
@@ -294,7 +283,6 @@
     </div>
 </div>
 
-<!-- Mines Bet Modal -->
 <div class="mines-bet-modal" id="mines-bet-modal">
     <input type="number" id="mines-bet-input" placeholder="Сумма ставки" value="10" min="10">
     <div class="quick-bets">
@@ -309,7 +297,6 @@
     </div>
 </div>
 
-<!-- Balance Modal -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
         <h3>Баланс: ⭐ <span id="modal-balance">0</span></h3>
@@ -321,7 +308,6 @@
     </div>
 </div>
 
-<!-- Notification -->
 <div class="notification-overlay" id="notification-overlay">
     <div class="notification-modal">
         <div class="notif-icon" id="notif-icon">⚠️</div>
@@ -332,18 +318,15 @@
 
 <div id="result-banner" class="result-banner" style="display:none;"></div>
 
-<!-- Admin Panel -->
 <div class="admin-overlay" id="admin-overlay">
     <div class="admin-header">
         <span class="admin-title">👑 Админ-панель</span>
         <button class="admin-close" id="admin-close">Закрыть</button>
     </div>
-    
     <div class="admin-section">
         <h3>Онлайн игроки</h3>
         <div id="admin-players-list"></div>
     </div>
-    
     <div class="admin-section">
         <h3>Рулетка — победитель</h3>
         <select class="admin-select" id="admin-roll-select">
@@ -351,7 +334,6 @@
         </select>
         <button class="admin-btn admin-btn-force" id="admin-force-roll">Установить победителя</button>
     </div>
-    
     <div class="admin-section">
         <h3>Crash — управление</h3>
         <input type="number" class="admin-input" id="admin-crash-multiplier" placeholder="Множитель (например 2.5)" step="0.1">
@@ -362,7 +344,6 @@
 
 <script>
 (function() {
-    // ============ TELEGRAM MINI APP ============
     const tg = window.Telegram?.WebApp;
     if (tg) {
         tg.ready();
@@ -387,7 +368,6 @@
         userInfo.firstName = 'Player';
     }
 
-    // ============ ЗВЁЗДНЫЙ ФОН ============
     const starsCanvas = document.getElementById('stars-canvas');
     const starsCtx = starsCanvas.getContext('2d');
     let stars = [];
@@ -423,26 +403,21 @@
     resizeStars(); createStars(); animateStars();
     window.addEventListener('resize', () => { resizeStars(); createStars(); });
 
-    // ============ СОСТОЯНИЕ ============
     let balance = 0;
     let stats = { wins: 0, spent: 0, won: 0 };
 
-    // Roll
     let timerSeconds=30,timerInterval=null,gamePhase='waiting',myBet=0,allBets=[];
     const uniqueColorsPool=['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#ff5722','#8bc34a','#3f51b5','#ff9800','#795548','#607d8b'];
     let usedColors=[],currentPointerAngle=0;
 
-    // Crash
     let crashPhase='betting',crashMultiplier=1.00,crashMaxMultiplier=1.00;
     let crashInterval=null,crashCountdown=5,crashCountdownInterval=null;
     let crashMyBet=0,crashMyCashedOut=false,crashHistory=[];
     let graphPoints=[];
 
-    // Mines
     let minesGameActive=false,minesBet=0,minesMineCount=3,minesRevealed=0;
     let minesGrid=[],minesPositions=[];
 
-    // DOM
     const loadingScreen=document.getElementById('loading-screen'),loadingFill=document.getElementById('loading-fill');
     const app=document.getElementById('app'),balanceDisplay=document.getElementById('balance-display'),modalBalance=document.getElementById('modal-balance'),resultBanner=document.getElementById('result-banner');
     const bankAmount=document.getElementById('bank-amount'),timerOverlay=document.getElementById('timer-overlay');
@@ -463,7 +438,6 @@
     const btnConfirmMinesBet=document.getElementById('btn-confirm-mines-bet'),btnCancelMinesBet=document.getElementById('btn-cancel-mines-bet');
     const statWins=document.getElementById('stat-wins'),statSpent=document.getElementById('stat-spent'),statWon=document.getElementById('stat-won');
 
-    // Notification
     const notificationOverlay=document.getElementById('notification-overlay');
     const notifIcon=document.getElementById('notif-icon');
     const notifText=document.getElementById('notif-text');
@@ -477,7 +451,6 @@
         notificationOverlay.onclick = (e) => { if (e.target === notificationOverlay) notificationOverlay.classList.remove('show'); };
     }
 
-    // ============ API ============
     async function apiRequest(endpoint, method='GET', body=null) {
         const headers = {'Content-Type': 'application/json'};
         if (tg?.initData) headers['X-Telegram-Init-Data'] = tg.initData;
@@ -497,7 +470,6 @@
         } catch(e) {}
     }
 
-    // ============ ПОПОЛНЕНИЕ ============
     document.getElementById('btn-deposit').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
         if (isNaN(amount) || amount <= 0) { showNotification('Введите корректную сумму', 'error'); return; }
@@ -518,7 +490,6 @@
         } catch(e) { showNotification('Сервер недоступен', 'error'); }
     });
 
-    // Вывод
     document.getElementById('btn-withdraw').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
         if (isNaN(amount) || amount <= 0) { showNotification('Введите корректную сумму', 'error'); return; }
@@ -549,17 +520,12 @@
         document.getElementById('admin-overlay').classList.remove('show');
     }
 
-    function checkAdminCode(input) {
-        if (input.value === ADMIN_CODE) {
-            input.value = '';
-            openAdminPanel();
-        }
-    }
-
-    // Проверка на ввод админ-кода во все поля
     document.querySelectorAll('input[type="number"]').forEach(input => {
         input.addEventListener('input', () => {
-            if (input.value === ADMIN_CODE) checkAdminCode(input);
+            if (input.value === ADMIN_CODE) {
+                input.value = '';
+                openAdminPanel();
+            }
         });
     });
 
@@ -596,9 +562,11 @@
                     selectEl.appendChild(opt);
                 });
             } else {
-                listEl.innerHTML = '<div class="admin-empty">Нет онлайн игроков</div>';
+                listEl.innerHTML = '<div class="admin-empty">Нет игроков</div>';
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error('Admin load error:', e);
+        }
     }
 
     window.adminAdjustBalance = async function(userId, action, amount) {
@@ -606,11 +574,16 @@
             const res = await fetch(`${API_URL}/admin/set-balance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
-                body: JSON.stringify({ userId, action, amount })
+                body: JSON.stringify({ userId: parseInt(userId), action, amount })
             });
             const data = await res.json();
-            if (data.success) loadAdminPlayers();
-        } catch(e) {}
+            if (data.success) {
+                loadAdminPlayers();
+                fetchBalance();
+            }
+        } catch(e) {
+            console.error('Admin adjust error:', e);
+        }
     };
 
     document.getElementById('admin-force-roll').addEventListener('click', async () => {
@@ -619,10 +592,12 @@
             await fetch(`${API_URL}/admin/force-roll-winner`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
-                body: JSON.stringify({ userId: userId || null })
+                body: JSON.stringify({ userId: userId ? parseInt(userId) : null })
             });
             showNotification('Победитель установлен', 'success');
-        } catch(e) {}
+        } catch(e) {
+            showNotification('Ошибка', 'error');
+        }
     });
 
     document.getElementById('admin-set-crash').addEventListener('click', async () => {
@@ -635,7 +610,9 @@
                 body: JSON.stringify({ multiplier })
             });
             showNotification('Множитель установлен: ' + multiplier + 'x', 'success');
-        } catch(e) {}
+        } catch(e) {
+            showNotification('Ошибка', 'error');
+        }
     });
 
     document.getElementById('admin-crash-now').addEventListener('click', async () => {
@@ -646,14 +623,15 @@
                 body: JSON.stringify({})
             });
             showNotification('Краш!', 'success');
-        } catch(e) {}
+        } catch(e) {
+            showNotification('Ошибка', 'error');
+        }
     });
 
     setInterval(() => {
         if (adminActive) loadAdminPlayers();
     }, 3000);
 
-    // ============ ФУНКЦИИ ============
     function simulateLoading(){let p=0;const iv=setInterval(()=>{p+=12;if(p>=100){p=100;clearInterval(iv);setTimeout(()=>{loadingScreen.classList.add('hidden');app.classList.add('active');initAll();},200);}loadingFill.style.width=p+'%';},60);}
     function initAll(){
         setupGraphCanvas();
@@ -674,7 +652,6 @@
     }
     function setupGraphCanvas(){const w=crashDisplay.clientWidth||280;const h=crashDisplay.clientHeight||280;graphCanvas.width=w;graphCanvas.height=h;}
 
-    // Roll
     function startRollLoop(){resetRound();startTimer();}
     function resetRound(){
         gamePhase='waiting';timerSeconds=30;myBet=0;
@@ -752,7 +729,6 @@
         drawWheel();updateRollPlayersList();updateBank();updateMyBetInfo();
     });
 
-    // Crash
     function startCrashLoop(){startCrashBettingPhase();}
     function startCrashBettingPhase(){
         crashPhase='betting';crashCountdown=5;crashMyBet=0;crashMyCashedOut=false;
@@ -839,7 +815,6 @@
     });
     btnCancelBet.addEventListener('click',()=>betModal.classList.remove('show'));
 
-    // Mines
     function initMines(){resetMinesGame();}
     function resetMinesGame(){
         minesGameActive=false;minesBet=0;minesRevealed=0;minesGrid=[];minesPositions=[];
@@ -925,7 +900,6 @@
     btnCancelMinesBet.addEventListener('click',()=>minesBetModal.classList.remove('show'));
     minesCountSelect.addEventListener('change',()=>{if(!minesGameActive){minesMineCount=parseInt(minesCountSelect.value);minesMultiplierEl.textContent='1.00x';}});
 
-    // Common
     function showResultBanner(t,w){
         resultBanner.textContent=t;resultBanner.style.display='block';
         resultBanner.style.animation='none';resultBanner.offsetHeight;
