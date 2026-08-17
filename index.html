@@ -414,7 +414,7 @@
     let crashInterval=null,crashCountdown=5,crashCountdownInterval=null;
     let crashMyBet=0,crashMyCashedOut=false,crashHistory=[];
     let graphPoints=[];
-    let crashBetsList = []; // Список ставок для отображения
+    let crashBetsList = [];
 
     let minesGameActive=false,minesBet=0,minesMineCount=3,minesRevealed=0;
     let minesGrid=[],minesPositions=[];
@@ -757,7 +757,7 @@
             if (b.cashedOut) {
                 statusClass = 'cashed';
                 statusText += ' → ' + Math.floor(b.amount * b.cashoutMultiplier) + ' ⭐';
-            } else if (crashPhase === 'crashed') {
+            } else if (crashPhase === 'crashed' && !b.cashedOut) {
                 statusClass = 'crashed';
                 statusText += ' ❌';
             }
@@ -806,6 +806,12 @@
         crashPhase='crashed';if(crashInterval)cancelAnimationFrame(crashInterval);
         crashMultiplierEl.textContent=crashMultiplier.toFixed(2)+'x';crashMultiplierEl.classList.add('crashed');
         drawGraph();
+        // Помечаем всех кто не кэшнулся
+        crashBetsList.forEach(b => {
+            if (!b.cashedOut) {
+                b.crashedOut = true;
+            }
+        });
         if(crashMyBet>0&&!crashMyCashedOut){stats.spent+=crashMyBet;updateStats();}
         crashMyCashedOut=true;
         crashHistory.unshift(crashMultiplier);if(crashHistory.length>15)crashHistory.pop();renderCrashHistory();
@@ -819,6 +825,13 @@
         const w=Math.floor(crashMyBet*crashMultiplier);
         balance+=w;stats.wins++;stats.won+=w-crashMyBet;
         updateBalance();updateStats();
+        // Обновляем статус в списке
+        crashBetsList.forEach(b => {
+            if (b.isYou && !b.cashedOut) {
+                b.cashedOut = true;
+                b.cashoutMultiplier = crashMultiplier;
+            }
+        });
         showResultBanner('Вы забрали '+w+' ⭐ (x'+crashMultiplier.toFixed(2)+')!',true);
         updateCrashButton();
         updateCrashPlayersList();
@@ -840,7 +853,7 @@
         if(a>balance){showNotification('Недостаточно звезд на балансе!','error');return;}
         if(crashPhase!=='betting'){showNotification('Ставки принимаются только до взлёта!','error');return;}
         balance-=a;crashMyBet=a;updateBalance();
-        crashBetsList.push({name: userInfo.firstName || 'You', amount: a, isYou: true, cashedOut: false, cashoutMultiplier: 0});
+        crashBetsList.push({name: userInfo.firstName || 'You', amount: a, isYou: true, cashedOut: false, cashoutMultiplier: 0, crashedOut: false});
         betModal.classList.remove('show');updateCrashButton();updateCrashPlayersList();
     });
     btnCancelBet.addEventListener('click',()=>betModal.classList.remove('show'));
