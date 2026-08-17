@@ -322,27 +322,20 @@
         tg.setBackgroundColor('#0a0a0f');
     }
 
+    const API_URL = 'https://krbet.onrender.com/api';
+
     // Данные пользователя
-    let userInfo = {
-        id: null,
-        username: null,
-        firstName: null,
-        photoUrl: null,
-    };
+    let userInfo = { id: null, username: null, firstName: null, photoUrl: null };
     if (tg?.initDataUnsafe?.user) {
         userInfo.id = tg.initDataUnsafe.user.id;
         userInfo.username = tg.initDataUnsafe.user.username;
         userInfo.firstName = tg.initDataUnsafe.user.first_name;
         userInfo.photoUrl = tg.initDataUnsafe.user.photo_url;
     } else {
-        // Заглушка для тестов вне Telegram
         userInfo.id = 0;
         userInfo.username = 'Player';
         userInfo.firstName = 'Player';
     }
-
-    // API base URL — заменить на реальный
-    const API_URL = 'https://krbet.onrender.com';
 
     // ============ ЗВЁЗДНЫЙ ФОН ============
     const starsCanvas = document.getElementById('stars-canvas');
@@ -454,45 +447,43 @@
         } catch(e) {}
     }
 
-    // ============ ПОПОЛНЕНИЕ ЧЕРЕЗ STARS ============
-    document.getElementById('btn-deposit').addEventListener('click', () => {
+    // ============ ПОПОЛНЕНИЕ ЧЕРЕЗ TELEGRAM STARS ============
+    document.getElementById('btn-deposit').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
         if (isNaN(amount) || amount <= 0) {
             showNotification('Введите корректную сумму', 'error');
             return;
         }
-        if (tg) {
-            // Реальный платёж через Telegram Stars
-            tg.showPopup({
-                title: 'Пополнение баланса',
-                message: `Пополнить баланс на ${amount} ⭐?`,
-                buttons: [
-                    { id: 'confirm', type: 'default', text: 'Подтвердить' },
-                    { id: 'cancel', type: 'cancel', text: 'Отмена' }
-                ]
-            }, async (btnId) => {
-                if (btnId === 'confirm') {
-                    try {
-                        const data = await apiRequest('/deposit', 'POST', { amount });
-                        if (data.success) {
-                            balance = data.balance;
-                            updateBalance();
-                            document.getElementById('modal-overlay').classList.remove('show');
-                            showNotification(`Баланс пополнен на ${amount} ⭐`, 'success');
-                        } else {
-                            showNotification(data.error || 'Ошибка пополнения', 'error');
+
+        try {
+            // Запрашиваем invoice link с сервера
+            const data = await apiRequest('/deposit', 'POST', { amount });
+            
+            if (data.success && data.invoiceLink) {
+                // Закрываем модалку
+                document.getElementById('modal-overlay').classList.remove('show');
+                
+                // Открываем нативный Telegram Invoice
+                if (tg && tg.openInvoice) {
+                    tg.openInvoice(data.invoiceLink, (status) => {
+                        if (status === 'paid') {
+                            showNotification('Платёж прошёл! Баланс будет начислен.', 'success');
+                            setTimeout(fetchBalance, 1500);
+                        } else if (status === 'cancelled') {
+                            showNotification('Платёж отменён', 'error');
+                        } else if (status === 'failed') {
+                            showNotification('Ошибка оплаты. Проверьте баланс звёзд.', 'error');
                         }
-                    } catch(e) {
-                        showNotification('Сервер недоступен', 'error');
-                    }
+                    });
+                } else {
+                    // Фолбэк для тестов
+                    showNotification('Открытие оплаты недоступно. Используйте Telegram Mini App.', 'error');
                 }
-            });
-        } else {
-            // Тестовый режим
-            balance += amount;
-            updateBalance();
-            document.getElementById('modal-overlay').classList.remove('show');
-            showNotification(`Баланс пополнен на ${amount} ⭐`, 'success');
+            } else {
+                showNotification(data.error || 'Ошибка создания платежа', 'error');
+            }
+        } catch(e) {
+            showNotification('Сервер недоступен', 'error');
         }
     });
 
@@ -522,11 +513,7 @@
                 showNotification(data.error || 'Ошибка вывода', 'error');
             }
         } catch(e) {
-            // Тестовый режим
-            balance -= amount;
-            updateBalance();
-            document.getElementById('modal-overlay').classList.remove('show');
-            showNotification('Заявка на вывод отправлена', 'success');
+            showNotification('Сервер недоступен', 'error');
         }
     });
 
@@ -541,8 +528,6 @@
         updateBalance();
         updateStats();
         fetchBalance();
-        // WebSocket подключение будет здесь
-        connectWebSocket();
     }
     function updateProfile() {
         const avatar = document.getElementById('profile-avatar');
@@ -551,16 +536,9 @@
         else avatar.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userInfo.id || 'player'}`;
         nick.textContent = userInfo.firstName || userInfo.username || 'Player';
     }
-
-    // WebSocket заглушка
-    function connectWebSocket() {
-        // Будет реализовано после настройки сервера
-        console.log('WebSocket: подключение будет здесь');
-    }
-
     function setupGraphCanvas(){const w=crashDisplay.clientWidth||280;const h=crashDisplay.clientHeight||280;graphCanvas.width=w;graphCanvas.height=h;}
 
-    // ============ ROLL ============
+    // Roll
     function startRollLoop(){resetRound();startTimer();}
     function resetRound(){
         gamePhase='waiting';timerSeconds=30;myBet=0;
@@ -638,7 +616,7 @@
         drawWheel();updateRollPlayersList();updateBank();updateMyBetInfo();
     });
 
-    // ============ CRASH ============
+    // Crash
     function startCrashLoop(){startCrashBettingPhase();}
     function startCrashBettingPhase(){
         crashPhase='betting';crashCountdown=5;crashMyBet=0;crashMyCashedOut=false;
@@ -725,7 +703,7 @@
     });
     btnCancelBet.addEventListener('click',()=>betModal.classList.remove('show'));
 
-    // ============ MINES ============
+    // Mines
     function initMines(){resetMinesGame();}
     function resetMinesGame(){
         minesGameActive=false;minesBet=0;minesRevealed=0;minesGrid=[];minesPositions=[];
@@ -811,7 +789,7 @@
     btnCancelMinesBet.addEventListener('click',()=>minesBetModal.classList.remove('show'));
     minesCountSelect.addEventListener('change',()=>{if(!minesGameActive){minesMineCount=parseInt(minesCountSelect.value);minesMultiplierEl.textContent='1.00x';}});
 
-    // ============ COMMON ============
+    // Common
     function showResultBanner(t,w){
         resultBanner.textContent=t;resultBanner.style.display='block';
         resultBanner.style.animation='none';resultBanner.offsetHeight;
