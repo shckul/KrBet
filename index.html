@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>KR Bet</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -342,6 +343,7 @@
     </div>
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 (function() {
     const tg = window.Telegram?.WebApp;
@@ -368,6 +370,10 @@
         userInfo.firstName = 'Player';
     }
 
+    // ============ SOCKET.IO ============
+    const socket = io('https://krbet.onrender.com');
+
+    // ============ ЗВЁЗДНЫЙ ФОН ============
     const starsCanvas = document.getElementById('stars-canvas');
     const starsCtx = starsCanvas.getContext('2d');
     let stars = [];
@@ -403,22 +409,26 @@
     resizeStars(); createStars(); animateStars();
     window.addEventListener('resize', () => { resizeStars(); createStars(); });
 
+    // ============ СОСТОЯНИЕ ============
     let balance = 0;
     let stats = { wins: 0, spent: 0, won: 0 };
+    let myUserId = userInfo.id;
 
-    let timerSeconds=30,timerInterval=null,gamePhase='waiting',myBet=0,allBets=[];
-    const uniqueColorsPool=['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#ff5722','#8bc34a','#3f51b5','#ff9800','#795548','#607d8b'];
-    let usedColors=[],currentPointerAngle=0;
+    // Roll state
+    let rollState = { phase: 'waiting', bets: [], totalBank: 0, timerSeconds: 30, winnerIndex: -1, winnerData: null };
+    let currentPointerAngle = 0;
 
-    let crashPhase='betting',crashMultiplier=1.00,crashMaxMultiplier=1.00;
-    let crashInterval=null,crashCountdown=5,crashCountdownInterval=null;
-    let crashMyBet=0,crashMyCashedOut=false,crashHistory=[];
-    let graphPoints=[];
-    let crashBetsList = [];
+    // Crash state
+    let crashState = { phase: 'waiting', multiplier: 1.00, countdown: 5, bets: [], history: [] };
+    let graphPoints = [];
+    let crashMyCashedOut = false;
+    let crashMyBet = 0;
 
+    // Mines
     let minesGameActive=false,minesBet=0,minesMineCount=3,minesRevealed=0;
     let minesGrid=[],minesPositions=[];
 
+    // DOM
     const loadingScreen=document.getElementById('loading-screen'),loadingFill=document.getElementById('loading-fill');
     const app=document.getElementById('app'),balanceDisplay=document.getElementById('balance-display'),modalBalance=document.getElementById('modal-balance'),resultBanner=document.getElementById('result-banner');
     const bankAmount=document.getElementById('bank-amount'),timerOverlay=document.getElementById('timer-overlay');
@@ -452,6 +462,76 @@
         notificationOverlay.onclick = (e) => { if (e.target === notificationOverlay) notificationOverlay.classList.remove('show'); };
     }
 
+    // ============ SOCKET.IO ОБРАБОТЧИКИ ============
+    socket.on('auth:success', (data) => {
+        balance = data.balance;
+        stats = data.stats;
+        myUserId = data.user.id;
+        updateBalance();
+        updateStats();
+    });
+
+    socket.on('balance:update', (newBalance) => {
+        balance = newBalance;
+        updateBalance();
+    });
+
+    // Roll events
+    socket.on('roll:state', (state) => {
+        rollState = state;
+        updateRollUI();
+    });
+
+    socket.on('roll:timer', (seconds) => {
+        rollState.timerSeconds = seconds;
+        timerOverlay.textContent = seconds;
+    });
+
+    socket.on('roll:result', (data) => {
+        showResultBanner('🎉 ' + data.winnerName + ' выиграл ' + data.winnerAmount + ' ⭐!', true);
+    });
+
+    // Crash events
+    socket.on('crash:state', (state) => {
+        crashState = state;
+        updateCrashUI();
+    });
+
+    socket.on('crash:tick', (multiplier) => {
+        crashState.multiplier = multiplier;
+        crashMultiplierEl.textContent = multiplier.toFixed(2) + 'x';
+        const prog = Math.min(multiplier / 10, 1);
+        graphPoints.push({x: prog, y: prog});
+        if (graphPoints.length > 200) graphPoints.shift();
+        drawGraph();
+    });
+
+    socket.on('crash:countdown', (countdown) => {
+        crashState.countdown = countdown;
+        if (crashState.phase === 'waiting') {
+            crashMainBtn.textContent = 'Betting ' + countdown;
+        }
+    });
+
+    socket.on('crash:crash', (multiplier) => {
+        crashState.phase = 'crashed';
+        crashState.multiplier = multiplier;
+        crashMultiplierEl.textContent = multiplier.toFixed(2) + 'x';
+        crashMultiplierEl.classList.add('crashed');
+        crashMainBtn.textContent = 'Crashed!';
+        crashMainBtn.className = 'crash-btn crashed';
+        crashMainBtn.onclick = null;
+        updateCrashUI();
+    });
+
+    socket.on('crash:cashedOut', (data) => {
+        if (data.userId === myUserId) {
+            crashMyCashedOut = true;
+            showResultBanner('✅ Вы забрали ' + data.win + ' ⭐ (x' + data.multiplier.toFixed(2) + ')!', true);
+        }
+    });
+
+    // ============ API ============
     async function apiRequest(endpoint, method='GET', body=null) {
         const headers = {'Content-Type': 'application/json'};
         if (tg?.initData) headers['X-Telegram-Init-Data'] = tg.initData;
@@ -471,6 +551,7 @@
         } catch(e) {}
     }
 
+    // ============ ПОПОЛНЕНИЕ ============
     document.getElementById('btn-deposit').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
         if (isNaN(amount) || amount <= 0) { showNotification('Введите корректную сумму', 'error'); return; }
@@ -515,12 +596,10 @@
         document.getElementById('admin-overlay').classList.add('show');
         loadAdminPlayers();
     }
-
     function closeAdminPanel() {
         adminActive = false;
         document.getElementById('admin-overlay').classList.remove('show');
     }
-
     document.querySelectorAll('input[type="number"]').forEach(input => {
         input.addEventListener('input', () => {
             if (input.value === ADMIN_CODE) {
@@ -529,7 +608,6 @@
             }
         });
     });
-
     document.getElementById('admin-close').addEventListener('click', closeAdminPanel);
 
     async function loadAdminPlayers() {
@@ -542,7 +620,6 @@
             const selectEl = document.getElementById('admin-roll-select');
             listEl.innerHTML = '';
             selectEl.innerHTML = '<option value="">Случайный победитель</option>';
-            
             if (data.players && data.players.length > 0) {
                 data.players.forEach(p => {
                     const row = document.createElement('div');
@@ -556,7 +633,6 @@
                         </div>
                     `;
                     listEl.appendChild(row);
-                    
                     const opt = document.createElement('option');
                     opt.value = p.userId;
                     opt.textContent = `${p.name} (ID: ${p.userId})`;
@@ -565,9 +641,7 @@
             } else {
                 listEl.innerHTML = '<div class="admin-empty">Нет игроков</div>';
             }
-        } catch(e) {
-            console.error('Admin load error:', e);
-        }
+        } catch(e) {}
     }
 
     window.adminAdjustBalance = async function(userId, action, amount) {
@@ -582,9 +656,7 @@
                 loadAdminPlayers();
                 fetchBalance();
             }
-        } catch(e) {
-            console.error('Admin adjust error:', e);
-        }
+        } catch(e) {}
     };
 
     document.getElementById('admin-force-roll').addEventListener('click', async () => {
@@ -596,9 +668,7 @@
                 body: JSON.stringify({ userId: userId ? parseInt(userId) : null })
             });
             showNotification('Победитель установлен', 'success');
-        } catch(e) {
-            showNotification('Ошибка', 'error');
-        }
+        } catch(e) {}
     });
 
     document.getElementById('admin-set-crash').addEventListener('click', async () => {
@@ -611,9 +681,7 @@
                 body: JSON.stringify({ multiplier })
             });
             showNotification('Множитель установлен: ' + multiplier + 'x', 'success');
-        } catch(e) {
-            showNotification('Ошибка', 'error');
-        }
+        } catch(e) {}
     });
 
     document.getElementById('admin-crash-now').addEventListener('click', async () => {
@@ -624,240 +692,210 @@
                 body: JSON.stringify({})
             });
             showNotification('Краш!', 'success');
-        } catch(e) {
-            showNotification('Ошибка', 'error');
-        }
+        } catch(e) {}
     });
 
     setInterval(() => {
         if (adminActive) loadAdminPlayers();
     }, 3000);
 
-    function simulateLoading(){let p=0;const iv=setInterval(()=>{p+=12;if(p>=100){p=100;clearInterval(iv);setTimeout(()=>{loadingScreen.classList.add('hidden');app.classList.add('active');initAll();},200);}loadingFill.style.width=p+'%';},60);}
-    function initAll(){
-        setupGraphCanvas();
-        updateProfile();
-        startRollLoop();
-        startCrashLoop();
-        initMines();
-        updateBalance();
-        updateStats();
-        fetchBalance();
+    // ============ ROLL UI ============
+    function updateRollUI() {
+        if (rollState.phase === 'waiting') {
+            timerOverlay.style.display = 'block';
+            timerOverlay.textContent = rollState.timerSeconds;
+            btnPlaceBet.disabled = false;
+        } else if (rollState.phase === 'spinning') {
+            timerOverlay.style.display = 'none';
+            btnPlaceBet.disabled = true;
+            animatePointer();
+        } else if (rollState.phase === 'result') {
+            timerOverlay.style.display = 'none';
+            btnPlaceBet.disabled = true;
+        }
+        updateRollPlayersList();
+        updateBank();
     }
-    function updateProfile() {
-        const avatar = document.getElementById('profile-avatar');
-        const nick = document.getElementById('profile-nick');
-        if (userInfo.photoUrl) avatar.src = userInfo.photoUrl;
-        else avatar.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userInfo.id || 'player'}`;
-        nick.textContent = userInfo.firstName || userInfo.username || 'Player';
-    }
-    function setupGraphCanvas(){const w=crashDisplay.clientWidth||280;const h=crashDisplay.clientHeight||280;graphCanvas.width=w;graphCanvas.height=h;}
 
-    function startRollLoop(){resetRound();startTimer();}
-    function resetRound(){
-        gamePhase='waiting';timerSeconds=30;myBet=0;
-        allBets.forEach(b=>releaseColor(b.color));allBets=[];usedColors=[];
-        drawWheel();updateRollPlayersList();updateMyBetInfo();updateBank();
-        btnPlaceBet.disabled=false;timerOverlay.textContent=timerSeconds;timerOverlay.style.display='block';
-        currentPointerAngle=0;pointerLayer.style.transition='none';pointerLayer.style.transform='rotate(0deg)';
+    function animatePointer() {
+        const spins = 6 + Math.floor(Math.random() * 7);
+        const totalRotation = spins * 360;
+        const duration = 4200;
+        const startAngle = currentPointerAngle;
+        const startTime = performance.now();
+        function anim(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = progress < 0.5 ? 8 * progress ** 4 : 1 - (-2 * progress + 2) ** 4 / 2;
+            currentPointerAngle = (startAngle + totalRotation * eased) % 360;
+            pointerLayer.style.transition = 'none';
+            pointerLayer.style.transform = `rotate(${currentPointerAngle}deg)`;
+            if (progress < 1) requestAnimationFrame(anim);
+        }
+        requestAnimationFrame(anim);
     }
-    function startTimer(){if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(()=>{timerSeconds--;timerOverlay.textContent=timerSeconds;if(timerSeconds<=0){clearInterval(timerInterval);timerOverlay.style.display='none';startSpin();}},1000);}
-    function getUniqueColor(){const a=uniqueColorsPool.filter(c=>!usedColors.includes(c));if(a.length===0){usedColors=[];return uniqueColorsPool[0];}const c=a[Math.floor(Math.random()*a.length)];usedColors.push(c);return c;}
-    function releaseColor(c){usedColors=usedColors.filter(x=>x!==c);}
-    function drawWheel(){
-        ctx.clearRect(0,0,SIZE,SIZE);const cx=SIZE/2,cy=SIZE/2,rad=SIZE/2-4;
-        const t=allBets.reduce((s,b)=>s+b.amount,0);
-        if(t===0){ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.fillStyle='#0d0d18';ctx.fill();ctx.strokeStyle='#1a1a25';ctx.lineWidth=2;ctx.stroke();return;}
+
+    function updateRollPlayersList() {
+        playersList.innerHTML = '';
+        if (rollState.bets.length === 0) {
+            playersList.innerHTML = '<div style="text-align:center;color:#555;padding:16px;">Нет ставок</div>';
+            return;
+        }
+        rollState.bets.forEach(b => {
+            const row = document.createElement('div');
+            const isYou = b.userId === myUserId;
+            row.className = 'player-row' + (isYou ? ' you' : '');
+            row.innerHTML = `<span><span class="player-color-dot" style="background:${b.color};"></span>${b.name}</span><span>${b.amount} ⭐</span>`;
+            playersList.appendChild(row);
+        });
+    }
+
+    function updateBank() {
+        bankAmount.textContent = rollState.totalBank + ' ⭐';
+        const myBet = rollState.bets.find(b => b.userId === myUserId);
+        myBetInfo.textContent = myBet ? `Ваша ставка: ${myBet.amount} ⭐` : 'Ваша ставка: —';
+    }
+
+    function drawWheel() {
+        ctx.clearRect(0,0,SIZE,SIZE);
+        const cx=SIZE/2,cy=SIZE/2,rad=SIZE/2-4;
+        const t = rollState.totalBank;
+        if (t===0 || rollState.bets.length === 0) {
+            ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);
+            ctx.fillStyle='#0d0d18';ctx.fill();
+            ctx.strokeStyle='#1a1a25';ctx.lineWidth=2;ctx.stroke();
+            return;
+        }
         let sa=-Math.PI/2;
-        allBets.forEach(b=>{
+        rollState.bets.forEach(b=>{
             const sw=(b.amount/t)*Math.PI*2,ea=sa+sw;
             ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rad,sa,ea);ctx.closePath();
-            ctx.fillStyle=b.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=2;ctx.stroke();
-            const ma=sa+sw/2,ad=rad*0.58,ax=cx+Math.cos(ma)*ad,ay=cy+Math.sin(ma)*ad,as=64;
+            ctx.fillStyle=b.color;ctx.fill();
+            ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=2;ctx.stroke();
+            const ma=sa+sw/2,ad=rad*0.58,ax=cx+Math.cos(ma)*ad,ay=cy+Math.sin(ma)*ad;
             ctx.fillStyle='rgba(255,255,255,0.95)';ctx.font='bold 18px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
             ctx.fillText(b.name.substring(0,10),ax,ay-10);
             ctx.fillText(b.amount+'⭐',ax,ay+10);
             sa=ea;
         });
-        ctx.beginPath();ctx.arc(cx,cy,44,0,Math.PI*2);const g=ctx.createRadialGradient(cx-8,cy-8,4,cx,cy,44);
-        g.addColorStop(0,'#3a3a45');g.addColorStop(1,'#0a0a0f');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#1a1a25';ctx.lineWidth=4;ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,44,0,Math.PI*2);
+        const g=ctx.createRadialGradient(cx-8,cy-8,4,cx,cy,44);
+        g.addColorStop(0,'#3a3a45');g.addColorStop(1,'#0a0a0f');
+        ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='#1a1a25';ctx.lineWidth=4;ctx.stroke();
     }
-    function startSpin(){
-        if(allBets.length===0){setTimeout(()=>{resetRound();startTimer();},600);return;}
-        gamePhase='spinning';btnPlaceBet.disabled=true;
-        const t=allBets.reduce((s,b)=>s+b.amount,0);
-        let r=Math.random()*t,wi=0;
-        for(let i=0;i<allBets.length;i++){r-=allBets[i].amount;if(r<=0){wi=i;break;}}
-        let cum=0;const segs=[];
-        for(const b of allBets){const sw=(b.amount/t)*360;segs.push({start:cum,sweep:sw,bet:b});cum+=sw;}
-        const ts=segs[wi],ta=ts.start+Math.random()*ts.sweep,sp=6+Math.floor(Math.random()*7),tr=sp*360+ta;
-        const dur=4200,sa=currentPointerAngle,st=performance.now();
-        function anim(now){
-            const el=now-st,pr=Math.min(el/dur,1),ea=pr<0.5?8*pr**4:1-(-2*pr+2)**4/2;
-            currentPointerAngle=(sa+tr*ea)%360;
-            pointerLayer.style.transition='none';pointerLayer.style.transform=`rotate(${currentPointerAngle}deg)`;
-            if(pr<1)requestAnimationFrame(anim);else finishRoll(allBets[wi],t);
-        }
-        requestAnimationFrame(anim);
-    }
-    function finishRoll(w,t){
-        gamePhase='result';
-        if(w.isYou){balance+=t;stats.wins++;stats.won+=t;showResultBanner('🎉 Вы выиграли '+t+' ⭐!',true);}
-        else showResultBanner(w.name+' выиграл '+t+' ⭐',false);
-        if(myBet>0)stats.spent+=myBet;
-        updateBalance();updateStats();
-        setTimeout(()=>{resetRound();startTimer();},2200);
-    }
-    function updateRollPlayersList(){
-        playersList.innerHTML='';
-        if(allBets.length===0){playersList.innerHTML='<div style="text-align:center;color:#555;padding:16px;">Нет ставок</div>';return;}
-        allBets.forEach(b=>{
-            const r=document.createElement('div');r.className='player-row'+(b.isYou?' you':'');
-            r.innerHTML=`<span><span class="player-color-dot" style="background:${b.color};"></span>${b.name}</span><span>${b.amount} ⭐</span>`;
-            playersList.appendChild(r);
-        });
-    }
-    function updateBank(){bankAmount.textContent=allBets.reduce((s,b)=>s+b.amount,0)+' ⭐';}
-    function updateMyBetInfo(){myBetInfo.textContent=myBet>0?`Ваша ставка: ${myBet} ⭐`:'Ваша ставка: —';}
-    btnPlaceBet.addEventListener('click',async()=>{
-        if(gamePhase!=='waiting')return;
-        if(myBet>0){showNotification('Вы уже поставили в этом раунде!','error');return;}
-        const a=parseInt(betInput.value);
-        if(isNaN(a)||a<10){showNotification('Минимальная ставка 10 ⭐','error');return;}
-        if(a>balance){showNotification('Недостаточно звезд на балансе!','error');return;}
-        balance-=a;myBet=a;updateBalance();
-        allBets.push({id:'you',name:userInfo.firstName||'You',amount:a,color:'#c9a84c',isYou:true});
-        drawWheel();updateRollPlayersList();updateBank();updateMyBetInfo();
+
+    btnPlaceBet.addEventListener('click', () => {
+        const amount = parseInt(betInput.value);
+        if (isNaN(amount) || amount < 10) { showNotification('Минимальная ставка 10 ⭐','error'); return; }
+        if (amount > balance) { showNotification('Недостаточно звезд на балансе!','error'); return; }
+        if (rollState.phase !== 'waiting') { showNotification('Ставки принимаются только до начала игры!','error'); return; }
+        socket.emit('roll:bet', { amount });
     });
 
-    function startCrashLoop(){startCrashBettingPhase();}
-    function startCrashBettingPhase(){
-        crashPhase='betting';crashCountdown=5;crashMyBet=0;crashMyCashedOut=false;
-        crashMultiplier=1.00;crashMaxMultiplier=1.00;graphPoints=[];
-        crashBetsList = [];
-        crashMultiplierEl.textContent='1.00x';crashMultiplierEl.classList.remove('crashed');
-        setupGraphCanvas();clearGraph();updateCrashButton();
-        betModal.classList.remove('show');
+    // ============ CRASH UI ============
+    function updateCrashUI() {
+        if (crashState.phase === 'waiting') {
+            crashMultiplierEl.textContent = '1.00x';
+            crashMultiplierEl.classList.remove('crashed');
+            crashMainBtn.className = 'crash-btn';
+            const myBet = crashState.bets.find(b => b.userId === myUserId);
+            if (myBet) {
+                crashMainBtn.textContent = 'Waiting...';
+                crashMainBtn.classList.add('waiting');
+                crashMainBtn.onclick = null;
+            } else {
+                crashMainBtn.textContent = 'Place Bet';
+                crashMainBtn.classList.add('place');
+                crashMainBtn.onclick = () => { if (crashState.phase === 'waiting') betModal.classList.add('show'); };
+            }
+        } else if (crashState.phase === 'flying') {
+            const myBet = crashState.bets.find(b => b.userId === myUserId);
+            if (myBet && !myBet.cashedOut) {
+                crashMainBtn.textContent = 'Cashout';
+                crashMainBtn.className = 'crash-btn cashout';
+                crashMainBtn.onclick = () => socket.emit('crash:cashout');
+            } else {
+                crashMainBtn.textContent = 'Waiting...';
+                crashMainBtn.className = 'crash-btn waiting';
+                crashMainBtn.onclick = null;
+            }
+        } else if (crashState.phase === 'crashed') {
+            crashMainBtn.textContent = 'Crashed!';
+            crashMainBtn.className = 'crash-btn crashed';
+            crashMainBtn.onclick = null;
+        }
         updateCrashPlayersList();
-        crashMainBtn.textContent='Betting 5';
-        if(crashCountdownInterval)clearInterval(crashCountdownInterval);
-        crashCountdownInterval=setInterval(()=>{crashCountdown--;if(crashCountdown>0)crashMainBtn.textContent='Betting '+crashCountdown;else{clearInterval(crashCountdownInterval);startFlight();}},1000);
     }
-    
-    function updateCrashPlayersList(){
-        crashPlayersList.innerHTML='';
-        if(crashBetsList.length===0){
-            crashPlayersList.innerHTML='<div style="text-align:center;color:#555;padding:16px;">Нет ставок</div>';
+
+    function updateCrashPlayersList() {
+        crashPlayersList.innerHTML = '';
+        if (crashState.bets.length === 0) {
+            crashPlayersList.innerHTML = '<div style="text-align:center;color:#555;padding:16px;">Нет ставок</div>';
             return;
         }
-        crashBetsList.forEach(b => {
+        crashState.bets.forEach(b => {
             const row = document.createElement('div');
+            const isYou = b.userId === myUserId;
             let statusClass = '';
             let statusText = b.amount + ' ⭐';
             if (b.cashedOut) {
                 statusClass = 'cashed';
                 statusText += ' → ' + Math.floor(b.amount * b.cashoutMultiplier) + ' ⭐';
-            } else if (crashPhase === 'crashed' && !b.cashedOut) {
+            } else if (crashState.phase === 'crashed' && !b.cashedOut) {
                 statusClass = 'crashed';
                 statusText += ' ❌';
             }
-            row.className = 'player-row' + (b.isYou ? ' you' : '') + ' ' + statusClass;
+            row.className = 'player-row' + (isYou ? ' you' : '') + ' ' + statusClass;
             row.innerHTML = `<span>${b.name}</span><span>${statusText}</span>`;
             crashPlayersList.appendChild(row);
         });
     }
-    
-    function clearGraph(){graphCtx.clearRect(0,0,graphCanvas.width,graphCanvas.height);}
-    function drawGraph(){
+
+    function drawGraph() {
         const w=graphCanvas.width,h=graphCanvas.height;
         graphCtx.clearRect(0,0,w,h);
         if(graphPoints.length<2)return;
-        let lineColor=crashPhase==='crashed'?'rgba(231,76,60,0.9)':'rgba(46,204,113,0.9)';
+        let lineColor=crashState.phase==='crashed'?'rgba(231,76,60,0.9)':'rgba(46,204,113,0.9)';
         graphCtx.beginPath();graphCtx.lineWidth=3;graphCtx.lineCap='round';graphCtx.lineJoin='round';graphCtx.strokeStyle=lineColor;
         const padding=25,graphW=w-padding*2,graphH=h-padding*2;
-        for(let i=0;i<graphPoints.length;i++){const p=graphPoints[i];const x=padding+p.x*graphW;const y=h-padding-p.y*graphH;if(i===0)graphCtx.moveTo(x,y);else graphCtx.lineTo(x,y);}
-        graphCtx.stroke();
-        if(graphPoints.length>0){const last=graphPoints[graphPoints.length-1];const lx=padding+last.x*graphW;const ly=h-padding-last.y*graphH;graphCtx.beginPath();graphCtx.arc(lx,ly,5,0,Math.PI*2);graphCtx.fillStyle=lineColor;graphCtx.fill();}
-    }
-    function startFlight(){
-        crashPhase='flying';const r=Math.random();
-        if(r<0.40)crashMaxMultiplier=1.01+Math.random()*0.7;
-        else if(r<0.70)crashMaxMultiplier=1.2+Math.random()*1.3;
-        else if(r<0.90)crashMaxMultiplier=2.0+Math.random()*2.5;
-        else crashMaxMultiplier=3.5+Math.random()*6;
-        crashMultiplier=1.00;graphPoints=[{x:0,y:0}];
-        setupGraphCanvas();clearGraph();updateCrashButton();
-        const st=performance.now(),lineDuration=6000;
-        function fly(now){
-            if(crashPhase!=='flying')return;
-            const el=(now-st)/1000;
-            crashMultiplier=Math.pow(Math.E,el*0.12);
-            if(crashMultiplier>=crashMaxMultiplier){crashMultiplier=crashMaxMultiplier;crashNow();return;}
-            crashMultiplierEl.textContent=crashMultiplier.toFixed(2)+'x';
-            const lineProgress=Math.min(el*1000/lineDuration,1);
-            graphPoints.push({x:lineProgress,y:lineProgress});
-            if(graphPoints.length>200)graphPoints.shift();
-            drawGraph();
-            crashInterval=requestAnimationFrame(fly);
+        for(let i=0;i<graphPoints.length;i++){
+            const p=graphPoints[i];
+            const x=padding+p.x*graphW;
+            const y=h-padding-p.y*graphH;
+            if(i===0)graphCtx.moveTo(x,y);else graphCtx.lineTo(x,y);
         }
-        crashInterval=requestAnimationFrame(fly);
+        graphCtx.stroke();
+        if(graphPoints.length>0){
+            const last=graphPoints[graphPoints.length-1];
+            const lx=padding+last.x*graphW;
+            const ly=h-padding-last.y*graphH;
+            graphCtx.beginPath();graphCtx.arc(lx,ly,5,0,Math.PI*2);
+            graphCtx.fillStyle=lineColor;graphCtx.fill();
+        }
     }
-    function crashNow(){
-        crashPhase='crashed';if(crashInterval)cancelAnimationFrame(crashInterval);
-        crashMultiplierEl.textContent=crashMultiplier.toFixed(2)+'x';crashMultiplierEl.classList.add('crashed');
-        drawGraph();
-        // Помечаем всех кто не кэшнулся
-        crashBetsList.forEach(b => {
-            if (!b.cashedOut) {
-                b.crashedOut = true;
-            }
-        });
-        if(crashMyBet>0&&!crashMyCashedOut){stats.spent+=crashMyBet;updateStats();}
-        crashMyCashedOut=true;
-        crashHistory.unshift(crashMultiplier);if(crashHistory.length>15)crashHistory.pop();renderCrashHistory();
-        updateCrashButton();
-        updateCrashPlayersList();
-        setTimeout(()=>startCrashBettingPhase(),5000);
-    }
-    function cashOut(){
-        if(crashPhase!=='flying'||crashMyBet===0||crashMyCashedOut)return;
-        crashMyCashedOut=true;
-        const w=Math.floor(crashMyBet*crashMultiplier);
-        balance+=w;stats.wins++;stats.won+=w-crashMyBet;
-        updateBalance();updateStats();
-        // Обновляем статус в списке
-        crashBetsList.forEach(b => {
-            if (b.isYou && !b.cashedOut) {
-                b.cashedOut = true;
-                b.cashoutMultiplier = crashMultiplier;
-            }
-        });
-        showResultBanner('Вы забрали '+w+' ⭐ (x'+crashMultiplier.toFixed(2)+')!',true);
-        updateCrashButton();
-        updateCrashPlayersList();
-    }
-    function updateCrashButton(){
-        crashMainBtn.className='crash-btn';
-        if(crashPhase==='betting'){
-            if(crashMyBet===0){crashMainBtn.textContent='Place Bet';crashMainBtn.classList.add('place');crashMainBtn.onclick=()=>{if(crashPhase==='betting')betModal.classList.add('show');};}
-            else{crashMainBtn.textContent='Waiting...';crashMainBtn.classList.add('waiting');crashMainBtn.onclick=null;}
-        }else if(crashPhase==='flying'){
-            if(crashMyBet>0&&!crashMyCashedOut){crashMainBtn.textContent='Cashout';crashMainBtn.classList.add('cashout');crashMainBtn.onclick=cashOut;}
-            else{crashMainBtn.textContent='Waiting...';crashMainBtn.classList.add('waiting');crashMainBtn.onclick=null;}
-        }else if(crashPhase==='crashed'){crashMainBtn.textContent='Crashed!';crashMainBtn.classList.add('crashed');crashMainBtn.onclick=null;}
-    }
-    function renderCrashHistory(){crashHistoryEl.innerHTML='';crashHistory.forEach(v=>{const i=document.createElement('div');i.className='history-item '+(v>=2?'green':'red');i.textContent=v.toFixed(2)+'x';crashHistoryEl.appendChild(i);});}
-    btnConfirmBet.addEventListener('click',()=>{
-        const a=parseInt(crashBetInput.value);
-        if(isNaN(a)||a<10){showNotification('Минимальная ставка 10 ⭐','error');return;}
-        if(a>balance){showNotification('Недостаточно звезд на балансе!','error');return;}
-        if(crashPhase!=='betting'){showNotification('Ставки принимаются только до взлёта!','error');return;}
-        balance-=a;crashMyBet=a;updateBalance();
-        crashBetsList.push({name: userInfo.firstName || 'You', amount: a, isYou: true, cashedOut: false, cashoutMultiplier: 0, crashedOut: false});
-        betModal.classList.remove('show');updateCrashButton();updateCrashPlayersList();
-    });
-    btnCancelBet.addEventListener('click',()=>betModal.classList.remove('show'));
 
+    function renderCrashHistory() {
+        crashHistoryEl.innerHTML='';
+        crashState.history.forEach(v=>{
+            const i=document.createElement('div');
+            i.className='history-item '+(v>=2?'green':'red');
+            i.textContent=v.toFixed(2)+'x';
+            crashHistoryEl.appendChild(i);
+        });
+    }
+
+    btnConfirmBet.addEventListener('click', () => {
+        const amount = parseInt(crashBetInput.value);
+        if (isNaN(amount) || amount < 10) { showNotification('Минимальная ставка 10 ⭐','error'); return; }
+        if (amount > balance) { showNotification('Недостаточно звезд на балансе!','error'); return; }
+        if (crashState.phase !== 'waiting') { showNotification('Ставки принимаются только до взлёта!','error'); return; }
+        socket.emit('crash:bet', { amount });
+        betModal.classList.remove('show');
+    });
+
+    btnCancelBet.addEventListener('click', () => betModal.classList.remove('show'));
+
+    // ============ MINES ============
     function initMines(){resetMinesGame();}
     function resetMinesGame(){
         minesGameActive=false;minesBet=0;minesRevealed=0;minesGrid=[];minesPositions=[];
@@ -943,6 +981,7 @@
     btnCancelMinesBet.addEventListener('click',()=>minesBetModal.classList.remove('show'));
     minesCountSelect.addEventListener('change',()=>{if(!minesGameActive){minesMineCount=parseInt(minesCountSelect.value);minesMultiplierEl.textContent='1.00x';}});
 
+    // ============ COMMON ============
     function showResultBanner(t,w){
         resultBanner.textContent=t;resultBanner.style.display='block';
         resultBanner.style.animation='none';resultBanner.offsetHeight;
@@ -952,10 +991,50 @@
     }
     function updateBalance(){balanceDisplay.textContent=balance;modalBalance.textContent=balance;}
     function updateStats(){statWins.textContent=stats.wins;statSpent.textContent=stats.spent+' ⭐';statWon.textContent=stats.won+' ⭐';}
+    function setupGraphCanvas(){const w=crashDisplay.clientWidth||280;const h=crashDisplay.clientHeight||280;graphCanvas.width=w;graphCanvas.height=h;}
+
+    function updateProfile() {
+        const avatar = document.getElementById('profile-avatar');
+        const nick = document.getElementById('profile-nick');
+        if (userInfo.photoUrl) avatar.src = userInfo.photoUrl;
+        else avatar.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userInfo.id || 'player'}`;
+        nick.textContent = userInfo.firstName || userInfo.username || 'Player';
+    }
 
     document.querySelectorAll('.bottom-tab').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.bottom-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-pane').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');});});
     document.getElementById('btn-open-modal').addEventListener('click',()=>{document.getElementById('modal-amount-input').value=10;document.getElementById('modal-overlay').classList.add('show');});
     document.getElementById('btn-close-modal').addEventListener('click',()=>document.getElementById('modal-overlay').classList.remove('show'));
+
+    // ============ ИНИЦИАЛИЗАЦИЯ ============
+    function initAll(){
+        setupGraphCanvas();
+        updateProfile();
+        initMines();
+        updateBalance();
+        updateStats();
+        fetchBalance();
+        // Авторизация на сервере
+        if (tg?.initData) {
+            socket.emit('auth', tg.initData);
+        }
+    }
+
+    function simulateLoading(){
+        let p=0;
+        const iv=setInterval(()=>{
+            p+=12;
+            if(p>=100){
+                p=100;
+                clearInterval(iv);
+                setTimeout(()=>{
+                    loadingScreen.classList.add('hidden');
+                    app.classList.add('active');
+                    initAll();
+                },200);
+            }
+            loadingFill.style.width=p+'%';
+        },60);
+    }
 
     simulateLoading();
 })();
