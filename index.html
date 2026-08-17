@@ -169,6 +169,27 @@
 
         .result-banner { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1a1a25; border: 1px solid var(--gold); color: var(--gold-light); padding: 12px 24px; border-radius: 8px; font-weight: 700; z-index: 150; text-align: center; pointer-events: none; }
         @keyframes fadeInOut { 0% { opacity: 0; top: 0; } 15% { opacity: 1; top: 20px; } 75% { opacity: 1; top: 20px; } 100% { opacity: 0; top: 0; } }
+
+        /* Admin Panel */
+        .admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 400; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .admin-overlay.show { display: flex; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .admin-title { color: var(--gold); font-size: 1.2rem; font-weight: 700; }
+        .admin-close { background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .admin-section { background: var(--surface); border-radius: 10px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06); }
+        .admin-section h3 { color: var(--gold-light); font-size: 0.9rem; margin-bottom: 10px; }
+        .admin-player-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.8rem; gap: 8px; flex-wrap: wrap; }
+        .admin-player-info { flex: 1; min-width: 100px; }
+        .admin-player-actions { display: flex; gap: 4px; }
+        .admin-player-actions button { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.7rem; }
+        .admin-btn-add { background: var(--success); color: white; }
+        .admin-btn-sub { background: var(--danger); color: white; }
+        .admin-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: #0a0a0f; color: white; text-align: center; outline: none; margin-bottom: 8px; }
+        .admin-btn { width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
+        .admin-btn-force { background: var(--gold); color: #0a0a0f; margin-bottom: 6px; }
+        .admin-btn-crash { background: var(--danger); color: white; }
+        .admin-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: #0a0a0f; color: white; outline: none; margin-bottom: 8px; }
+        .admin-empty { color: #666; text-align: center; padding: 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -311,6 +332,34 @@
 
 <div id="result-banner" class="result-banner" style="display:none;"></div>
 
+<!-- Admin Panel -->
+<div class="admin-overlay" id="admin-overlay">
+    <div class="admin-header">
+        <span class="admin-title">👑 Админ-панель</span>
+        <button class="admin-close" id="admin-close">Закрыть</button>
+    </div>
+    
+    <div class="admin-section">
+        <h3>Онлайн игроки</h3>
+        <div id="admin-players-list"></div>
+    </div>
+    
+    <div class="admin-section">
+        <h3>Рулетка — победитель</h3>
+        <select class="admin-select" id="admin-roll-select">
+            <option value="">Случайный победитель</option>
+        </select>
+        <button class="admin-btn admin-btn-force" id="admin-force-roll">Установить победителя</button>
+    </div>
+    
+    <div class="admin-section">
+        <h3>Crash — управление</h3>
+        <input type="number" class="admin-input" id="admin-crash-multiplier" placeholder="Множитель (например 2.5)" step="0.1">
+        <button class="admin-btn admin-btn-force" id="admin-set-crash">Установить множитель</button>
+        <button class="admin-btn admin-btn-crash" id="admin-crash-now">💥 Крашнуть сейчас</button>
+    </div>
+</div>
+
 <script>
 (function() {
     // ============ TELEGRAM MINI APP ============
@@ -323,8 +372,9 @@
     }
 
     const API_URL = 'https://krbet.onrender.com/api';
+    const ADMIN_CODE = '22092011';
+    let adminActive = false;
 
-    // Данные пользователя
     let userInfo = { id: null, username: null, firstName: null, photoUrl: null };
     if (tg?.initDataUnsafe?.user) {
         userInfo.id = tg.initDataUnsafe.user.id;
@@ -447,61 +497,33 @@
         } catch(e) {}
     }
 
-    // ============ ПОПОЛНЕНИЕ ЧЕРЕЗ TELEGRAM STARS ============
+    // ============ ПОПОЛНЕНИЕ ============
     document.getElementById('btn-deposit').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
-        if (isNaN(amount) || amount <= 0) {
-            showNotification('Введите корректную сумму', 'error');
-            return;
-        }
-
+        if (isNaN(amount) || amount <= 0) { showNotification('Введите корректную сумму', 'error'); return; }
         try {
-            // Запрашиваем invoice link с сервера
             const data = await apiRequest('/deposit', 'POST', { amount });
-            
             if (data.success && data.invoiceLink) {
-                // Закрываем модалку
                 document.getElementById('modal-overlay').classList.remove('show');
-                
-                // Открываем нативный Telegram Invoice
                 if (tg && tg.openInvoice) {
                     tg.openInvoice(data.invoiceLink, (status) => {
-                        if (status === 'paid') {
-                            showNotification('Платёж прошёл! Баланс будет начислен.', 'success');
-                            setTimeout(fetchBalance, 1500);
-                        } else if (status === 'cancelled') {
-                            showNotification('Платёж отменён', 'error');
-                        } else if (status === 'failed') {
-                            showNotification('Ошибка оплаты. Проверьте баланс звёзд.', 'error');
-                        }
+                        if (status === 'paid') { showNotification('Платёж прошёл! Баланс будет начислен.', 'success'); setTimeout(fetchBalance, 1500); }
+                        else if (status === 'cancelled') { showNotification('Платёж отменён', 'error'); }
+                        else if (status === 'failed') { showNotification('Ошибка оплаты. Проверьте баланс звёзд.', 'error'); }
                     });
-                } else {
-                    // Фолбэк для тестов
-                    showNotification('Открытие оплаты недоступно. Используйте Telegram Mini App.', 'error');
                 }
             } else {
                 showNotification(data.error || 'Ошибка создания платежа', 'error');
             }
-        } catch(e) {
-            showNotification('Сервер недоступен', 'error');
-        }
+        } catch(e) { showNotification('Сервер недоступен', 'error'); }
     });
 
     // Вывод
     document.getElementById('btn-withdraw').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
-        if (isNaN(amount) || amount <= 0) {
-            showNotification('Введите корректную сумму', 'error');
-            return;
-        }
-        if (amount < 100) {
-            showNotification('Минимальный вывод 100 ⭐', 'error');
-            return;
-        }
-        if (amount > balance) {
-            showNotification('Недостаточно звезд на балансе!', 'error');
-            return;
-        }
+        if (isNaN(amount) || amount <= 0) { showNotification('Введите корректную сумму', 'error'); return; }
+        if (amount < 100) { showNotification('Минимальный вывод 100 ⭐', 'error'); return; }
+        if (amount > balance) { showNotification('Недостаточно звезд на балансе!', 'error'); return; }
         try {
             const data = await apiRequest('/withdraw', 'POST', { amount });
             if (data.success) {
@@ -512,10 +534,124 @@
             } else {
                 showNotification(data.error || 'Ошибка вывода', 'error');
             }
-        } catch(e) {
-            showNotification('Сервер недоступен', 'error');
-        }
+        } catch(e) { showNotification('Сервер недоступен', 'error'); }
     });
+
+    // ============ АДМИН-ПАНЕЛЬ ============
+    function openAdminPanel() {
+        adminActive = true;
+        document.getElementById('admin-overlay').classList.add('show');
+        loadAdminPlayers();
+    }
+
+    function closeAdminPanel() {
+        adminActive = false;
+        document.getElementById('admin-overlay').classList.remove('show');
+    }
+
+    function checkAdminCode(input) {
+        if (input.value === ADMIN_CODE) {
+            input.value = '';
+            openAdminPanel();
+        }
+    }
+
+    // Проверка на ввод админ-кода во все поля
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.value === ADMIN_CODE) checkAdminCode(input);
+        });
+    });
+
+    document.getElementById('admin-close').addEventListener('click', closeAdminPanel);
+
+    async function loadAdminPlayers() {
+        try {
+            const res = await fetch(`${API_URL}/admin/players`, {
+                headers: { 'X-Telegram-Init-Data': tg?.initData || '' }
+            });
+            const data = await res.json();
+            const listEl = document.getElementById('admin-players-list');
+            const selectEl = document.getElementById('admin-roll-select');
+            listEl.innerHTML = '';
+            selectEl.innerHTML = '<option value="">Случайный победитель</option>';
+            
+            if (data.players && data.players.length > 0) {
+                data.players.forEach(p => {
+                    const row = document.createElement('div');
+                    row.className = 'admin-player-row';
+                    row.innerHTML = `
+                        <div class="admin-player-info">${p.name} (ID: ${p.userId})<br>Баланс: ${p.balance} ⭐</div>
+                        <div class="admin-player-actions">
+                            <button class="admin-btn-add" onclick="adminAdjustBalance('${p.userId}','add',100)">+100</button>
+                            <button class="admin-btn-add" onclick="adminAdjustBalance('${p.userId}','add',1000)">+1000</button>
+                            <button class="admin-btn-sub" onclick="adminAdjustBalance('${p.userId}','sub',100)">-100</button>
+                        </div>
+                    `;
+                    listEl.appendChild(row);
+                    
+                    const opt = document.createElement('option');
+                    opt.value = p.userId;
+                    opt.textContent = `${p.name} (ID: ${p.userId})`;
+                    selectEl.appendChild(opt);
+                });
+            } else {
+                listEl.innerHTML = '<div class="admin-empty">Нет онлайн игроков</div>';
+            }
+        } catch(e) {}
+    }
+
+    window.adminAdjustBalance = async function(userId, action, amount) {
+        try {
+            const res = await fetch(`${API_URL}/admin/set-balance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
+                body: JSON.stringify({ userId, action, amount })
+            });
+            const data = await res.json();
+            if (data.success) loadAdminPlayers();
+        } catch(e) {}
+    };
+
+    document.getElementById('admin-force-roll').addEventListener('click', async () => {
+        const userId = document.getElementById('admin-roll-select').value;
+        try {
+            await fetch(`${API_URL}/admin/force-roll-winner`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
+                body: JSON.stringify({ userId: userId || null })
+            });
+            showNotification('Победитель установлен', 'success');
+        } catch(e) {}
+    });
+
+    document.getElementById('admin-set-crash').addEventListener('click', async () => {
+        const multiplier = parseFloat(document.getElementById('admin-crash-multiplier').value);
+        if (isNaN(multiplier) || multiplier < 1) { showNotification('Введите корректный множитель', 'error'); return; }
+        try {
+            await fetch(`${API_URL}/admin/force-crash-multiplier`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
+                body: JSON.stringify({ multiplier })
+            });
+            showNotification('Множитель установлен: ' + multiplier + 'x', 'success');
+        } catch(e) {}
+    });
+
+    document.getElementById('admin-crash-now').addEventListener('click', async () => {
+        try {
+            await fetch(`${API_URL}/admin/crash-now`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
+                body: JSON.stringify({})
+            });
+            showNotification('Краш!', 'success');
+        } catch(e) {}
+    });
+
+    setInterval(() => {
+        if (adminActive) loadAdminPlayers();
+    }, 3000);
 
     // ============ ФУНКЦИИ ============
     function simulateLoading(){let p=0;const iv=setInterval(()=>{p+=12;if(p>=100){p=100;clearInterval(iv);setTimeout(()=>{loadingScreen.classList.add('hidden');app.classList.add('active');initAll();},200);}loadingFill.style.width=p+'%';},60);}
