@@ -468,7 +468,11 @@
     });
 
     socket.on('roll:state', (state) => {
+        const prevPhase = rollState.phase;
         rollState = state;
+        if (state.phase === 'spinning' && prevPhase !== 'spinning') {
+            animatePointer();
+        }
         updateRollUI();
         drawWheel();
     });
@@ -495,8 +499,8 @@
     socket.on('crash:tick', (multiplier) => {
         crashState.multiplier = multiplier;
         crashMultiplierEl.textContent = multiplier.toFixed(2) + 'x';
-        const lineDuration = 6000;
         const elapsed = (Date.now() - (crashState.startedAt || Date.now())) / 1000;
+        const lineDuration = 6000;
         const lineProgress = Math.min(elapsed * 1000 / lineDuration, 1);
         graphPoints.push({x: lineProgress, y: lineProgress});
         if (graphPoints.length > 200) graphPoints.shift();
@@ -701,10 +705,11 @@
             timerOverlay.style.display = 'block';
             timerOverlay.textContent = rollState.timerSeconds;
             btnPlaceBet.disabled = false;
+            pointerLayer.style.transition = 'none';
+            pointerLayer.style.transform = `rotate(${currentPointerAngle}deg)`;
         } else if (rollState.phase === 'spinning') {
             timerOverlay.style.display = 'none';
             btnPlaceBet.disabled = true;
-            animatePointer();
         } else if (rollState.phase === 'result') {
             timerOverlay.style.display = 'none';
             btnPlaceBet.disabled = true;
@@ -714,11 +719,31 @@
     }
 
     function animatePointer() {
+        const totalBets = rollState.bets.length;
+        if (totalBets === 0) return;
+        
+        const totalBank = rollState.totalBank;
+        const winnerIndex = rollState.winnerIndex >= 0 ? rollState.winnerIndex : 0;
+        
+        // Вычисляем угол сектора победителя
+        let cumulativeAngle = 0;
+        let targetAngle = 0;
+        for (let i = 0; i < totalBets; i++) {
+            const bet = rollState.bets[i];
+            const sweep = (bet.amount / totalBank) * 360;
+            if (i === winnerIndex) {
+                targetAngle = cumulativeAngle + sweep / 2;
+                break;
+            }
+            cumulativeAngle += sweep;
+        }
+        
         const spins = 6 + Math.floor(Math.random() * 7);
-        const totalRotation = spins * 360;
+        const totalRotation = spins * 360 + (360 - targetAngle);
         const duration = 4200;
         const startAngle = currentPointerAngle;
         const startTime = performance.now();
+        
         function anim(now) {
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1);
