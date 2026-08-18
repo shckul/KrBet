@@ -34,6 +34,9 @@ const rollGame = {
     winnerIndex: -1,
     forcedWinner: null,
     winnerData: null,
+    spinAngle: 0,
+    spinSpins: 0,
+    spinDuration: 0,
 };
 
 const crashGame = {
@@ -325,6 +328,9 @@ function getRollPublicState() {
         totalBank: rollGame.bets.reduce((sum, b) => sum + b.amount, 0),
         winnerIndex: rollGame.winnerIndex,
         winnerData: rollGame.winnerData,
+        spinAngle: rollGame.spinAngle,
+        spinSpins: rollGame.spinSpins,
+        spinDuration: rollGame.spinDuration,
     };
 }
 
@@ -335,6 +341,9 @@ function startRollTimer() {
     rollGame.winnerIndex = -1;
     rollGame.winnerData = null;
     rollGame.forcedWinner = null;
+    rollGame.spinAngle = 0;
+    rollGame.spinSpins = 0;
+    rollGame.spinDuration = 0;
     io.emit('roll:state', getRollPublicState());
 
     if (rollGame.timerInterval) clearInterval(rollGame.timerInterval);
@@ -352,7 +361,6 @@ function startRollSpin() {
     if (rollGame.bets.length === 0) { setTimeout(() => startRollTimer(), 600); return; }
     rollGame.phase = 'spinning';
     rollGame.winnerData = null;
-    io.emit('roll:state', getRollPublicState());
 
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
     let winnerIndex;
@@ -370,6 +378,32 @@ function startRollSpin() {
     }
 
     rollGame.winnerIndex = winnerIndex;
+
+    let cumulativeAngle = 0;
+    let winnerStartAngle = 0;
+    let winnerSweep = 0;
+    for (let i = 0; i < rollGame.bets.length; i++) {
+        const sweep = (rollGame.bets[i].amount / totalBank) * 360;
+        if (i === winnerIndex) {
+            winnerStartAngle = cumulativeAngle;
+            winnerSweep = sweep;
+            break;
+        }
+        cumulativeAngle += sweep;
+    }
+    const randomInSector = Math.random() * winnerSweep;
+    const targetAngle = winnerStartAngle + randomInSector;
+    
+    const spins = 5 + Math.floor(Math.random() * 6);
+    const duration = 3800 + Math.random() * 800;
+    const totalRotation = spins * 360 + (360 - targetAngle);
+    
+    rollGame.spinAngle = totalRotation;
+    rollGame.spinSpins = spins;
+    rollGame.spinDuration = duration;
+
+    io.emit('roll:state', getRollPublicState());
+
     const winner = rollGame.bets[winnerIndex];
 
     setTimeout(() => {
@@ -390,7 +424,7 @@ function startRollSpin() {
         io.emit('roll:result', rollGame.winnerData);
         io.emit('roll:state', getRollPublicState());
         setTimeout(() => startRollTimer(), 2200);
-    }, 4200);
+    }, duration);
 }
 
 // ============ CRASH LOOP ============
