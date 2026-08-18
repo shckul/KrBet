@@ -24,7 +24,7 @@ const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
 // ============================================
 const users = new Map();
 const pendingPayments = new Map();
-const onlineUsers = new Map(); // socketId -> userId
+const onlineUsers = new Map();
 
 const rollGame = {
     phase: 'waiting',
@@ -33,12 +33,11 @@ const rollGame = {
     timerInterval: null,
     winnerIndex: -1,
     forcedWinner: null,
-    spinAngle: 0,
     winnerData: null,
 };
 
 const crashGame = {
-    phase: 'waiting', // waiting | flying | crashed
+    phase: 'waiting',
     multiplier: 1.00,
     maxMultiplier: 1.00,
     countdown: 5,
@@ -84,15 +83,12 @@ function getOrCreateUser(userData) {
             lastActive: Date.now(),
         });
     } else {
-        const user = users.get(userData.id);
-        user.lastActive = Date.now();
+        users.get(userData.id).lastActive = Date.now();
     }
     return users.get(userData.id);
 }
 
-// ============================================
-// API
-// ============================================
+// ============ API ============
 
 app.get('/api/balance', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
@@ -177,9 +173,7 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ success: true, balance: user.balance });
 });
 
-// ============================================
-// АДМИН API
-// ============================================
+// ============ АДМИН ============
 
 app.get('/api/admin/players', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
@@ -209,7 +203,6 @@ app.post('/api/admin/set-balance', (req, res) => {
     if (!user) return res.status(404).json({ success: false });
     if (action === 'add') user.balance += amount;
     else if (action === 'sub') user.balance -= amount;
-    else return res.status(400).json({ success: false });
     onlineUsers.forEach((uid, socketId) => {
         if (uid === numericUserId) io.to(socketId).emit('balance:update', user.balance);
     });
@@ -236,12 +229,9 @@ app.post('/api/admin/crash-now', (req, res) => {
 app.get('/api/roll/state', (req, res) => res.json(getRollPublicState()));
 app.get('/api/crash/state', (req, res) => res.json(getCrashPublicState()));
 
-// ============================================
-// SOCKET.IO
-// ============================================
+// ============ SOCKET.IO ============
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
     let currentUser = null;
 
     socket.on('auth', (initData) => {
@@ -254,7 +244,6 @@ io.on('connection', (socket) => {
                 stats: currentUser.stats,
                 user: { id: currentUser.id, name: currentUser.firstName, photoUrl: currentUser.photoUrl },
             });
-            // Отправляем текущее состояние
             socket.emit('roll:state', getRollPublicState());
             socket.emit('roll:timer', rollGame.timerSeconds);
             socket.emit('crash:state', getCrashPublicState());
@@ -280,6 +269,7 @@ io.on('connection', (socket) => {
 
         rollGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, color });
         socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
         io.emit('roll:state', getRollPublicState());
     });
 
@@ -294,15 +284,10 @@ io.on('connection', (socket) => {
         currentUser.balance -= amount;
         currentUser.stats.spent += amount;
 
-        crashGame.bets.push({
-            userId: currentUser.id,
-            name: currentUser.firstName || 'Player',
-            amount,
-            cashedOut: false,
-            cashoutMultiplier: 0,
-        });
+        crashGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, cashedOut: false, cashoutMultiplier: 0 });
 
         socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
         io.emit('crash:state', getCrashPublicState());
     });
 
@@ -320,19 +305,17 @@ io.on('connection', (socket) => {
         currentUser.stats.won += win - bet.amount;
 
         socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
         socket.emit('crash:cashedOut', { win, multiplier: crashGame.multiplier, userId: currentUser.id });
         io.emit('crash:state', getCrashPublicState());
     });
 
     socket.on('disconnect', () => {
         onlineUsers.delete(socket.id);
-        console.log('User disconnected:', socket.id);
     });
 });
 
-// ============================================
-// ROLL LOOP
-// ============================================
+// ============ ROLL LOOP ============
 
 function getRollPublicState() {
     return {
@@ -396,6 +379,12 @@ function startRollSpin() {
             user.balance += totalBank;
             user.stats.wins++;
             user.stats.won += totalBank;
+            onlineUsers.forEach((uid, socketId) => {
+                if (uid === winner.userId) {
+                    io.to(socketId).emit('balance:update', user.balance);
+                    io.to(socketId).emit('stats:update', user.stats);
+                }
+            });
         }
         rollGame.winnerData = { winnerName: winner.name, winnerAmount: totalBank, winnerIndex };
         io.emit('roll:result', rollGame.winnerData);
@@ -404,9 +393,7 @@ function startRollSpin() {
     }, 4200);
 }
 
-// ============================================
-// CRASH LOOP
-// ============================================
+// ============ CRASH LOOP ============
 
 function getCrashPublicState() {
     return {
@@ -415,6 +402,7 @@ function getCrashPublicState() {
         countdown: crashGame.countdown,
         bets: crashGame.bets.map(b => ({ userId: b.userId, name: b.name, amount: b.amount, cashedOut: b.cashedOut, cashoutMultiplier: b.cashoutMultiplier })),
         history: crashGame.history,
+        startedAt: crashGame.startedAt,
     };
 }
 
@@ -489,13 +477,9 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ============================================
-// ЗАПУСК
-// ============================================
 startRollTimer();
 startCrashTimer();
 
 server.listen(PORT, () => {
     console.log(`🚀 KR Bet server running on port ${PORT}`);
-    console.log(`🤖 Bot Token: ${BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
 });
