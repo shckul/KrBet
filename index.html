@@ -410,7 +410,7 @@
     let stats = { wins: 0, spent: 0, won: 0 };
     let myUserId = userInfo.id;
 
-    let rollState = { phase: 'waiting', bets: [], totalBank: 0, timerSeconds: 30, winnerIndex: -1, winnerData: null };
+    let rollState = { phase: 'waiting', bets: [], totalBank: 0, timerSeconds: 30, winnerIndex: -1, winnerData: null, spinAngle: 0, spinSpins: 0, spinDuration: 0 };
     let currentPointerAngle = 0;
 
     let crashState = { phase: 'waiting', multiplier: 1.00, countdown: 5, bets: [], history: [], startedAt: 0 };
@@ -724,33 +724,11 @@
     }
 
     function animatePointer() {
-        const totalBets = rollState.bets.length;
-        if (totalBets === 0) return;
+        const totalRotation = rollState.spinAngle || 0;
+        const duration = rollState.spinDuration || 4200;
         
-        const totalBank = rollState.totalBank;
-        const winnerIndex = rollState.winnerIndex >= 0 ? rollState.winnerIndex : 0;
+        if (totalRotation === 0) return;
         
-        let cumulativeAngle = 0;
-        let winnerStartAngle = 0;
-        let winnerSweep = 0;
-        
-        for (let i = 0; i < totalBets; i++) {
-            const bet = rollState.bets[i];
-            const sweep = (bet.amount / totalBank) * 360;
-            if (i === winnerIndex) {
-                winnerStartAngle = cumulativeAngle;
-                winnerSweep = sweep;
-                break;
-            }
-            cumulativeAngle += sweep;
-        }
-        
-        const randomInSector = Math.random() * winnerSweep;
-        const targetAngle = winnerStartAngle + randomInSector;
-        
-        const spins = 5 + Math.floor(Math.random() * 6);
-        const totalRotation = spins * 360 + (360 - targetAngle);
-        const duration = 3800 + Math.random() * 800;
         const startAngle = currentPointerAngle;
         const startTime = performance.now();
         
