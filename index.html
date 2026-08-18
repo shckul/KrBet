@@ -726,12 +726,9 @@
     function animatePointer() {
         const totalRotation = rollState.spinAngle || 0;
         const duration = rollState.spinDuration || 4200;
-        
         if (totalRotation === 0) return;
-        
         const startAngle = currentPointerAngle;
         const startTime = performance.now();
-        
         function anim(now) {
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1);
@@ -942,6 +939,7 @@
         if(minesPositions.includes(index)){
             minesGrid[index]='bomb';cell.classList.add('bomb');cell.textContent='💣';
             revealAllBombs();minesGameActive=false;
+            socket.emit('mines:lose', { amount: minesBet });
             stats.spent+=minesBet;updateStats();
             minesMultiplierEl.textContent='0.00x';minesMultiplierEl.className='mines-multiplier lost';
             minesMainBtn.textContent='Взрыв!';minesMainBtn.className='mines-btn over';minesMainBtn.onclick=null;
@@ -963,7 +961,8 @@
     function cashoutMines(){
         if(!minesGameActive)return;
         const mult=getMinesMultiplier();const win=Math.floor(minesBet*mult);
-        balance+=win;stats.wins++;stats.won+=win-minesBet;
+        socket.emit('mines:win', { win: win });
+        balance+=win;stats.wins++;stats.won+=win;
         updateBalance();updateStats();
         minesGameActive=false;
         minesMultiplierEl.textContent=mult.toFixed(2)+'x';minesMultiplierEl.className='mines-multiplier cashed';
@@ -988,6 +987,7 @@
         const a=parseInt(minesBetInput.value);
         if(isNaN(a)||a<10){showNotification('Минимальная ставка 10 ⭐','error');return;}
         if(a>balance){showNotification('Недостаточно звезд на балансе!','error');return;}
+        socket.emit('mines:bet', { amount: a });
         balance-=a;updateBalance();
         minesBetModal.classList.remove('show');startMinesGame(a);
     });
