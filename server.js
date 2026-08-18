@@ -313,6 +313,40 @@ io.on('connection', (socket) => {
         io.emit('crash:state', getCrashPublicState());
     });
 
+    // ============ MINES ============
+    socket.on('mines:bet', (data) => {
+        if (!currentUser) return;
+        const amount = parseInt(data.amount);
+        if (isNaN(amount) || amount < 10) return;
+        if (currentUser.balance < amount) return;
+
+        currentUser.balance -= amount;
+        currentUser.stats.spent += amount;
+        socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
+    });
+
+    socket.on('mines:win', (data) => {
+        if (!currentUser) return;
+        const win = parseInt(data.win);
+        if (isNaN(win) || win <= 0) return;
+
+        currentUser.balance += win;
+        currentUser.stats.wins++;
+        currentUser.stats.won += win;
+        socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
+    });
+
+    socket.on('mines:lose', (data) => {
+        if (!currentUser) return;
+        const amount = parseInt(data.amount);
+        if (isNaN(amount) || amount <= 0) return;
+
+        currentUser.stats.spent += amount;
+        socket.emit('stats:update', currentUser.stats);
+    });
+
     socket.on('disconnect', () => {
         onlineUsers.delete(socket.id);
     });
