@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>KR Bet</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -370,10 +369,8 @@
         userInfo.firstName = 'Player';
     }
 
-    // ============ SOCKET.IO ============
     const socket = io('https://krbet.onrender.com');
 
-    // ============ ЗВЁЗДНЫЙ ФОН ============
     const starsCanvas = document.getElementById('stars-canvas');
     const starsCtx = starsCanvas.getContext('2d');
     let stars = [];
@@ -409,26 +406,21 @@
     resizeStars(); createStars(); animateStars();
     window.addEventListener('resize', () => { resizeStars(); createStars(); });
 
-    // ============ СОСТОЯНИЕ ============
     let balance = 0;
     let stats = { wins: 0, spent: 0, won: 0 };
     let myUserId = userInfo.id;
 
-    // Roll state
     let rollState = { phase: 'waiting', bets: [], totalBank: 0, timerSeconds: 30, winnerIndex: -1, winnerData: null };
     let currentPointerAngle = 0;
 
-    // Crash state
     let crashState = { phase: 'waiting', multiplier: 1.00, countdown: 5, bets: [], history: [] };
     let graphPoints = [];
     let crashMyCashedOut = false;
     let crashMyBet = 0;
 
-    // Mines
     let minesGameActive=false,minesBet=0,minesMineCount=3,minesRevealed=0;
     let minesGrid=[],minesPositions=[];
 
-    // DOM
     const loadingScreen=document.getElementById('loading-screen'),loadingFill=document.getElementById('loading-fill');
     const app=document.getElementById('app'),balanceDisplay=document.getElementById('balance-display'),modalBalance=document.getElementById('modal-balance'),resultBanner=document.getElementById('result-banner');
     const bankAmount=document.getElementById('bank-amount'),timerOverlay=document.getElementById('timer-overlay');
@@ -462,7 +454,6 @@
         notificationOverlay.onclick = (e) => { if (e.target === notificationOverlay) notificationOverlay.classList.remove('show'); };
     }
 
-    // ============ SOCKET.IO ОБРАБОТЧИКИ ============
     socket.on('auth:success', (data) => {
         balance = data.balance;
         stats = data.stats;
@@ -476,10 +467,10 @@
         updateBalance();
     });
 
-    // Roll events
     socket.on('roll:state', (state) => {
         rollState = state;
         updateRollUI();
+        drawWheel();
     });
 
     socket.on('roll:timer', (seconds) => {
@@ -491,17 +482,23 @@
         showResultBanner('🎉 ' + data.winnerName + ' выиграл ' + data.winnerAmount + ' ⭐!', true);
     });
 
-    // Crash events
     socket.on('crash:state', (state) => {
         crashState = state;
         updateCrashUI();
+        renderCrashHistory();
+        if (crashState.phase === 'waiting') {
+            graphPoints = [];
+            drawGraph();
+        }
     });
 
     socket.on('crash:tick', (multiplier) => {
         crashState.multiplier = multiplier;
         crashMultiplierEl.textContent = multiplier.toFixed(2) + 'x';
-        const prog = Math.min(multiplier / 10, 1);
-        graphPoints.push({x: prog, y: prog});
+        const lineDuration = 6000;
+        const elapsed = (Date.now() - (crashState.startedAt || Date.now())) / 1000;
+        const lineProgress = Math.min(elapsed * 1000 / lineDuration, 1);
+        graphPoints.push({x: lineProgress, y: lineProgress});
         if (graphPoints.length > 200) graphPoints.shift();
         drawGraph();
     });
@@ -522,6 +519,7 @@
         crashMainBtn.className = 'crash-btn crashed';
         crashMainBtn.onclick = null;
         updateCrashUI();
+        renderCrashHistory();
     });
 
     socket.on('crash:cashedOut', (data) => {
@@ -531,7 +529,6 @@
         }
     });
 
-    // ============ API ============
     async function apiRequest(endpoint, method='GET', body=null) {
         const headers = {'Content-Type': 'application/json'};
         if (tg?.initData) headers['X-Telegram-Init-Data'] = tg.initData;
@@ -551,7 +548,6 @@
         } catch(e) {}
     }
 
-    // ============ ПОПОЛНЕНИЕ ============
     document.getElementById('btn-deposit').addEventListener('click', async () => {
         const amount = parseInt(document.getElementById('modal-amount-input').value);
         if (isNaN(amount) || amount <= 0) { showNotification('Введите корректную сумму', 'error'); return; }
@@ -825,6 +821,7 @@
             crashMainBtn.onclick = null;
         }
         updateCrashPlayersList();
+        renderCrashHistory();
     }
 
     function updateCrashPlayersList() {
@@ -851,6 +848,16 @@
         });
     }
 
+    function renderCrashHistory() {
+        crashHistoryEl.innerHTML = '';
+        crashState.history.forEach(v => {
+            const i = document.createElement('div');
+            i.className = 'history-item ' + (v >= 2 ? 'green' : 'red');
+            i.textContent = v.toFixed(2) + 'x';
+            crashHistoryEl.appendChild(i);
+        });
+    }
+
     function drawGraph() {
         const w=graphCanvas.width,h=graphCanvas.height;
         graphCtx.clearRect(0,0,w,h);
@@ -874,16 +881,6 @@
         }
     }
 
-    function renderCrashHistory() {
-        crashHistoryEl.innerHTML='';
-        crashState.history.forEach(v=>{
-            const i=document.createElement('div');
-            i.className='history-item '+(v>=2?'green':'red');
-            i.textContent=v.toFixed(2)+'x';
-            crashHistoryEl.appendChild(i);
-        });
-    }
-
     btnConfirmBet.addEventListener('click', () => {
         const amount = parseInt(crashBetInput.value);
         if (isNaN(amount) || amount < 10) { showNotification('Минимальная ставка 10 ⭐','error'); return; }
@@ -892,7 +889,6 @@
         socket.emit('crash:bet', { amount });
         betModal.classList.remove('show');
     });
-
     btnCancelBet.addEventListener('click', () => betModal.classList.remove('show'));
 
     // ============ MINES ============
@@ -1005,7 +1001,6 @@
     document.getElementById('btn-open-modal').addEventListener('click',()=>{document.getElementById('modal-amount-input').value=10;document.getElementById('modal-overlay').classList.add('show');});
     document.getElementById('btn-close-modal').addEventListener('click',()=>document.getElementById('modal-overlay').classList.remove('show'));
 
-    // ============ ИНИЦИАЛИЗАЦИЯ ============
     function initAll(){
         setupGraphCanvas();
         updateProfile();
@@ -1013,7 +1008,6 @@
         updateBalance();
         updateStats();
         fetchBalance();
-        // Авторизация на сервере
         if (tg?.initData) {
             socket.emit('auth', tg.initData);
         }
