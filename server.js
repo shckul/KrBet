@@ -367,7 +367,6 @@ io.on('connection', (socket) => {
         socket.emit('stats:update', currentUser.stats);
     });
 
-    // ============ UPGRADER — ИСПРАВЛЕНО ============
     socket.on('upgrader:play', (data) => {
         if (!currentUser) return;
         const bet = parseInt(data.bet);
@@ -382,11 +381,9 @@ io.on('connection', (socket) => {
         currentUser.stats.spent += bet;
         addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
 
-        // ВАЖНО: Сервер определяет результат, но НЕ отправляет его сразу
         const won = Math.random() < chance;
         const winAmount = won ? target : 0;
         
-        // Вычисляем целевой угол для анимации
         const winSectorSize = chance * 360;
         let targetAngle;
         if (won) {
@@ -395,7 +392,6 @@ io.on('connection', (socket) => {
             targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
         }
         
-        // Отправляем угол для анимации
         socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
 
         if (won) {
@@ -409,7 +405,6 @@ io.on('connection', (socket) => {
         socket.emit('stats:update', currentUser.stats);
         socket.emit('history:update', currentUser.history);
         
-        // Отправляем результат ПОСЛЕ анимации (через 3.5 секунды)
         setTimeout(() => {
             socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
         }, 3500);
@@ -524,30 +519,53 @@ function startRollSpin() {
     rollGame.winnerData = null;
 
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
-    let winnerIndex;
-
+    
+    // ВАЖНО: Сначала выбираем случайный угол, потом находим победителя по этому углу
+    const randomAngle = Math.random() * 360;
+    
+    let winnerIndex = 0;
+    
     if (rollGame.forcedWinner) {
+        // Если админ установил победителя — находим его сектор
         winnerIndex = rollGame.bets.findIndex(b => b.userId === rollGame.forcedWinner);
-        if (winnerIndex === -1) winnerIndex = Math.floor(Math.random() * rollGame.bets.length);
-    } else {
-        let random = Math.random() * totalBank;
-        winnerIndex = 0;
-        for (let i = 0; i < rollGame.bets.length; i++) {
-            random -= rollGame.bets[i].amount;
-            if (random <= 0) { winnerIndex = i; break; }
+        if (winnerIndex === -1) winnerIndex = 0;
+        
+        // Вычисляем угол для сектора победителя
+        let cumulative = 0;
+        for (let i = 0; i < winnerIndex; i++) {
+            cumulative += (rollGame.bets[i].amount / totalBank) * 360;
         }
+        const winnerSweep = (rollGame.bets[winnerIndex].amount / totalBank) * 360;
+        // Случайная точка внутри сектора победителя
+        const randomInSector = Math.random() * winnerSweep;
+        const forcedAngle = cumulative + randomInSector;
+        
+        // Переопределяем randomAngle
+        rollGame.spinAngle = forcedAngle;
+    } else {
+        // Находим какой сектор содержит randomAngle
+        let cumulative = 0;
+        for (let i = 0; i < rollGame.bets.length; i++) {
+            const sweep = (rollGame.bets[i].amount / totalBank) * 360;
+            if (randomAngle >= cumulative && randomAngle < cumulative + sweep) {
+                winnerIndex = i;
+                break;
+            }
+            cumulative += sweep;
+        }
+        rollGame.spinAngle = randomAngle;
     }
-
+    
     rollGame.winnerIndex = winnerIndex;
     const winner = rollGame.bets[winnerIndex];
-
-    const randomAngle = Math.random() * 360;
+    
+    // Вычисляем общий угол вращения
     const spins = 5 + Math.floor(Math.random() * 6);
     const duration = 3800 + Math.random() * 800;
-    const totalRotation = spins * 360 + randomAngle;
-
-    rollGame.spinAngle = totalRotation;
+    const totalRotation = spins * 360 + rollGame.spinAngle;
+    
     rollGame.spinDuration = duration;
+    rollGame.spinAngle = totalRotation;
 
     io.emit('roll:state', getRollPublicState());
 
@@ -661,7 +679,7 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ============ ICE ARENA — ПОЛНОСТЬЮ ИСПРАВЛЕНО ============
+// ============ ICE ARENA ============
 
 function getIcePublicState() {
     return {
@@ -726,11 +744,9 @@ function launchIcePuck(angle) {
     if (iceGame.puckAnimation) clearInterval(iceGame.puckAnimation);
     
     iceGame.puckAnimation = setInterval(() => {
-        // Обновляем позицию
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
         
-        // Проверяем и исправляем X координату
         if (iceGame.puckX < MIN_POS) {
             iceGame.puckX = MIN_POS;
             iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.8;
@@ -739,7 +755,6 @@ function launchIcePuck(angle) {
             iceGame.puckVX = -Math.abs(iceGame.puckVX) * 0.8;
         }
         
-        // Проверяем и исправляем Y координату
         if (iceGame.puckY < MIN_POS) {
             iceGame.puckY = MIN_POS;
             iceGame.puckVY = Math.abs(iceGame.puckVY) * 0.8;
@@ -748,14 +763,11 @@ function launchIcePuck(angle) {
             iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.8;
         }
         
-        // Трение
         iceGame.puckVX *= friction;
         iceGame.puckVY *= friction;
         
-        // Отправляем позицию
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
-        // Проверяем остановку
         if (Math.abs(iceGame.puckVX) < 0.03 && Math.abs(iceGame.puckVY) < 0.03) {
             clearInterval(iceGame.puckAnimation);
             finishIceRound();
