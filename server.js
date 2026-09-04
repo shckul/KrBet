@@ -19,9 +19,6 @@ const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
 
-// ============================================
-// ХРАНИЛИЩЕ
-// ============================================
 const users = new Map();
 const pendingPayments = new Map();
 const onlineUsers = new Map();
@@ -413,25 +410,25 @@ function startRollSpin() {
 
     rollGame.winnerIndex = winnerIndex;
 
+    // ВАЖНО: Сектора рисуются от -90 градусов (верх) по часовой стрелке
+    // Поэтому targetAngle = сумма предыдущих + случайная точка в секторе победителя
     let cumulativeAngle = 0;
-    let winnerStartAngle = 0;
-    let winnerSweep = 0;
-    for (let i = 0; i < rollGame.bets.length; i++) {
-        const sweep = (rollGame.bets[i].amount / totalBank) * 360;
-        if (i === winnerIndex) {
-            winnerStartAngle = cumulativeAngle;
-            winnerSweep = sweep;
-            break;
-        }
-        cumulativeAngle += sweep;
+    for (let i = 0; i < winnerIndex; i++) {
+        cumulativeAngle += (rollGame.bets[i].amount / totalBank) * 360;
     }
+    const winnerSweep = (rollGame.bets[winnerIndex].amount / totalBank) * 360;
     const randomInSector = Math.random() * winnerSweep;
-    const targetAngle = winnerStartAngle + randomInSector;
-    
+    const targetAngle = cumulativeAngle + randomInSector;
+
     const spins = 5 + Math.floor(Math.random() * 6);
     const duration = 3800 + Math.random() * 800;
-    const totalRotation = spins * 360 + (360 - targetAngle);
-    
+    // totalRotation — сколько стрелка должна повернуться от текущего положения
+    // чтобы остановиться на targetAngle
+    // Текущее положение = currentPointerAngle (в градусах)
+    // Нужно чтобы (currentPointerAngle + totalRotation) % 360 = targetAngle
+    const currentAngle = rollGame.spinAngle % 360;
+    const totalRotation = spins * 360 + ((targetAngle - currentAngle + 360) % 360);
+
     rollGame.spinAngle = totalRotation;
     rollGame.spinSpins = spins;
     rollGame.spinDuration = duration;
