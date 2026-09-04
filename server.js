@@ -370,47 +370,56 @@ io.on('connection', (socket) => {
     });
 
     socket.on('upgrader:play', (data) => {
-        if (!currentUser) return;
-        const bet = parseInt(data.bet);
-        const target = parseInt(data.target);
-        if (isNaN(bet) || isNaN(target) || bet < 10 || target <= bet) return;
-        if (currentUser.balance < bet) return;
+    if (!currentUser) return;
+    const bet = parseInt(data.bet);
+    const target = parseInt(data.target);
+    if (isNaN(bet) || isNaN(target) || bet < 10 || target <= bet) return;
+    if (currentUser.balance < bet) return;
 
-        const chance = bet / target;
-        if (chance > 0.75) return;
+    const chance = bet / target;
+    if (chance > 0.75) return;
 
-        currentUser.balance -= bet;
-        currentUser.stats.spent += bet;
-        addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
+    // Сразу списываем ставку
+    currentUser.balance -= bet;
+    currentUser.stats.spent += bet;
+    addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
+    socket.emit('balance:update', currentUser.balance);
+    socket.emit('stats:update', currentUser.stats);
+    socket.emit('history:update', currentUser.history);
 
-        const won = Math.random() < chance;
-        const winAmount = won ? target : 0;
-        
-        const winSectorSize = chance * 360;
-        let targetAngle;
-        if (won) {
-            targetAngle = Math.random() * winSectorSize;
-        } else {
-            targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
-        }
-        
-        socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
+    // Определяем результат, но НЕ начисляем сразу
+    const won = Math.random() < chance;
+    const winAmount = won ? target : 0;
+    
+    // Вычисляем угол для анимации
+    const winSectorSize = chance * 360;
+    let targetAngle;
+    if (won) {
+        targetAngle = Math.random() * winSectorSize;
+    } else {
+        targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
+    }
+    
+    socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
 
+    // Начисляем выигрыш ТОЛЬКО после анимации (через 3.5 секунды)
+    setTimeout(() => {
         if (won) {
             currentUser.balance += target;
             currentUser.stats.wins++;
             currentUser.stats.won += target;
             addHistory(currentUser, 'Выигрыш (Upgrader)', target, 'win');
+            
+            // Отправляем обновлённый баланс
+            socket.emit('balance:update', currentUser.balance);
+            socket.emit('stats:update', currentUser.stats);
+            socket.emit('history:update', currentUser.history);
         }
-
-        socket.emit('balance:update', currentUser.balance);
-        socket.emit('stats:update', currentUser.stats);
-        socket.emit('history:update', currentUser.history);
         
-        setTimeout(() => {
-            socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
-        }, 3500);
-    });
+        // Отправляем результат
+        socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
+    }, 3500);
+});
 
     socket.on('ice:bet', (data) => {
         if (!currentUser) return;
