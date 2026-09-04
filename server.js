@@ -19,15 +19,12 @@ const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
 
-// ============================================
-// ХРАНИЛИЩЕ
-// ============================================
-const users = new Map(); // userId -> user
-const pendingPayments = new Map(); // paymentId -> payment
-const onlineUsers = new Map(); // socketId -> userId
+const users = new Map();
+const pendingPayments = new Map();
+const onlineUsers = new Map();
 
 const rollGame = {
-    phase: 'waiting', // waiting | spinning | result
+    phase: 'waiting',
     bets: [],
     timerSeconds: 30,
     timerInterval: null,
@@ -39,7 +36,7 @@ const rollGame = {
 };
 
 const crashGame = {
-    phase: 'waiting', // waiting | flying | crashed
+    phase: 'waiting',
     multiplier: 1.00,
     maxMultiplier: 1.00,
     countdown: 5,
@@ -53,13 +50,13 @@ const crashGame = {
 };
 
 const iceGame = {
-    phase: 'waiting', // waiting | launching | sliding | result
+    phase: 'waiting',
     timerSeconds: 30,
     bets: [],
     totalBank: 0,
     timerInterval: null,
-    puckX: 0,
-    puckY: 0,
+    puckX: 170,
+    puckY: 170,
     puckVX: 0,
     puckVY: 0,
     puckAnimation: null,
@@ -111,10 +108,6 @@ function addHistory(user, action, amount, type) {
     user.history.unshift({ action, amount, type, time: Date.now() });
     if (user.history.length > 50) user.history.pop();
 }
-
-// ============================================
-// API
-// ============================================
 
 app.get('/api/balance', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
@@ -200,10 +193,6 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ success: true, balance: user.balance });
 });
 
-// ============================================
-// АДМИН
-// ============================================
-
 app.get('/api/admin/players', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
@@ -255,10 +244,6 @@ app.post('/api/admin/crash-now', (req, res) => {
     res.json({ success: true });
 });
 
-// ============================================
-// SOCKET.IO
-// ============================================
-
 io.on('connection', (socket) => {
     let currentUser = null;
 
@@ -282,7 +267,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ============ ROLL ============
     socket.on('roll:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -306,7 +290,6 @@ io.on('connection', (socket) => {
         io.emit('roll:state', getRollPublicState());
     });
 
-    // ============ CRASH ============
     socket.on('crash:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -348,7 +331,6 @@ io.on('connection', (socket) => {
         io.emit('crash:state', getCrashPublicState());
     });
 
-    // ============ MINES ============
     socket.on('mines:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -385,7 +367,7 @@ io.on('connection', (socket) => {
         socket.emit('stats:update', currentUser.stats);
     });
 
-    // ============ UPGRADER ============
+    // ============ UPGRADER (исправлено) ============
     socket.on('upgrader:play', (data) => {
         if (!currentUser) return;
         const bet = parseInt(data.bet);
@@ -413,10 +395,13 @@ io.on('connection', (socket) => {
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
         socket.emit('history:update', currentUser.history);
-        socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
+        
+        // Отправляем результат с задержкой 3.5 секунды (после анимации стрелки)
+        setTimeout(() => {
+            socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
+        }, 3500);
     });
 
-    // ============ ICE ARENA ============
     socket.on('ice:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -442,7 +427,6 @@ io.on('connection', (socket) => {
         io.emit('ice:state', getIcePublicState());
     });
 
-    // ============ CASES ============
     socket.on('case:open', (data) => {
         if (!currentUser) return;
         const caseId = data.caseId;
@@ -484,9 +468,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// ============================================
-// ROLL LOOP
-// ============================================
+// ============ ROLL LOOP ============
 
 function getRollPublicState() {
     return {
@@ -546,7 +528,6 @@ function startRollSpin() {
     rollGame.winnerIndex = winnerIndex;
     const winner = rollGame.bets[winnerIndex];
 
-    // Вычисляем угол
     const randomAngle = Math.random() * 360;
     const spins = 5 + Math.floor(Math.random() * 6);
     const duration = 3800 + Math.random() * 800;
@@ -580,9 +561,7 @@ function startRollSpin() {
     }, duration);
 }
 
-// ============================================
-// CRASH LOOP
-// ============================================
+// ============ CRASH LOOP ============
 
 function getCrashPublicState() {
     return {
@@ -669,9 +648,7 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ============================================
-// ICE ARENA LOOP
-// ============================================
+// ============ ICE ARENA (исправлено) ============
 
 function getIcePublicState() {
     return {
@@ -690,6 +667,10 @@ function startIceTimer() {
     iceGame.bets = [];
     iceGame.totalBank = 0;
     iceGame.winnerData = null;
+    iceGame.puckX = 170;
+    iceGame.puckY = 170;
+    iceGame.puckVX = 0;
+    iceGame.puckVY = 0;
     io.emit('ice:state', getIcePublicState());
 
     if (iceGame.timerInterval) clearInterval(iceGame.timerInterval);
@@ -708,7 +689,6 @@ function startIceLaunch() {
     iceGame.phase = 'launching';
     io.emit('ice:state', getIcePublicState());
 
-    // Стрелка крутится 1 секунду
     const finalAngle = Math.random() * 360;
     
     setTimeout(() => {
@@ -718,7 +698,7 @@ function startIceLaunch() {
 
 function launchIcePuck(angle) {
     iceGame.phase = 'sliding';
-    iceGame.puckX = 170; // Центр поля
+    iceGame.puckX = 170;
     iceGame.puckY = 170;
     
     const speed = 6;
@@ -727,6 +707,11 @@ function launchIcePuck(angle) {
     iceGame.puckVY = Math.sin(rad) * speed;
     
     const friction = 0.995;
+    // Границы поля: шайба 20px, поле 340px
+    const MIN_X = 10;
+    const MAX_X = 330;
+    const MIN_Y = 10;
+    const MAX_Y = 330;
     
     if (iceGame.puckAnimation) clearInterval(iceGame.puckAnimation);
     
@@ -734,18 +719,17 @@ function launchIcePuck(angle) {
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
         
-        // Отскок от краёв (поле 340x340, шайба 20px)
-        if (iceGame.puckX <= 10) { iceGame.puckX = 10; iceGame.puckVX = -iceGame.puckVX * 0.8; }
-        if (iceGame.puckX >= 330) { iceGame.puckX = 330; iceGame.puckVX = -iceGame.puckVX * 0.8; }
-        if (iceGame.puckY <= 10) { iceGame.puckY = 10; iceGame.puckVY = -iceGame.puckVY * 0.8; }
-        if (iceGame.puckY >= 330) { iceGame.puckY = 330; iceGame.puckVY = -iceGame.puckVY * 0.8; }
+        // Отскок от стенок
+        if (iceGame.puckX <= MIN_X) { iceGame.puckX = MIN_X; iceGame.puckVX = -iceGame.puckVX * 0.8; }
+        if (iceGame.puckX >= MAX_X) { iceGame.puckX = MAX_X; iceGame.puckVX = -iceGame.puckVX * 0.8; }
+        if (iceGame.puckY <= MIN_Y) { iceGame.puckY = MIN_Y; iceGame.puckVY = -iceGame.puckVY * 0.8; }
+        if (iceGame.puckY >= MAX_Y) { iceGame.puckY = MAX_Y; iceGame.puckVY = -iceGame.puckVY * 0.8; }
         
         iceGame.puckVX *= friction;
         iceGame.puckVY *= friction;
         
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
-        // Проверяем остановку
         if (Math.abs(iceGame.puckVX) < 0.05 && Math.abs(iceGame.puckVY) < 0.05) {
             clearInterval(iceGame.puckAnimation);
             finishIceRound();
@@ -756,7 +740,6 @@ function launchIcePuck(angle) {
 function finishIceRound() {
     iceGame.phase = 'result';
     
-    // Определяем победителя по X координате
     const relativeX = iceGame.puckX / 340;
     let cumulative = 0;
     let winner = iceGame.bets[0];
@@ -789,9 +772,6 @@ function finishIceRound() {
     setTimeout(() => startIceTimer(), 2200);
 }
 
-// ============================================
-// ЗАПУСК
-// ============================================
 startRollTimer();
 startCrashTimer();
 startIceTimer();
@@ -799,5 +779,4 @@ startIceTimer();
 server.listen(PORT, () => {
     console.log(`🚀 KR Bet server running on port ${PORT}`);
     console.log(`🤖 Bot Token: ${BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
-    console.log(`⚠️  Set webhook: https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${WEBAPP_URL}/api/webhook/payment`);
 });
