@@ -33,6 +33,7 @@ const rollGame = {
     winnerData: null,
     spinAngle: 0,
     spinDuration: 0,
+    finalAngle: 0, // Финальный угол в градусах (0-360), где 0 = верх
 };
 
 const crashGame = {
@@ -488,6 +489,7 @@ function getRollPublicState() {
         winnerData: rollGame.winnerData,
         spinAngle: rollGame.spinAngle,
         spinDuration: rollGame.spinDuration,
+        finalAngle: rollGame.finalAngle,
     };
 }
 
@@ -500,6 +502,7 @@ function startRollTimer() {
     rollGame.forcedWinner = null;
     rollGame.spinAngle = 0;
     rollGame.spinDuration = 0;
+    rollGame.finalAngle = 0;
     io.emit('roll:state', getRollPublicState());
 
     if (rollGame.timerInterval) clearInterval(rollGame.timerInterval);
@@ -520,52 +523,54 @@ function startRollSpin() {
 
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
     
-    // ВАЖНО: Сначала выбираем случайный угол, потом находим победителя по этому углу
-    const randomAngle = Math.random() * 360;
+    // ВАЖНО: Клиент рисует сектора от -90° (верх) по часовой стрелке
+    // Поэтому winner определяется по углу от ВЕРХА (0 = верх, по часовой)
     
-    let winnerIndex = 0;
+    let finalAngleDeg;
+    let winnerIndex;
     
     if (rollGame.forcedWinner) {
-        // Если админ установил победителя — находим его сектор
+        // Админ выбрал победителя — вычисляем угол в его секторе
         winnerIndex = rollGame.bets.findIndex(b => b.userId === rollGame.forcedWinner);
         if (winnerIndex === -1) winnerIndex = 0;
         
-        // Вычисляем угол для сектора победителя
+        // Вычисляем границы сектора победителя (от верха, по часовой)
         let cumulative = 0;
         for (let i = 0; i < winnerIndex; i++) {
             cumulative += (rollGame.bets[i].amount / totalBank) * 360;
         }
         const winnerSweep = (rollGame.bets[winnerIndex].amount / totalBank) * 360;
-        // Случайная точка внутри сектора победителя
-        const randomInSector = Math.random() * winnerSweep;
-        const forcedAngle = cumulative + randomInSector;
-        
-        // Переопределяем randomAngle
-        rollGame.spinAngle = forcedAngle;
+        finalAngleDeg = cumulative + Math.random() * winnerSweep;
     } else {
-        // Находим какой сектор содержит randomAngle
+        // Случайный угол от верха (0-360 по часовой)
+        finalAngleDeg = Math.random() * 360;
+        
+        // Находим какой сектор содержит этот угол
         let cumulative = 0;
+        winnerIndex = 0;
         for (let i = 0; i < rollGame.bets.length; i++) {
             const sweep = (rollGame.bets[i].amount / totalBank) * 360;
-            if (randomAngle >= cumulative && randomAngle < cumulative + sweep) {
+            if (finalAngleDeg >= cumulative && finalAngleDeg < cumulative + sweep) {
                 winnerIndex = i;
                 break;
             }
             cumulative += sweep;
         }
-        rollGame.spinAngle = randomAngle;
     }
     
     rollGame.winnerIndex = winnerIndex;
+    rollGame.finalAngle = finalAngleDeg;
+    
     const winner = rollGame.bets[winnerIndex];
     
-    // Вычисляем общий угол вращения
+    // Вычисляем общее вращение для анимации
+    // Стрелка должна остановиться на finalAngleDeg
     const spins = 5 + Math.floor(Math.random() * 6);
     const duration = 3800 + Math.random() * 800;
-    const totalRotation = spins * 360 + rollGame.spinAngle;
+    const totalRotation = spins * 360 + finalAngleDeg;
     
-    rollGame.spinDuration = duration;
     rollGame.spinAngle = totalRotation;
+    rollGame.spinDuration = duration;
 
     io.emit('roll:state', getRollPublicState());
 
