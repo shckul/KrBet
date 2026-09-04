@@ -367,7 +367,7 @@ io.on('connection', (socket) => {
         socket.emit('stats:update', currentUser.stats);
     });
 
-    // ============ UPGRADER (исправлено) ============
+    // ============ UPGRADER — ИСПРАВЛЕНО ============
     socket.on('upgrader:play', (data) => {
         if (!currentUser) return;
         const bet = parseInt(data.bet);
@@ -382,8 +382,21 @@ io.on('connection', (socket) => {
         currentUser.stats.spent += bet;
         addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
 
+        // ВАЖНО: Сервер определяет результат, но НЕ отправляет его сразу
         const won = Math.random() < chance;
         const winAmount = won ? target : 0;
+        
+        // Вычисляем целевой угол для анимации
+        const winSectorSize = chance * 360;
+        let targetAngle;
+        if (won) {
+            targetAngle = Math.random() * winSectorSize;
+        } else {
+            targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
+        }
+        
+        // Отправляем угол для анимации
+        socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
 
         if (won) {
             currentUser.balance += target;
@@ -396,7 +409,7 @@ io.on('connection', (socket) => {
         socket.emit('stats:update', currentUser.stats);
         socket.emit('history:update', currentUser.history);
         
-        // Отправляем результат с задержкой 3.5 секунды (после анимации стрелки)
+        // Отправляем результат ПОСЛЕ анимации (через 3.5 секунды)
         setTimeout(() => {
             socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
         }, 3500);
@@ -648,8 +661,7 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ============ ICE ARENA (исправлено) ============
-// ============ ICE ARENA (исправлено полностью) ============
+// ============ ICE ARENA — ПОЛНОСТЬЮ ИСПРАВЛЕНО ============
 
 function getIcePublicState() {
     return {
@@ -708,14 +720,8 @@ function launchIcePuck(angle) {
     iceGame.puckVY = Math.sin(rad) * speed;
     
     const friction = 0.995;
-    
-    // ВАЖНО: Границы поля. Шайба 20px, поле 340px
-    // Но координаты puckX/puckY - это ЦЕНТР шайбы
-    // Поэтому границы должны быть: от 10 до 330 (340 - 10)
-    const MIN_X = 10;
-    const MAX_X = 330;
-    const MIN_Y = 10;
-    const MAX_Y = 330;
+    const MIN_POS = 10;
+    const MAX_POS = 330;
     
     if (iceGame.puckAnimation) clearInterval(iceGame.puckAnimation);
     
@@ -724,25 +730,21 @@ function launchIcePuck(angle) {
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
         
-        // ПРОВЕРЯЕМ ГРАНИЦЫ В ПЕРВУЮ ОЧЕРЕДЬ
-        // Отскок от левой стены
-        if (iceGame.puckX < MIN_X) {
-            iceGame.puckX = MIN_X;
+        // Проверяем и исправляем X координату
+        if (iceGame.puckX < MIN_POS) {
+            iceGame.puckX = MIN_POS;
             iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.8;
-        }
-        // Отскок от правой стены
-        if (iceGame.puckX > MAX_X) {
-            iceGame.puckX = MAX_X;
+        } else if (iceGame.puckX > MAX_POS) {
+            iceGame.puckX = MAX_POS;
             iceGame.puckVX = -Math.abs(iceGame.puckVX) * 0.8;
         }
-        // Отскок от верхней стены
-        if (iceGame.puckY < MIN_Y) {
-            iceGame.puckY = MIN_Y;
+        
+        // Проверяем и исправляем Y координату
+        if (iceGame.puckY < MIN_POS) {
+            iceGame.puckY = MIN_POS;
             iceGame.puckVY = Math.abs(iceGame.puckVY) * 0.8;
-        }
-        // Отскок от нижней стены
-        if (iceGame.puckY > MAX_Y) {
-            iceGame.puckY = MAX_Y;
+        } else if (iceGame.puckY > MAX_POS) {
+            iceGame.puckY = MAX_POS;
             iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.8;
         }
         
@@ -750,11 +752,11 @@ function launchIcePuck(angle) {
         iceGame.puckVX *= friction;
         iceGame.puckVY *= friction;
         
-        // Отправляем позицию на клиент
+        // Отправляем позицию
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
         // Проверяем остановку
-        if (Math.abs(iceGame.puckVX) < 0.05 && Math.abs(iceGame.puckVY) < 0.05) {
+        if (Math.abs(iceGame.puckVX) < 0.03 && Math.abs(iceGame.puckVY) < 0.03) {
             clearInterval(iceGame.puckAnimation);
             finishIceRound();
         }
@@ -764,9 +766,7 @@ function launchIcePuck(angle) {
 function finishIceRound() {
     iceGame.phase = 'result';
     
-    // Определяем победителя по X координате
-    // Поле 340px, шайба остановилась в puckX
-    const relativeX = iceGame.puckX / 340;
+    const relativeX = Math.max(0, Math.min(1, iceGame.puckX / 340));
     let cumulative = 0;
     let winner = iceGame.bets[0];
     
