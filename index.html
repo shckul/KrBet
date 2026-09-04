@@ -596,7 +596,7 @@
     let upgraderPointerAngle = 0;
     let upgraderChance = 0;
 
-    let iceState = { phase: 'waiting', timerSeconds: 30, bets: [], totalBank: 0, puckX: 0, puckY: 0, puckVX: 0, puckVY: 0 };
+    let iceState = { phase: 'waiting', timerSeconds: 30, bets: [], totalBank: 0, puckX: 0, puckY: 0 };
     let icePuckAnimation = null;
 
     const casesData = {
@@ -869,11 +869,13 @@
     });
 
     socket.on('ice:puck', (puckData) => {
-        iceState.puckX = puckData.x;
-        iceState.puckY = puckData.y;
         icePuck.style.display = 'block';
-        icePuck.style.left = (puckData.x - 10) + 'px';
-        icePuck.style.top = (puckData.y - 10) + 'px';
+        // Масштабируем координаты от 340x340 к реальному размеру поля
+        const fieldRect = iceField.getBoundingClientRect();
+        const scaleX = fieldRect.width / 340;
+        const scaleY = fieldRect.height / 340;
+        icePuck.style.left = (puckData.x * scaleX - 10) + 'px';
+        icePuck.style.top = (puckData.y * scaleY - 10) + 'px';
     });
 
     socket.on('ice:result', (data) => {
@@ -882,6 +884,31 @@
         } else {
             showResultBanner(data.winnerName + ' выиграл ' + data.winnerAmount + ' ⭐', false);
         }
+    });
+
+    // ============ UPGRADER SOCKET ============
+    socket.on('upgrader:angle', (data) => {
+        const targetAngle = data.targetAngle;
+        const duration = data.duration;
+        const spins = 4 + Math.floor(Math.random() * 4);
+        const totalRotation = spins * 360 + ((targetAngle - upgraderPointerAngle + 360) % 360);
+        const startAngle = upgraderPointerAngle;
+        const startTime = performance.now();
+        
+        function anim(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = progress < 0.5 ? 8 * progress ** 4 : 1 - (-2 * progress + 2) ** 4 / 2;
+            upgraderPointerAngle = (startAngle + totalRotation * eased) % 360;
+            upgraderPointerLayer.style.transition = 'none';
+            upgraderPointerLayer.style.transform = `rotate(${upgraderPointerAngle}deg)`;
+            if (progress < 1) { requestAnimationFrame(anim); }
+            else {
+                upgraderPointerAngle = targetAngle % 360;
+                upgraderPointerLayer.style.transform = `rotate(${upgraderPointerAngle}deg)`;
+            }
+        }
+        requestAnimationFrame(anim);
     });
 
     socket.on('upgrader:result', (data) => {
@@ -1246,32 +1273,8 @@
         upgraderBtn.disabled = true;
         upgraderResult.textContent = '';
         
-        // Отправляем на сервер
+        // Отправляем на сервер, сервер решит результат и отправит угол для анимации
         socket.emit('upgrader:play', { bet, target });
-        
-        // Анимация стрелки
-        const won = Math.random() < upgraderChance;
-        const winSectorSize = upgraderChance * 360;
-        let targetAngle;
-        if (won) { targetAngle = Math.random() * winSectorSize; }
-        else { targetAngle = winSectorSize + Math.random() * (360 - winSectorSize); }
-        
-        const spins = 4 + Math.floor(Math.random() * 4);
-        const totalRotation = spins * 360 + ((targetAngle - upgraderPointerAngle + 360) % 360);
-        const duration = 3000 + Math.random() * 1000;
-        const startAngle = upgraderPointerAngle;
-        const startTime = performance.now();
-        
-        function anim(now) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = progress < 0.5 ? 8 * progress ** 4 : 1 - (-2 * progress + 2) ** 4 / 2;
-            upgraderPointerAngle = (startAngle + totalRotation * eased) % 360;
-            upgraderPointerLayer.style.transition = 'none';
-            upgraderPointerLayer.style.transform = `rotate(${upgraderPointerAngle}deg)`;
-            if (progress < 1) { requestAnimationFrame(anim); }
-        }
-        requestAnimationFrame(anim);
     });
 
     // ============ ROLL UI ============
@@ -1504,7 +1507,6 @@
     }
 
     function drawIceField() {
-        const cx = ICE_SIZE / 2;
         const w = ICE_SIZE;
         const h = ICE_SIZE;
         
@@ -1529,7 +1531,7 @@
             iceCtx.textAlign = 'center';
             iceCtx.textBaseline = 'middle';
             iceCtx.save();
-            iceCtx.translate(currentX + zoneWidth / 2, cx);
+            iceCtx.translate(currentX + zoneWidth / 2, w / 2);
             iceCtx.rotate(-Math.PI / 2);
             iceCtx.fillText(bet.name.substring(0, 8), 0, 0);
             iceCtx.restore();
@@ -1739,4 +1741,4 @@
 })();
 </script>
 </body>
-                                   </html>
+            </html>
