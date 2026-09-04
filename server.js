@@ -33,7 +33,8 @@ const rollGame = {
     winnerData: null,
     spinAngle: 0,
     spinDuration: 0,
-    finalAngle: 0, // Финальный угол в градусах (0-360), где 0 = верх
+    finalAngle: 0,
+    currentAngle: 0, // Текущий угол стрелки на сервере
 };
 
 const crashGame = {
@@ -490,6 +491,7 @@ function getRollPublicState() {
         spinAngle: rollGame.spinAngle,
         spinDuration: rollGame.spinDuration,
         finalAngle: rollGame.finalAngle,
+        currentAngle: rollGame.currentAngle,
     };
 }
 
@@ -503,6 +505,7 @@ function startRollTimer() {
     rollGame.spinAngle = 0;
     rollGame.spinDuration = 0;
     rollGame.finalAngle = 0;
+    rollGame.currentAngle = 0; // Сбрасываем стрелку на верх
     io.emit('roll:state', getRollPublicState());
 
     if (rollGame.timerInterval) clearInterval(rollGame.timerInterval);
@@ -523,14 +526,14 @@ function startRollSpin() {
 
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
     
-    // ВАЖНО: Клиент рисует сектора от -90° (верх) по часовой стрелке
-    // Поэтому winner определяется по углу от ВЕРХА (0 = верх, по часовой)
+    // ВАЖНО: Сектора на клиенте рисуются от ВЕРХА по часовой стрелке
+    // Угол 0 = верх, угол 90 = право, угол 180 = низ, угол 270 = лево
     
     let finalAngleDeg;
     let winnerIndex;
     
     if (rollGame.forcedWinner) {
-        // Админ выбрал победителя — вычисляем угол в его секторе
+        // Админ выбрал победителя
         winnerIndex = rollGame.bets.findIndex(b => b.userId === rollGame.forcedWinner);
         if (winnerIndex === -1) winnerIndex = 0;
         
@@ -542,10 +545,10 @@ function startRollSpin() {
         const winnerSweep = (rollGame.bets[winnerIndex].amount / totalBank) * 360;
         finalAngleDeg = cumulative + Math.random() * winnerSweep;
     } else {
-        // Случайный угол от верха (0-360 по часовой)
+        // Случайный угол
         finalAngleDeg = Math.random() * 360;
         
-        // Находим какой сектор содержит этот угол
+        // Находим победителя по этому углу
         let cumulative = 0;
         winnerIndex = 0;
         for (let i = 0; i < rollGame.bets.length; i++) {
@@ -563,7 +566,7 @@ function startRollSpin() {
     
     const winner = rollGame.bets[winnerIndex];
     
-    // Вычисляем общее вращение для анимации
+    // Стрелка начинает с currentAngle (должен быть 0 после сброса)
     // Стрелка должна остановиться на finalAngleDeg
     const spins = 5 + Math.floor(Math.random() * 6);
     const duration = 3800 + Math.random() * 800;
@@ -576,6 +579,7 @@ function startRollSpin() {
 
     setTimeout(() => {
         rollGame.phase = 'result';
+        rollGame.currentAngle = finalAngleDeg; // Сохраняем текущий угол
         const user = users.get(winner.userId);
         if (user) {
             user.balance += totalBank;
