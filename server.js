@@ -741,12 +741,14 @@ function launchIcePuck(angle) {
     iceGame.puckX = 170;
     iceGame.puckY = 170;
     
-    const speed = 6;
+    // Увеличиваем начальную скорость с 6 до 10
+    const speed = 10;
     const rad = angle * Math.PI / 180;
     iceGame.puckVX = Math.cos(rad) * speed;
     iceGame.puckVY = Math.sin(rad) * speed;
     
-    const friction = 0.995;
+    // Меньше трение в начале (0.998 вместо 0.995)
+    const friction = 0.998;
     const MIN_POS = 10;
     const MAX_POS = 330;
     
@@ -772,8 +774,22 @@ function launchIcePuck(angle) {
             iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.8;
         }
         
-        iceGame.puckVX *= friction;
-        iceGame.puckVY *= friction;
+        // ВАЖНО: Разное трение в начале и в конце
+        const currentSpeed = Math.sqrt(iceGame.puckVX * iceGame.puckVX + iceGame.puckVY * iceGame.puckVY);
+        
+        if (currentSpeed > 3) {
+            // Быстрая фаза — меньше трение
+            iceGame.puckVX *= 0.998;
+            iceGame.puckVY *= 0.998;
+        } else if (currentSpeed > 1) {
+            // Средняя фаза — умеренное трение
+            iceGame.puckVX *= 0.99;
+            iceGame.puckVY *= 0.99;
+        } else {
+            // Медленная фаза — сильное торможение
+            iceGame.puckVX *= 0.95;
+            iceGame.puckVY *= 0.95;
+        }
         
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
@@ -783,7 +799,6 @@ function launchIcePuck(angle) {
         }
     }, 16);
 }
-
 function finishIceRound() {
     iceGame.phase = 'result';
     
