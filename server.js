@@ -649,6 +649,7 @@ function crashNow() {
 }
 
 // ============ ICE ARENA (исправлено) ============
+// ============ ICE ARENA (исправлено полностью) ============
 
 function getIcePublicState() {
     return {
@@ -707,7 +708,10 @@ function launchIcePuck(angle) {
     iceGame.puckVY = Math.sin(rad) * speed;
     
     const friction = 0.995;
-    // Границы поля: шайба 20px, поле 340px
+    
+    // ВАЖНО: Границы поля. Шайба 20px, поле 340px
+    // Но координаты puckX/puckY - это ЦЕНТР шайбы
+    // Поэтому границы должны быть: от 10 до 330 (340 - 10)
     const MIN_X = 10;
     const MAX_X = 330;
     const MIN_Y = 10;
@@ -716,20 +720,40 @@ function launchIcePuck(angle) {
     if (iceGame.puckAnimation) clearInterval(iceGame.puckAnimation);
     
     iceGame.puckAnimation = setInterval(() => {
+        // Обновляем позицию
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
         
-        // Отскок от стенок
-        if (iceGame.puckX <= MIN_X) { iceGame.puckX = MIN_X; iceGame.puckVX = -iceGame.puckVX * 0.8; }
-        if (iceGame.puckX >= MAX_X) { iceGame.puckX = MAX_X; iceGame.puckVX = -iceGame.puckVX * 0.8; }
-        if (iceGame.puckY <= MIN_Y) { iceGame.puckY = MIN_Y; iceGame.puckVY = -iceGame.puckVY * 0.8; }
-        if (iceGame.puckY >= MAX_Y) { iceGame.puckY = MAX_Y; iceGame.puckVY = -iceGame.puckVY * 0.8; }
+        // ПРОВЕРЯЕМ ГРАНИЦЫ В ПЕРВУЮ ОЧЕРЕДЬ
+        // Отскок от левой стены
+        if (iceGame.puckX < MIN_X) {
+            iceGame.puckX = MIN_X;
+            iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.8;
+        }
+        // Отскок от правой стены
+        if (iceGame.puckX > MAX_X) {
+            iceGame.puckX = MAX_X;
+            iceGame.puckVX = -Math.abs(iceGame.puckVX) * 0.8;
+        }
+        // Отскок от верхней стены
+        if (iceGame.puckY < MIN_Y) {
+            iceGame.puckY = MIN_Y;
+            iceGame.puckVY = Math.abs(iceGame.puckVY) * 0.8;
+        }
+        // Отскок от нижней стены
+        if (iceGame.puckY > MAX_Y) {
+            iceGame.puckY = MAX_Y;
+            iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.8;
+        }
         
+        // Трение
         iceGame.puckVX *= friction;
         iceGame.puckVY *= friction;
         
+        // Отправляем позицию на клиент
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
+        // Проверяем остановку
         if (Math.abs(iceGame.puckVX) < 0.05 && Math.abs(iceGame.puckVY) < 0.05) {
             clearInterval(iceGame.puckAnimation);
             finishIceRound();
@@ -740,6 +764,8 @@ function launchIcePuck(angle) {
 function finishIceRound() {
     iceGame.phase = 'result';
     
+    // Определяем победителя по X координате
+    // Поле 340px, шайба остановилась в puckX
     const relativeX = iceGame.puckX / 340;
     let cumulative = 0;
     let winner = iceGame.bets[0];
