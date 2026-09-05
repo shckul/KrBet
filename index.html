@@ -1518,60 +1518,83 @@
     }
 
     function drawIceField() {
-        const w = ICE_SIZE;
-        const h = ICE_SIZE;
-        
-        iceCtx.clearRect(0, 0, w, h);
-        
-        if (!iceState.zones || iceState.zones.length === 0) {
-            iceCtx.fillStyle = '#0d0d18';
-            iceCtx.fillRect(0, 0, w, h);
-            return;
-        }
-        
-        const scaleX = w / 340;
-        const scaleY = h / 340;
-        
-        iceState.zones.forEach(zone => {
-            const x = zone.x * scaleX;
-            const y = zone.y * scaleY;
-            const zw = zone.width * scaleX;
-            const zh = zone.height * scaleY;
-            
-            iceCtx.fillStyle = zone.color;
-            iceCtx.fillRect(x, y, zw, zh);
-            
-            if (zone.photoUrl) {
-                if (!iceAvatarCache[zone.userId]) {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                        iceAvatarCache[zone.userId] = img;
-                        drawIceField();
-                    };
-                    img.src = zone.photoUrl;
-                } else {
-                    const img = iceAvatarCache[zone.userId];
-                    const avatarSize = Math.min(zw, zh) * 0.5;
-                    const ax = x + zw / 2 - avatarSize / 2;
-                    const ay = y + zh / 2 - avatarSize / 2;
-                    
-                    iceCtx.save();
-                    iceCtx.beginPath();
-                    iceCtx.arc(x + zw / 2, y + zh / 2, avatarSize / 2, 0, Math.PI * 2);
-                    iceCtx.clip();
-                    iceCtx.drawImage(img, ax, ay, avatarSize, avatarSize);
-                    iceCtx.restore();
-                    
-                    iceCtx.beginPath();
-                    iceCtx.arc(x + zw / 2, y + zh / 2, avatarSize / 2, 0, Math.PI * 2);
-                    iceCtx.strokeStyle = 'rgba(255,255,255,0.6)';
-                    iceCtx.lineWidth = 2;
-                    iceCtx.stroke();
-                }
-            }
-        });
+    const w = ICE_SIZE;
+    const h = ICE_SIZE;
+    
+    iceCtx.clearRect(0, 0, w, h);
+    
+    if (!iceState.zones || iceState.zones.length === 0) {
+        iceCtx.fillStyle = '#0d0d18';
+        iceCtx.fillRect(0, 0, w, h);
+        return;
     }
+    
+    const scaleX = w / 340;
+    const scaleY = h / 340;
+    
+    iceState.zones.forEach(zone => {
+        const x = zone.x * scaleX;
+        const y = zone.y * scaleY;
+        const zw = zone.width * scaleX;
+        const zh = zone.height * scaleY;
+        
+        iceCtx.fillStyle = zone.color;
+        iceCtx.fillRect(x, y, zw, zh);
+        
+        const avatarSize = Math.min(zw, zh) * 0.5;
+        const centerX = x + zw / 2;
+        const centerY = y + zh / 2;
+        
+        if (zone.photoUrl) {
+            // Есть реальная аватарка
+            if (!iceAvatarCache[zone.userId]) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    iceAvatarCache[zone.userId] = img;
+                    drawIceField();
+                };
+                img.src = zone.photoUrl;
+            } else {
+                const img = iceAvatarCache[zone.userId];
+                const ax = centerX - avatarSize / 2;
+                const ay = centerY - avatarSize / 2;
+                
+                iceCtx.save();
+                iceCtx.beginPath();
+                iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+                iceCtx.clip();
+                iceCtx.drawImage(img, ax, ay, avatarSize, avatarSize);
+                iceCtx.restore();
+                
+                iceCtx.beginPath();
+                iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+                iceCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+                iceCtx.lineWidth = 2;
+                iceCtx.stroke();
+            }
+        } else {
+            // Нет аватарки — рисуем круг с первыми буквами
+            iceCtx.save();
+            iceCtx.beginPath();
+            iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+            iceCtx.fillStyle = 'rgba(255,255,255,0.15)';
+            iceCtx.fill();
+            iceCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+            iceCtx.lineWidth = 2;
+            iceCtx.stroke();
+            
+            // Первые буквы имени (до 2 букв)
+            const initials = zone.name.substring(0, 2).toUpperCase();
+            iceCtx.fillStyle = 'rgba(255,255,255,0.9)';
+            iceCtx.font = 'bold ' + Math.floor(avatarSize * 0.4) + 'px Inter, sans-serif';
+            iceCtx.textAlign = 'center';
+            iceCtx.textBaseline = 'middle';
+            iceCtx.fillText(initials, centerX, centerY);
+            iceCtx.restore();
+        }
+    });
+        }
 
     iceBetBtn.addEventListener('click', () => {
         if (iceState.phase !== 'waiting') return;
