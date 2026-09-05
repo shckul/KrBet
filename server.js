@@ -19,6 +19,9 @@ const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
 
+// ============================================
+// ХРАНИЛИЩЕ
+// ============================================
 const users = new Map();
 const pendingPayments = new Map();
 const onlineUsers = new Map();
@@ -106,6 +109,7 @@ function getOrCreateUser(userData) {
         user.lastActive = Date.now();
         if (userData.photoUrl) user.photoUrl = userData.photoUrl;
         if (userData.username) user.username = userData.username;
+        if (userData.firstName) user.firstName = userData.firstName;
     }
     return users.get(userData.id);
 }
@@ -114,6 +118,10 @@ function addHistory(user, action, amount, type) {
     user.history.unshift({ action, amount, type, time: Date.now() });
     if (user.history.length > 50) user.history.pop();
 }
+
+// ============================================
+// API
+// ============================================
 
 app.get('/api/balance', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
@@ -199,6 +207,10 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ success: true, balance: user.balance });
 });
 
+// ============================================
+// АДМИН
+// ============================================
+
 app.get('/api/admin/players', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
@@ -249,6 +261,10 @@ app.post('/api/admin/crash-now', (req, res) => {
     crashGame.forceCrashNow = true;
     res.json({ success: true });
 });
+
+// ============================================
+// SOCKET.IO
+// ============================================
 
 io.on('connection', (socket) => {
     let currentUser = null;
@@ -418,39 +434,39 @@ io.on('connection', (socket) => {
     });
 
     socket.on('ice:bet', (data) => {
-    if (!currentUser) return;
-    const amount = parseInt(data.amount);
-    if (isNaN(amount) || amount < 10) return;
-    if (iceGame.phase !== 'waiting') return;
-    if (currentUser.balance < amount) return;
-    if (iceGame.bets.some(b => b.userId === currentUser.id)) return;
+        if (!currentUser) return;
+        const amount = parseInt(data.amount);
+        if (isNaN(amount) || amount < 10) return;
+        if (iceGame.phase !== 'waiting') return;
+        if (currentUser.balance < amount) return;
+        if (iceGame.bets.some(b => b.userId === currentUser.id)) return;
 
-    currentUser.balance -= amount;
-    currentUser.stats.spent += amount;
-    addHistory(currentUser, 'Ставка (Ice Arena)', amount, 'bet');
+        currentUser.balance -= amount;
+        currentUser.stats.spent += amount;
+        addHistory(currentUser, 'Ставка (Ice Arena)', amount, 'bet');
 
-    const usedColors = iceGame.bets.map(b => b.color);
-    const available = colors.filter(c => !usedColors.includes(c));
-    const color = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : '#c9a84c';
+        const usedColors = iceGame.bets.map(b => b.color);
+        const available = colors.filter(c => !usedColors.includes(c));
+        const color = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : '#c9a84c';
 
-    iceGame.bets.push({ 
-        userId: currentUser.id, 
-        name: currentUser.firstName || 'Player', 
-        photoUrl: currentUser.photoUrl || null, 
-        amount, 
-        color 
+        iceGame.bets.push({ 
+            userId: currentUser.id, 
+            name: currentUser.firstName || 'Player', 
+            photoUrl: currentUser.photoUrl || null, 
+            amount, 
+            color 
+        });
+        iceGame.totalBank += amount;
+        
+        iceGame.zones = generateIceZones();
+        
+        socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
+        socket.emit('history:update', currentUser.history);
+        io.emit('ice:state', getIcePublicState());
+        io.emit('ice:zones', iceGame.zones);
     });
-    iceGame.totalBank += amount;
-    
-    // Генерируем зоны СРАЗУ при ставке
-    iceGame.zones = generateIceZones();
-    
-    socket.emit('balance:update', currentUser.balance);
-    socket.emit('stats:update', currentUser.stats);
-    socket.emit('history:update', currentUser.history);
-    io.emit('ice:state', getIcePublicState());
-    io.emit('ice:zones', iceGame.zones);
-});
+
     socket.on('case:open', (data) => {
         if (!currentUser) return;
         const caseId = data.caseId;
@@ -492,7 +508,9 @@ io.on('connection', (socket) => {
     });
 });
 
-// ============ ROLL LOOP ============
+// ============================================
+// ROLL LOOP
+// ============================================
 
 function getRollPublicState() {
     return {
@@ -606,7 +624,9 @@ function startRollSpin() {
     }, duration);
 }
 
-// ============ CRASH LOOP ============
+// ============================================
+// CRASH LOOP
+// ============================================
 
 function getCrashPublicState() {
     return {
@@ -693,102 +713,9 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ============ ICE ARENA ============
-
-function getIcePublicState() {
-    return {
-        phase: iceGame.phase,
-        timerSeconds: iceGame.timerSeconds,
-        bets: iceGame.bets.map(b => ({ userId: b.userId, name: b.name, amount: b.amount, color: b.color })),
-        totalBank: iceGame.totalBank,
-        puckX: iceGame.puckX,
-        puckY: iceGame.puckY,
-        zones: iceGame.zones || [],
-    };
-}
-
-function startIceTimer() {
-    iceGame.phase = 'waiting';
-    iceGame.timerSeconds = 30;
-    iceGame.bets = [];
-    iceGame.totalBank = 0;
-    iceGame.winnerData = null;
-    iceGame.puckX = 170;
-    iceGame.puckY = 170;
-    iceGame.puckVX = 0;
-    iceGame.puckVY = 0;
-    iceGame.zones = [];
-    io.emit('ice:state', getIcePublicState());
-
-    if (iceGame.timerInterval) clearInterval(iceGame.timerInterval);
-    iceGame.timerInterval = setInterval(() => {
-        iceGame.timerSeconds--;
-        if (iceGame.timerSeconds <= 0) {
-            clearInterval(iceGame.timerInterval);
-            startIceLaunch();
-        }
-        io.emit('ice:timer', iceGame.timerSeconds);
-    }, 1000);
-}
-
-function generateIceZones() {
-    const zones = [];
-    
-    if (iceGame.bets.length === 0) return zones;
-    
-    if (iceGame.bets.length === 1) {
-        const bet = iceGame.bets[0];
-        const user = users.get(bet.userId);
-        zones.push({
-            userId: bet.userId,
-            name: bet.name,
-            color: bet.color,
-            photoUrl: user ? user.photoUrl : null,
-            x: 0,
-            y: 0,
-            width: 340,
-            height: 340,
-        });
-        return zones;
-    }
-    
-    const sortedBets = [...iceGame.bets].sort((a, b) => b.amount - a.amount);
-    
-    function splitZone(zone, betsList) {
-        if (betsList.length === 0) return;
-        if (betsList.length === 1) {
-            const bet = betsList[0];
-            const user = users.get(bet.userId);
-            zones.push({
-                userId: bet.userId,
-                name: bet.name,
-                color: bet.color,
-                photoUrl: user ? user.photoUrl : null,
-                x: zone.x,
-                y: zone.y,
-                width: zone.width,
-                height: zone.height,
-            });
-            return;
-        }
-        
-        const bet1 = betsList[0];
-        const bet2 = betsList[1];
-        const rest = betsList.slice(2);
-        const totalBet = betsList.reduce((s, b) => s + b.amount, 0);
-        const ratio = bet1.amount / totalBet;
-        
-        const splitHorizontal = Math.random() > 0.5;
-        
-        if (splitHorizontal) {
-            const zone1Width = zone.width * ratio;
-            const zone2Width = zone.width - zone1Width;
-            
-            const user = users.get(bet1.userId);
-            zones.push({
-                userId: bet1.userId,
-                name: bet1.name,
-// ============ ICE ARENA ============
+// ============================================
+// ICE ARENA
+// ============================================
 
 function getIcePublicState() {
     return {
@@ -1049,6 +976,10 @@ function finishIceRound() {
     
     setTimeout(() => startIceTimer(), 2200);
 }
+
+// ============================================
+// ЗАПУСК
+// ============================================
 startRollTimer();
 startCrashTimer();
 startIceTimer();
