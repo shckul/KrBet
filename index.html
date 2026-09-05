@@ -860,11 +860,33 @@
 
     socket.on('ice:state', (state) => {
         iceState = state;
+        // Копируем photoUrl из bets в zones, если zones пришли без фото
+        if (iceState.zones && iceState.zones.length > 0) {
+            iceState.zones.forEach(zone => {
+                if (!zone.photoUrl) {
+                    const bet = iceState.bets.find(b => b.userId === zone.userId);
+                    if (bet && bet.photoUrl) {
+                        zone.photoUrl = bet.photoUrl;
+                    }
+                }
+            });
+        }
         updateIceUI();
     });
 
     socket.on('ice:zones', (zones) => {
         iceState.zones = zones;
+        // Копируем photoUrl из bets в zones
+        if (iceState.zones && iceState.zones.length > 0) {
+            iceState.zones.forEach(zone => {
+                if (!zone.photoUrl) {
+                    const bet = iceState.bets.find(b => b.userId === zone.userId);
+                    if (bet && bet.photoUrl) {
+                        zone.photoUrl = bet.photoUrl;
+                    }
+                }
+            });
+        }
         drawIceField();
     });
 
@@ -1518,105 +1540,103 @@
     }
 
     function drawIceField() {
-    const w = ICE_SIZE;
-    const h = ICE_SIZE;
-    
-    iceCtx.clearRect(0, 0, w, h);
-    
-    if (!iceState.zones || iceState.zones.length === 0) {
-        iceCtx.fillStyle = '#0d0d18';
-        iceCtx.fillRect(0, 0, w, h);
-        return;
-    }
-    
-    const scaleX = w / 340;
-    const scaleY = h / 340;
-    
-    iceState.zones.forEach(zone => {
-        const x = zone.x * scaleX;
-        const y = zone.y * scaleY;
-        const zw = zone.width * scaleX;
-        const zh = zone.height * scaleY;
+        const w = ICE_SIZE;
+        const h = ICE_SIZE;
         
-        // Закрашиваем зону
-        iceCtx.fillStyle = zone.color;
-        iceCtx.fillRect(x, y, zw, zh);
+        iceCtx.clearRect(0, 0, w, h);
         
-        const avatarSize = Math.min(zw, zh) * 0.5;
-        const centerX = x + zw / 2;
-        const centerY = y + zh / 2;
+        if (!iceState.zones || iceState.zones.length === 0) {
+            iceCtx.fillStyle = '#0d0d18';
+            iceCtx.fillRect(0, 0, w, h);
+            return;
+        }
         
-        if (zone.photoUrl && zone.photoUrl.length > 0) {
-            // Есть аватарка — загружаем и рисуем
-            if (!iceAvatarCache[zone.userId]) {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    iceAvatarCache[zone.userId] = img;
-                    drawIceField();
-                };
-                img.onerror = () => {
-                    // Если не загрузилась — рисуем буквы
-                    drawInitialsAvatar(zone, centerX, centerY, avatarSize);
-                };
-                img.src = zone.photoUrl;
+        const scaleX = w / 340;
+        const scaleY = h / 340;
+        
+        iceState.zones.forEach(zone => {
+            const x = zone.x * scaleX;
+            const y = zone.y * scaleY;
+            const zw = zone.width * scaleX;
+            const zh = zone.height * scaleY;
+            
+            // Закрашиваем зону
+            iceCtx.fillStyle = zone.color;
+            iceCtx.fillRect(x, y, zw, zh);
+            
+            const avatarSize = Math.min(zw, zh) * 0.5;
+            const centerX = x + zw / 2;
+            const centerY = y + zh / 2;
+            
+            if (zone.photoUrl && zone.photoUrl.length > 0) {
+                // Есть аватарка — загружаем и рисуем
+                if (!iceAvatarCache[zone.userId]) {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        iceAvatarCache[zone.userId] = img;
+                        drawIceField();
+                    };
+                    img.onerror = () => {
+                        // Если не загрузилась — рисуем буквы
+                        drawInitialsAvatar(zone, centerX, centerY, avatarSize);
+                    };
+                    img.src = zone.photoUrl;
+                } else {
+                    const img = iceAvatarCache[zone.userId];
+                    const ax = centerX - avatarSize / 2;
+                    const ay = centerY - avatarSize / 2;
+                    
+                    iceCtx.save();
+                    iceCtx.beginPath();
+                    iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+                    iceCtx.clip();
+                    iceCtx.drawImage(img, ax, ay, avatarSize, avatarSize);
+                    iceCtx.restore();
+                    
+                    iceCtx.beginPath();
+                    iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+                    iceCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+                    iceCtx.lineWidth = 2;
+                    iceCtx.stroke();
+                }
             } else {
-                const img = iceAvatarCache[zone.userId];
-                const ax = centerX - avatarSize / 2;
-                const ay = centerY - avatarSize / 2;
-                
-                iceCtx.save();
-                iceCtx.beginPath();
-                iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
-                iceCtx.clip();
-                iceCtx.drawImage(img, ax, ay, avatarSize, avatarSize);
-                iceCtx.restore();
-                
-                iceCtx.beginPath();
-                iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
-                iceCtx.strokeStyle = 'rgba(255,255,255,0.6)';
-                iceCtx.lineWidth = 2;
-                iceCtx.stroke();
+                // Нет аватарки — рисуем круг с буквами
+                drawInitialsAvatar(zone, centerX, centerY, avatarSize);
             }
-        } else {
-            // Нет аватарки — рисуем круг с буквами
-            drawInitialsAvatar(zone, centerX, centerY, avatarSize);
-        }
-    });
-}
-
-function drawInitialsAvatar(zone, centerX, centerY, avatarSize) {
-    iceCtx.save();
-    
-    // Круг
-    iceCtx.beginPath();
-    iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
-    iceCtx.fillStyle = 'rgba(255,255,255,0.15)';
-    iceCtx.fill();
-    iceCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-    iceCtx.lineWidth = 2;
-    iceCtx.stroke();
-    
-    // Первые буквы имени
-    let initials = '';
-    const nameParts = zone.name.split(' ');
-    if (nameParts.length >= 2) {
-        initials = (nameParts[0][0] || '') + (nameParts[1][0] || '');
-    } else {
-        initials = zone.name.substring(0, 2);
+        });
     }
-    initials = initials.toUpperCase();
-    
-    iceCtx.fillStyle = 'rgba(255,255,255,0.9)';
-    iceCtx.font = 'bold ' + Math.floor(avatarSize * 0.4) + 'px Inter, sans-serif';
-    iceCtx.textAlign = 'center';
-    iceCtx.textBaseline = 'middle';
-    iceCtx.fillText(initials, centerX, centerY);
-    
-    iceCtx.restore();
-}
-    });
+
+    function drawInitialsAvatar(zone, centerX, centerY, avatarSize) {
+        iceCtx.save();
+        
+        // Круг
+        iceCtx.beginPath();
+        iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+        iceCtx.fillStyle = 'rgba(255,255,255,0.15)';
+        iceCtx.fill();
+        iceCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+        iceCtx.lineWidth = 2;
+        iceCtx.stroke();
+        
+        // Первые буквы имени
+        let initials = '';
+        const nameParts = zone.name.split(' ');
+        if (nameParts.length >= 2) {
+            initials = (nameParts[0][0] || '') + (nameParts[1][0] || '');
+        } else {
+            initials = zone.name.substring(0, 2);
         }
+        initials = initials.toUpperCase();
+        
+        iceCtx.fillStyle = 'rgba(255,255,255,0.9)';
+        iceCtx.font = 'bold ' + Math.floor(avatarSize * 0.4) + 'px Inter, sans-serif';
+        iceCtx.textAlign = 'center';
+        iceCtx.textBaseline = 'middle';
+        iceCtx.fillText(initials, centerX, centerY);
+        
+        iceCtx.restore();
+    }
 
     iceBetBtn.addEventListener('click', () => {
         if (iceState.phase !== 'waiting') return;
@@ -1819,4 +1839,4 @@ function drawInitialsAvatar(zone, centerX, centerY, avatarSize) {
 })();
 </script>
 </body>
-    </html>
+</html>
