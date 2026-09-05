@@ -34,7 +34,7 @@ const rollGame = {
     spinAngle: 0,
     spinDuration: 0,
     finalAngle: 0,
-    currentAngle: 0, // Текущий угол стрелки на сервере
+    currentAngle: 0,
 };
 
 const crashGame = {
@@ -63,6 +63,7 @@ const iceGame = {
     puckVY: 0,
     puckAnimation: null,
     winnerData: null,
+    zones: [],
 };
 
 const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#ff5722','#8bc34a','#3f51b5','#ff9800','#795548','#607d8b'];
@@ -101,7 +102,10 @@ function getOrCreateUser(userData) {
             lastActive: Date.now(),
         });
     } else {
-        users.get(userData.id).lastActive = Date.now();
+        const user = users.get(userData.id);
+        user.lastActive = Date.now();
+        if (userData.photoUrl) user.photoUrl = userData.photoUrl;
+        if (userData.username) user.username = userData.username;
     }
     return users.get(userData.id);
 }
@@ -370,56 +374,48 @@ io.on('connection', (socket) => {
     });
 
     socket.on('upgrader:play', (data) => {
-    if (!currentUser) return;
-    const bet = parseInt(data.bet);
-    const target = parseInt(data.target);
-    if (isNaN(bet) || isNaN(target) || bet < 10 || target <= bet) return;
-    if (currentUser.balance < bet) return;
+        if (!currentUser) return;
+        const bet = parseInt(data.bet);
+        const target = parseInt(data.target);
+        if (isNaN(bet) || isNaN(target) || bet < 10 || target <= bet) return;
+        if (currentUser.balance < bet) return;
 
-    const chance = bet / target;
-    if (chance > 0.75) return;
+        const chance = bet / target;
+        if (chance > 0.75) return;
 
-    // Сразу списываем ставку
-    currentUser.balance -= bet;
-    currentUser.stats.spent += bet;
-    addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
-    socket.emit('balance:update', currentUser.balance);
-    socket.emit('stats:update', currentUser.stats);
-    socket.emit('history:update', currentUser.history);
+        currentUser.balance -= bet;
+        currentUser.stats.spent += bet;
+        addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
+        socket.emit('balance:update', currentUser.balance);
+        socket.emit('stats:update', currentUser.stats);
+        socket.emit('history:update', currentUser.history);
 
-    // Определяем результат, но НЕ начисляем сразу
-    const won = Math.random() < chance;
-    const winAmount = won ? target : 0;
-    
-    // Вычисляем угол для анимации
-    const winSectorSize = chance * 360;
-    let targetAngle;
-    if (won) {
-        targetAngle = Math.random() * winSectorSize;
-    } else {
-        targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
-    }
-    
-    socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
-
-    // Начисляем выигрыш ТОЛЬКО после анимации (через 3.5 секунды)
-    setTimeout(() => {
+        const won = Math.random() < chance;
+        const winAmount = won ? target : 0;
+        
+        const winSectorSize = chance * 360;
+        let targetAngle;
         if (won) {
-            currentUser.balance += target;
-            currentUser.stats.wins++;
-            currentUser.stats.won += target;
-            addHistory(currentUser, 'Выигрыш (Upgrader)', target, 'win');
-            
-            // Отправляем обновлённый баланс
-            socket.emit('balance:update', currentUser.balance);
-            socket.emit('stats:update', currentUser.stats);
-            socket.emit('history:update', currentUser.history);
+            targetAngle = Math.random() * winSectorSize;
+        } else {
+            targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
         }
         
-        // Отправляем результат
-        socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
-    }, 3500);
-});
+        socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
+
+        setTimeout(() => {
+            if (won) {
+                currentUser.balance += target;
+                currentUser.stats.wins++;
+                currentUser.stats.won += target;
+                addHistory(currentUser, 'Выигрыш (Upgrader)', target, 'win');
+                socket.emit('balance:update', currentUser.balance);
+                socket.emit('stats:update', currentUser.stats);
+                socket.emit('history:update', currentUser.history);
+            }
+            socket.emit('upgrader:result', { userId: currentUser.id, won, winAmount, betAmount: bet });
+        }, 3500);
+    });
 
     socket.on('ice:bet', (data) => {
         if (!currentUser) return;
@@ -437,7 +433,7 @@ io.on('connection', (socket) => {
         const available = colors.filter(c => !usedColors.includes(c));
         const color = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : '#c9a84c';
 
-        iceGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, color });
+        iceGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', photoUrl: currentUser.photoUrl, amount, color });
         iceGame.totalBank += amount;
 
         socket.emit('balance:update', currentUser.balance);
@@ -514,7 +510,7 @@ function startRollTimer() {
     rollGame.spinAngle = 0;
     rollGame.spinDuration = 0;
     rollGame.finalAngle = 0;
-    rollGame.currentAngle = 0; // Сбрасываем стрелку на верх
+    rollGame.currentAngle = 0;
     io.emit('roll:state', getRollPublicState());
 
     if (rollGame.timerInterval) clearInterval(rollGame.timerInterval);
@@ -535,18 +531,13 @@ function startRollSpin() {
 
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
     
-    // ВАЖНО: Сектора на клиенте рисуются от ВЕРХА по часовой стрелке
-    // Угол 0 = верх, угол 90 = право, угол 180 = низ, угол 270 = лево
-    
     let finalAngleDeg;
     let winnerIndex;
     
     if (rollGame.forcedWinner) {
-        // Админ выбрал победителя
         winnerIndex = rollGame.bets.findIndex(b => b.userId === rollGame.forcedWinner);
         if (winnerIndex === -1) winnerIndex = 0;
         
-        // Вычисляем границы сектора победителя (от верха, по часовой)
         let cumulative = 0;
         for (let i = 0; i < winnerIndex; i++) {
             cumulative += (rollGame.bets[i].amount / totalBank) * 360;
@@ -554,10 +545,8 @@ function startRollSpin() {
         const winnerSweep = (rollGame.bets[winnerIndex].amount / totalBank) * 360;
         finalAngleDeg = cumulative + Math.random() * winnerSweep;
     } else {
-        // Случайный угол
         finalAngleDeg = Math.random() * 360;
         
-        // Находим победителя по этому углу
         let cumulative = 0;
         winnerIndex = 0;
         for (let i = 0; i < rollGame.bets.length; i++) {
@@ -575,8 +564,6 @@ function startRollSpin() {
     
     const winner = rollGame.bets[winnerIndex];
     
-    // Стрелка начинает с currentAngle (должен быть 0 после сброса)
-    // Стрелка должна остановиться на finalAngleDeg
     const spins = 5 + Math.floor(Math.random() * 6);
     const duration = 3800 + Math.random() * 800;
     const totalRotation = spins * 360 + finalAngleDeg;
@@ -588,7 +575,7 @@ function startRollSpin() {
 
     setTimeout(() => {
         rollGame.phase = 'result';
-        rollGame.currentAngle = finalAngleDeg; // Сохраняем текущий угол
+        rollGame.currentAngle = finalAngleDeg;
         const user = users.get(winner.userId);
         if (user) {
             user.balance += totalBank;
@@ -707,6 +694,7 @@ function getIcePublicState() {
         totalBank: iceGame.totalBank,
         puckX: iceGame.puckX,
         puckY: iceGame.puckY,
+        zones: iceGame.zones || [],
     };
 }
 
@@ -720,6 +708,7 @@ function startIceTimer() {
     iceGame.puckY = 170;
     iceGame.puckVX = 0;
     iceGame.puckVY = 0;
+    iceGame.zones = [];
     io.emit('ice:state', getIcePublicState());
 
     if (iceGame.timerInterval) clearInterval(iceGame.timerInterval);
@@ -733,10 +722,123 @@ function startIceTimer() {
     }, 1000);
 }
 
+function generateIceZones() {
+    const zones = [];
+    
+    if (iceGame.bets.length === 0) return zones;
+    
+    if (iceGame.bets.length === 1) {
+        const bet = iceGame.bets[0];
+        const user = users.get(bet.userId);
+        zones.push({
+            userId: bet.userId,
+            name: bet.name,
+            color: bet.color,
+            photoUrl: user ? user.photoUrl : null,
+            x: 0,
+            y: 0,
+            width: 340,
+            height: 340,
+        });
+        return zones;
+    }
+    
+    const sortedBets = [...iceGame.bets].sort((a, b) => b.amount - a.amount);
+    
+    function splitZone(zone, betsList) {
+        if (betsList.length === 0) return;
+        if (betsList.length === 1) {
+            const bet = betsList[0];
+            const user = users.get(bet.userId);
+            zones.push({
+                userId: bet.userId,
+                name: bet.name,
+                color: bet.color,
+                photoUrl: user ? user.photoUrl : null,
+                x: zone.x,
+                y: zone.y,
+                width: zone.width,
+                height: zone.height,
+            });
+            return;
+        }
+        
+        const bet1 = betsList[0];
+        const bet2 = betsList[1];
+        const rest = betsList.slice(2);
+        const totalBet = betsList.reduce((s, b) => s + b.amount, 0);
+        const ratio = bet1.amount / totalBet;
+        
+        const splitHorizontal = Math.random() > 0.5;
+        
+        if (splitHorizontal) {
+            const zone1Width = zone.width * ratio;
+            const zone2Width = zone.width - zone1Width;
+            
+            const user = users.get(bet1.userId);
+            zones.push({
+                userId: bet1.userId,
+                name: bet1.name,
+                color: bet1.color,
+                photoUrl: user ? user.photoUrl : null,
+                x: zone.x,
+                y: zone.y,
+                width: zone1Width,
+                height: zone.height,
+            });
+            
+            const newZone = {
+                x: zone.x + zone1Width,
+                y: zone.y,
+                width: zone2Width,
+                height: zone.height,
+            };
+            
+            if (rest.length > 0 || bet2) {
+                splitZone(newZone, [bet2, ...rest]);
+            }
+        } else {
+            const zone1Height = zone.height * ratio;
+            const zone2Height = zone.height - zone1Height;
+            
+            const user = users.get(bet1.userId);
+            zones.push({
+                userId: bet1.userId,
+                name: bet1.name,
+                color: bet1.color,
+                photoUrl: user ? user.photoUrl : null,
+                x: zone.x,
+                y: zone.y,
+                width: zone.width,
+                height: zone1Height,
+            });
+            
+            const newZone = {
+                x: zone.x,
+                y: zone.y + zone1Height,
+                width: zone.width,
+                height: zone2Height,
+            };
+            
+            if (rest.length > 0 || bet2) {
+                splitZone(newZone, [bet2, ...rest]);
+            }
+        }
+    }
+    
+    splitZone({ x: 0, y: 0, width: 340, height: 340 }, sortedBets);
+    
+    return zones;
+}
+
 function startIceLaunch() {
     if (iceGame.bets.length === 0) { setTimeout(() => startIceTimer(), 600); return; }
     iceGame.phase = 'launching';
+    
+    iceGame.zones = generateIceZones();
+    
     io.emit('ice:state', getIcePublicState());
+    io.emit('ice:zones', iceGame.zones);
 
     const finalAngle = Math.random() * 360;
     
@@ -750,7 +852,6 @@ function launchIcePuck(angle) {
     iceGame.puckX = 170;
     iceGame.puckY = 170;
     
-    // Увеличиваем начальную скорость до 14
     const speed = 14;
     const rad = angle * Math.PI / 180;
     iceGame.puckVX = Math.cos(rad) * speed;
@@ -765,7 +866,6 @@ function launchIcePuck(angle) {
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
         
-        // Отскок от стенок с сохранением энергии
         if (iceGame.puckX < MIN_POS) {
             iceGame.puckX = MIN_POS;
             iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.85;
@@ -782,51 +882,46 @@ function launchIcePuck(angle) {
             iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.85;
         }
         
-        // Плавное трение — очень медленное в начале, быстрее в конце
         const currentSpeed = Math.sqrt(iceGame.puckVX * iceGame.puckVX + iceGame.puckVY * iceGame.puckVY);
         
         if (currentSpeed > 8) {
-            // Очень быстрая фаза — почти нет трения
             iceGame.puckVX *= 0.999;
             iceGame.puckVY *= 0.999;
         } else if (currentSpeed > 4) {
-            // Быстрая фаза — слабое трение
             iceGame.puckVX *= 0.997;
             iceGame.puckVY *= 0.997;
         } else if (currentSpeed > 2) {
-            // Средняя фаза — умеренное трение
             iceGame.puckVX *= 0.995;
             iceGame.puckVY *= 0.995;
         } else if (currentSpeed > 1) {
-            // Медленная фаза — заметное трение
             iceGame.puckVX *= 0.99;
             iceGame.puckVY *= 0.99;
         } else {
-            // Очень медленная — плавное торможение
             iceGame.puckVX *= 0.97;
             iceGame.puckVY *= 0.97;
         }
         
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
-        // Остановка при очень малой скорости
         if (Math.abs(iceGame.puckVX) < 0.02 && Math.abs(iceGame.puckVY) < 0.02) {
             clearInterval(iceGame.puckAnimation);
             finishIceRound();
         }
     }, 16);
 }
+
 function finishIceRound() {
     iceGame.phase = 'result';
     
-    const relativeX = Math.max(0, Math.min(1, iceGame.puckX / 340));
-    let cumulative = 0;
     let winner = iceGame.bets[0];
     
-    for (const bet of iceGame.bets) {
-        const zoneEnd = cumulative + bet.amount / iceGame.totalBank;
-        if (relativeX <= zoneEnd) { winner = bet; break; }
-        cumulative = zoneEnd;
+    for (const zone of iceGame.zones) {
+        if (iceGame.puckX >= zone.x && iceGame.puckX <= zone.x + zone.width &&
+            iceGame.puckY >= zone.y && iceGame.puckY <= zone.y + zone.height) {
+            const bet = iceGame.bets.find(b => b.userId === zone.userId);
+            if (bet) winner = bet;
+            break;
+        }
     }
     
     const user = users.get(winner.userId);
