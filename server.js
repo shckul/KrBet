@@ -750,14 +750,12 @@ function launchIcePuck(angle) {
     iceGame.puckX = 170;
     iceGame.puckY = 170;
     
-    // Увеличиваем начальную скорость с 6 до 10
-    const speed = 10;
+    // Увеличиваем начальную скорость до 14
+    const speed = 14;
     const rad = angle * Math.PI / 180;
     iceGame.puckVX = Math.cos(rad) * speed;
     iceGame.puckVY = Math.sin(rad) * speed;
     
-    // Меньше трение в начале (0.998 вместо 0.995)
-    const friction = 0.998;
     const MIN_POS = 10;
     const MAX_POS = 330;
     
@@ -767,42 +765,52 @@ function launchIcePuck(angle) {
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
         
+        // Отскок от стенок с сохранением энергии
         if (iceGame.puckX < MIN_POS) {
             iceGame.puckX = MIN_POS;
-            iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.8;
+            iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.85;
         } else if (iceGame.puckX > MAX_POS) {
             iceGame.puckX = MAX_POS;
-            iceGame.puckVX = -Math.abs(iceGame.puckVX) * 0.8;
+            iceGame.puckVX = -Math.abs(iceGame.puckVX) * 0.85;
         }
         
         if (iceGame.puckY < MIN_POS) {
             iceGame.puckY = MIN_POS;
-            iceGame.puckVY = Math.abs(iceGame.puckVY) * 0.8;
+            iceGame.puckVY = Math.abs(iceGame.puckVY) * 0.85;
         } else if (iceGame.puckY > MAX_POS) {
             iceGame.puckY = MAX_POS;
-            iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.8;
+            iceGame.puckVY = -Math.abs(iceGame.puckVY) * 0.85;
         }
         
-        // ВАЖНО: Разное трение в начале и в конце
+        // Плавное трение — очень медленное в начале, быстрее в конце
         const currentSpeed = Math.sqrt(iceGame.puckVX * iceGame.puckVX + iceGame.puckVY * iceGame.puckVY);
         
-        if (currentSpeed > 3) {
-            // Быстрая фаза — меньше трение
-            iceGame.puckVX *= 0.998;
-            iceGame.puckVY *= 0.998;
-        } else if (currentSpeed > 1) {
+        if (currentSpeed > 8) {
+            // Очень быстрая фаза — почти нет трения
+            iceGame.puckVX *= 0.999;
+            iceGame.puckVY *= 0.999;
+        } else if (currentSpeed > 4) {
+            // Быстрая фаза — слабое трение
+            iceGame.puckVX *= 0.997;
+            iceGame.puckVY *= 0.997;
+        } else if (currentSpeed > 2) {
             // Средняя фаза — умеренное трение
+            iceGame.puckVX *= 0.995;
+            iceGame.puckVY *= 0.995;
+        } else if (currentSpeed > 1) {
+            // Медленная фаза — заметное трение
             iceGame.puckVX *= 0.99;
             iceGame.puckVY *= 0.99;
         } else {
-            // Медленная фаза — сильное торможение
-            iceGame.puckVX *= 0.95;
-            iceGame.puckVY *= 0.95;
+            // Очень медленная — плавное торможение
+            iceGame.puckVX *= 0.97;
+            iceGame.puckVY *= 0.97;
         }
         
         io.emit('ice:puck', { x: iceGame.puckX, y: iceGame.puckY });
         
-        if (Math.abs(iceGame.puckVX) < 0.03 && Math.abs(iceGame.puckVY) < 0.03) {
+        // Остановка при очень малой скорости
+        if (Math.abs(iceGame.puckVX) < 0.02 && Math.abs(iceGame.puckVY) < 0.02) {
             clearInterval(iceGame.puckAnimation);
             finishIceRound();
         }
