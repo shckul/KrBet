@@ -583,7 +583,7 @@
     let history = [];
     let myUserId = userInfo.id;
 
-    let rollState = { phase: 'waiting', bets: [], totalBank: 0, timerSeconds: 30, winnerIndex: -1, winnerData: null, spinAngle: 0, spinDuration: 0 };
+    let rollState = { phase: 'waiting', bets: [], totalBank: 0, timerSeconds: 30, winnerIndex: -1, winnerData: null, spinAngle: 0, spinDuration: 0, finalAngle: 0, currentAngle: 0 };
     let currentPointerAngle = 0;
 
     let crashState = { phase: 'waiting', multiplier: 1.00, countdown: 5, bets: [], history: [], startedAt: 0 };
@@ -596,8 +596,8 @@
     let upgraderPointerAngle = 0;
     let upgraderChance = 0;
 
-    let iceState = { phase: 'waiting', timerSeconds: 30, bets: [], totalBank: 0, puckX: 0, puckY: 0 };
-    let icePuckAnimation = null;
+    let iceState = { phase: 'waiting', timerSeconds: 30, bets: [], totalBank: 0, puckX: 0, puckY: 0, zones: [] };
+    const iceAvatarCache = {};
 
     const casesData = {
         trash: { name: 'Trash Case', price: 10, drops: [1, 2, 3, 5, 10, 20, 35, 50, 100], weights: [5, 10, 25, 25, 15, 10, 5, 3, 1] },
@@ -863,6 +863,11 @@
         updateIceUI();
     });
 
+    socket.on('ice:zones', (zones) => {
+        iceState.zones = zones;
+        drawIceField();
+    });
+
     socket.on('ice:timer', (seconds) => {
         iceState.timerSeconds = seconds;
         iceTimerEl.textContent = seconds;
@@ -870,7 +875,6 @@
 
     socket.on('ice:puck', (puckData) => {
         icePuck.style.display = 'block';
-        // Масштабируем координаты от 340x340 к реальному размеру поля
         const fieldRect = iceField.getBoundingClientRect();
         const scaleX = fieldRect.width / 340;
         const scaleY = fieldRect.height / 340;
@@ -886,7 +890,6 @@
         }
     });
 
-    // ============ UPGRADER SOCKET ============
     socket.on('upgrader:angle', (data) => {
         const targetAngle = data.targetAngle;
         const duration = data.duration;
@@ -1273,61 +1276,55 @@
         upgraderBtn.disabled = true;
         upgraderResult.textContent = '';
         
-        // Отправляем на сервер, сервер решит результат и отправит угол для анимации
         socket.emit('upgrader:play', { bet, target });
     });
 
     // ============ ROLL UI ============
     function updateRollUI() {
-    if (rollState.phase === 'waiting') {
-        timerOverlay.style.display = 'block';
-        timerOverlay.textContent = rollState.timerSeconds;
-        btnPlaceBet.disabled = false;
-        pointerLayer.style.transition = 'none';
-        // ВАЖНО: Сбрасываем стрелку на верх (0°)
-        currentPointerAngle = 0;
-        pointerLayer.style.transform = `rotate(0deg)`;
-    } else if (rollState.phase === 'spinning') {
-        timerOverlay.style.display = 'none';
-        btnPlaceBet.disabled = true;
-        animatePointer();
-    } else if (rollState.phase === 'result') {
-        timerOverlay.style.display = 'none';
-        btnPlaceBet.disabled = true;
-    }
-    updateRollPlayersList();
-    updateBank();
-}
-
-function animatePointer() {
-    // Используем finalAngle от сервера
-    const finalAngle = rollState.finalAngle || 0;
-    const duration = rollState.spinDuration || 4200;
-    
-    // Стрелка всегда стартует с верха (0°)
-    const startAngle = 0;
-    const totalRotation = rollState.spinAngle || 0;
-    
-    currentPointerAngle = startAngle;
-    const startTime = performance.now();
-    
-    function anim(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = progress < 0.5 ? 8 * progress ** 4 : 1 - (-2 * progress + 2) ** 4 / 2;
-        currentPointerAngle = (startAngle + totalRotation * eased) % 360;
-        pointerLayer.style.transition = 'none';
-        pointerLayer.style.transform = `rotate(${currentPointerAngle}deg)`;
-        if (progress < 1) {
-            requestAnimationFrame(anim);
-        } else {
-            // Точно устанавливаем финальный угол
-            currentPointerAngle = finalAngle % 360;
-            pointerLayer.style.transform = `rotate(${currentPointerAngle}deg)`;
+        if (rollState.phase === 'waiting') {
+            timerOverlay.style.display = 'block';
+            timerOverlay.textContent = rollState.timerSeconds;
+            btnPlaceBet.disabled = false;
+            pointerLayer.style.transition = 'none';
+            currentPointerAngle = 0;
+            pointerLayer.style.transform = `rotate(0deg)`;
+        } else if (rollState.phase === 'spinning') {
+            timerOverlay.style.display = 'none';
+            btnPlaceBet.disabled = true;
+            animatePointer();
+        } else if (rollState.phase === 'result') {
+            timerOverlay.style.display = 'none';
+            btnPlaceBet.disabled = true;
         }
+        updateRollPlayersList();
+        updateBank();
     }
-    requestAnimationFrame(anim);
-                                                     }
+
+    function animatePointer() {
+        const finalAngle = rollState.finalAngle || 0;
+        const duration = rollState.spinDuration || 4200;
+        const startAngle = 0;
+        const totalRotation = rollState.spinAngle || 0;
+        
+        currentPointerAngle = startAngle;
+        const startTime = performance.now();
+        
+        function anim(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = progress < 0.5 ? 8 * progress ** 4 : 1 - (-2 * progress + 2) ** 4 / 2;
+            currentPointerAngle = (startAngle + totalRotation * eased) % 360;
+            pointerLayer.style.transition = 'none';
+            pointerLayer.style.transform = `rotate(${currentPointerAngle}deg)`;
+            if (progress < 1) {
+                requestAnimationFrame(anim);
+            } else {
+                currentPointerAngle = finalAngle % 360;
+                pointerLayer.style.transform = `rotate(${currentPointerAngle}deg)`;
+            }
+        }
+        requestAnimationFrame(anim);
+    }
 
     function updateRollPlayersList() {
         playersList.innerHTML = '';
@@ -1526,31 +1523,53 @@ function animatePointer() {
         
         iceCtx.clearRect(0, 0, w, h);
         
-        const totalBank = iceState.totalBank;
-        
-        if (totalBank === 0 || iceState.bets.length === 0) {
+        if (!iceState.zones || iceState.zones.length === 0) {
             iceCtx.fillStyle = '#0d0d18';
             iceCtx.fillRect(0, 0, w, h);
             return;
         }
         
-        let currentX = 0;
-        iceState.bets.forEach(bet => {
-            const zoneWidth = (bet.amount / totalBank) * w;
-            iceCtx.fillStyle = bet.color;
-            iceCtx.fillRect(currentX, 0, zoneWidth, h);
+        const scaleX = w / 340;
+        const scaleY = h / 340;
+        
+        iceState.zones.forEach(zone => {
+            const x = zone.x * scaleX;
+            const y = zone.y * scaleY;
+            const zw = zone.width * scaleX;
+            const zh = zone.height * scaleY;
             
-            iceCtx.fillStyle = 'rgba(255,255,255,0.9)';
-            iceCtx.font = 'bold 20px Inter, sans-serif';
-            iceCtx.textAlign = 'center';
-            iceCtx.textBaseline = 'middle';
-            iceCtx.save();
-            iceCtx.translate(currentX + zoneWidth / 2, w / 2);
-            iceCtx.rotate(-Math.PI / 2);
-            iceCtx.fillText(bet.name.substring(0, 8), 0, 0);
-            iceCtx.restore();
+            iceCtx.fillStyle = zone.color;
+            iceCtx.fillRect(x, y, zw, zh);
             
-            currentX += zoneWidth;
+            if (zone.photoUrl) {
+                if (!iceAvatarCache[zone.userId]) {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        iceAvatarCache[zone.userId] = img;
+                        drawIceField();
+                    };
+                    img.src = zone.photoUrl;
+                } else {
+                    const img = iceAvatarCache[zone.userId];
+                    const avatarSize = Math.min(zw, zh) * 0.5;
+                    const ax = x + zw / 2 - avatarSize / 2;
+                    const ay = y + zh / 2 - avatarSize / 2;
+                    
+                    iceCtx.save();
+                    iceCtx.beginPath();
+                    iceCtx.arc(x + zw / 2, y + zh / 2, avatarSize / 2, 0, Math.PI * 2);
+                    iceCtx.clip();
+                    iceCtx.drawImage(img, ax, ay, avatarSize, avatarSize);
+                    iceCtx.restore();
+                    
+                    iceCtx.beginPath();
+                    iceCtx.arc(x + zw / 2, y + zh / 2, avatarSize / 2, 0, Math.PI * 2);
+                    iceCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+                    iceCtx.lineWidth = 2;
+                    iceCtx.stroke();
+                }
+            }
         });
     }
 
@@ -1755,4 +1774,4 @@ function animatePointer() {
 })();
 </script>
 </body>
-            </html>
+    </html>
