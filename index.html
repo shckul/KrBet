@@ -1538,6 +1538,7 @@
         const zw = zone.width * scaleX;
         const zh = zone.height * scaleY;
         
+        // Закрашиваем зону
         iceCtx.fillStyle = zone.color;
         iceCtx.fillRect(x, y, zw, zh);
         
@@ -1545,14 +1546,18 @@
         const centerX = x + zw / 2;
         const centerY = y + zh / 2;
         
-        if (zone.photoUrl) {
-            // Есть реальная аватарка
+        if (zone.photoUrl && zone.photoUrl.length > 0) {
+            // Есть аватарка — загружаем и рисуем
             if (!iceAvatarCache[zone.userId]) {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
                 img.onload = () => {
                     iceAvatarCache[zone.userId] = img;
                     drawIceField();
+                };
+                img.onerror = () => {
+                    // Если не загрузилась — рисуем буквы
+                    drawInitialsAvatar(zone, centerX, centerY, avatarSize);
                 };
                 img.src = zone.photoUrl;
             } else {
@@ -1574,25 +1579,42 @@
                 iceCtx.stroke();
             }
         } else {
-            // Нет аватарки — рисуем круг с первыми буквами
-            iceCtx.save();
-            iceCtx.beginPath();
-            iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
-            iceCtx.fillStyle = 'rgba(255,255,255,0.15)';
-            iceCtx.fill();
-            iceCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-            iceCtx.lineWidth = 2;
-            iceCtx.stroke();
-            
-            // Первые буквы имени (до 2 букв)
-            const initials = zone.name.substring(0, 2).toUpperCase();
-            iceCtx.fillStyle = 'rgba(255,255,255,0.9)';
-            iceCtx.font = 'bold ' + Math.floor(avatarSize * 0.4) + 'px Inter, sans-serif';
-            iceCtx.textAlign = 'center';
-            iceCtx.textBaseline = 'middle';
-            iceCtx.fillText(initials, centerX, centerY);
-            iceCtx.restore();
+            // Нет аватарки — рисуем круг с буквами
+            drawInitialsAvatar(zone, centerX, centerY, avatarSize);
         }
+    });
+}
+
+function drawInitialsAvatar(zone, centerX, centerY, avatarSize) {
+    iceCtx.save();
+    
+    // Круг
+    iceCtx.beginPath();
+    iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
+    iceCtx.fillStyle = 'rgba(255,255,255,0.15)';
+    iceCtx.fill();
+    iceCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+    iceCtx.lineWidth = 2;
+    iceCtx.stroke();
+    
+    // Первые буквы имени
+    let initials = '';
+    const nameParts = zone.name.split(' ');
+    if (nameParts.length >= 2) {
+        initials = (nameParts[0][0] || '') + (nameParts[1][0] || '');
+    } else {
+        initials = zone.name.substring(0, 2);
+    }
+    initials = initials.toUpperCase();
+    
+    iceCtx.fillStyle = 'rgba(255,255,255,0.9)';
+    iceCtx.font = 'bold ' + Math.floor(avatarSize * 0.4) + 'px Inter, sans-serif';
+    iceCtx.textAlign = 'center';
+    iceCtx.textBaseline = 'middle';
+    iceCtx.fillText(initials, centerX, centerY);
+    
+    iceCtx.restore();
+}
     });
         }
 
