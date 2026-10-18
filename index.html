@@ -250,14 +250,14 @@
         .admin-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: #0a0a0f; color: white; outline: none; margin-bottom: 8px; }
         .admin-empty { color: #666; text-align: center; padding: 10px; font-size: 0.8rem; }
 
-        /* ============ НОВОЕ: Вкладки админки ============ */
+        /* Вкладки админки */
         .admin-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
         .admin-tab { flex: 1; padding: 12px; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #888; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .admin-tab.active { background: var(--gold); color: #0a0a0f; border-color: var(--gold); }
         .admin-tab-content { display: none; }
         .admin-tab-content.active { display: block; }
 
-        /* ============ НОВОЕ: Заявки на вывод ============ */
+        /* Заявки на вывод */
         .withdrawal-card { background: #0a0a0f; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
         .withdrawal-info { font-size: 0.8rem; color: #ccc; margin-bottom: 8px; line-height: 1.6; }
         .withdrawal-info b { color: var(--gold-light); }
@@ -268,6 +268,25 @@
         .history-withdrawal { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px; margin-bottom: 6px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         .history-withdrawal .status-approved { color: var(--success); font-weight: 700; }
         .history-withdrawal .status-rejected { color: var(--danger); font-weight: 700; }
+
+        /* Миссии */
+        .profile-tabs { display: flex; gap: 8px; margin: 16px 0 12px; width: 100%; max-width: 360px; }
+        .profile-tab { flex: 1; padding: 10px; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #888; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .profile-tab.active { background: var(--gold); color: #0a0a0f; border-color: var(--gold); }
+        .profile-tab-content { display: none; width: 100%; }
+        .profile-tab-content.active { display: block; }
+        .missions-progress { text-align: center; color: var(--gold-light); font-weight: 700; font-size: 0.9rem; margin-bottom: 12px; }
+        .mission-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .mission-card.completed { opacity: 0.5; }
+        .mission-info { flex: 1; }
+        .mission-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+        .mission-reward { font-size: 0.75rem; color: var(--gold-light); margin-bottom: 4px; }
+        .mission-progress-text { font-size: 0.7rem; color: var(--text-dim); }
+        .mission-btn { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
+        .mission-btn.claim { background: var(--gold); color: #0a0a0f; }
+        .mission-btn.subscribe { background: var(--gold); color: #0a0a0f; }
+        .mission-btn.done { background: rgba(46,204,113,0.15); color: var(--success); cursor: default; }
+        .mission-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -453,9 +472,18 @@
                 <div class="stats-row">
                     <div class="stat-item"><div class="stat-value" id="stat-wins">0</div><div class="stat-label">Побед</div></div>
                 </div>
-                <div class="history-section">
-                    <div class="history-title">Подробная статистика</div>
-                    <div class="history-box" id="history-box"><div style="text-align:center;color:#555;padding:16px;">Нет действий</div></div>
+                <div class="profile-tabs">
+                    <button class="profile-tab active" data-profile-tab="history">История</button>
+                    <button class="profile-tab" data-profile-tab="missions">Миссии</button>
+                </div>
+                <div class="profile-tab-content active" id="profile-tab-history">
+                    <div class="history-section">
+                        <div class="history-box" id="history-box"><div style="text-align:center;color:#555;padding:16px;">Нет действий</div></div>
+                    </div>
+                </div>
+                <div class="profile-tab-content" id="profile-tab-missions">
+                    <div class="missions-progress" id="missions-progress">Выполнено 0 из 8</div>
+                    <div id="missions-list"></div>
                 </div>
             </div>
         </div>
@@ -725,6 +753,13 @@
         if (userInfo.photoUrl) avatar.src = userInfo.photoUrl;
         else avatar.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userInfo.id || 'player'}`;
         nick.textContent = userInfo.firstName || userInfo.username || 'Player';
+        // Сброс вкладок профиля
+        document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+        const histTab = document.querySelector('.profile-tab[data-profile-tab="history"]');
+        if (histTab) histTab.classList.add('active');
+        const histContent = document.getElementById('profile-tab-history');
+        if (histContent) histContent.classList.add('active');
     }
 
     function goToMenu() {
@@ -1045,10 +1080,11 @@
     });
 
     // ============ АДМИН ============
+    let currentAdminTab = 'players';
+
     function openAdminPanel() {
         adminActive = true;
         document.getElementById('admin-overlay').classList.add('show');
-        // Сброс на вкладку "Игроки"
         document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
         document.querySelector('.admin-tab[data-admin-tab="players"]').classList.add('active');
@@ -1070,8 +1106,6 @@
     });
     document.getElementById('admin-close').addEventListener('click', closeAdminPanel);
 
-    // ============ НОВОЕ: ВКЛАДКИ АДМИНКИ ============
-    let currentAdminTab = 'players';
     document.querySelectorAll('.admin-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
@@ -1120,7 +1154,6 @@
         } catch(e) {}
     }
 
-    // ============ НОВОЕ: ЗАЯВКИ НА ВЫВОД ============
     async function loadAdminWithdrawals() {
         try {
             const res = await fetch(`${API_URL}/admin/withdrawals`, {
@@ -1259,6 +1292,111 @@
             }
         }
     }, 3000);
+
+    // ============ МИССИИ ============
+    document.querySelectorAll('.profile-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('profile-tab-' + tab.dataset.profileTab).classList.add('active');
+            if (tab.dataset.profileTab === 'missions') loadMissions();
+        });
+    });
+
+    async function loadMissions() {
+        try {
+            const res = await fetch(`${API_URL}/missions`, {
+                headers: { 'X-Telegram-Init-Data': tg?.initData || '' }
+            });
+            const data = await res.json();
+            if (!data.success) return;
+
+            const list = document.getElementById('missions-list');
+            const progress = document.getElementById('missions-progress');
+            list.innerHTML = '';
+
+            const missions = data.missions || [];
+            const completedCount = missions.filter(m => m.claimed).length;
+            progress.textContent = `Выполнено ${completedCount} из ${missions.length}`;
+
+            missions.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'mission-card' + (m.claimed ? ' completed' : '');
+
+                let btnHtml = '';
+                if (m.claimed) {
+                    btnHtml = `<button class="mission-btn done" disabled>✅ Выполнено</button>`;
+                } else if (m.type === 'subscription') {
+                    btnHtml = `<button class="mission-btn subscribe" onclick="subscribeToChannel()">Подписаться</button>`;
+                } else if (m.completed) {
+                    btnHtml = `<button class="mission-btn claim" onclick="claimMission('${m.id}')">Забрать ${m.reward} ⭐</button>`;
+                } else {
+                    btnHtml = `<button class="mission-btn" disabled>Прогресс</button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="mission-info">
+                        <div class="mission-title">${m.title}</div>
+                        <div class="mission-reward">Награда: ${m.reward} ⭐</div>
+                        ${m.progressText && !m.claimed ? `<div class="mission-progress-text">${m.progressText}</div>` : ''}
+                    </div>
+                    ${btnHtml}
+                `;
+                list.appendChild(card);
+            });
+        } catch(e) {}
+    }
+
+    window.claimMission = async function(missionId) {
+        try {
+            const res = await fetch(`${API_URL}/missions/claim`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
+                body: JSON.stringify({ missionId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (data.balance !== undefined) {
+                    balance = data.balance;
+                    updateBalance();
+                }
+                showNotification('Награда получена: ' + data.reward + ' ⭐', 'success');
+                loadMissions();
+            } else {
+                showNotification(data.error || 'Ошибка', 'error');
+            }
+        } catch(e) {
+            showNotification('Сервер недоступен', 'error');
+        }
+    };
+
+    window.subscribeToChannel = function() {
+        const url = 'https://t.me/Kr_Bet_Up';
+        if (tg && tg.openTelegramLink) {
+            tg.openTelegramLink(url);
+        } else {
+            window.open(url, '_blank');
+        }
+        setTimeout(async () => {
+            try {
+                const res = await fetch(`${API_URL}/missions/check-subscription`, {
+                    headers: { 'X-Telegram-Init-Data': tg?.initData || '' }
+                });
+                const data = await res.json();
+                if (data.success && data.subscribed) {
+                    if (data.balance !== undefined) {
+                        balance = data.balance;
+                        updateBalance();
+                    }
+                    showNotification('Подписка подтверждена! +10 ⭐', 'success');
+                    loadMissions();
+                } else if (data.success && !data.subscribed) {
+                    showNotification('Вы не подписаны на канал', 'error');
+                }
+            } catch(e) {}
+        }, 3000);
+    };
 
     // ============ ПРЕВЬЮ ============
     function animatePreviewRoll() {
@@ -1973,4 +2111,4 @@
 })();
 </script>
 </body>
-                    </html>
+    </html>
