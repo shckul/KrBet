@@ -249,6 +249,25 @@
         .admin-btn-crash { background: var(--danger); color: white; }
         .admin-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: #0a0a0f; color: white; outline: none; margin-bottom: 8px; }
         .admin-empty { color: #666; text-align: center; padding: 10px; font-size: 0.8rem; }
+
+        /* ============ НОВОЕ: Вкладки админки ============ */
+        .admin-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .admin-tab { flex: 1; padding: 12px; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #888; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .admin-tab.active { background: var(--gold); color: #0a0a0f; border-color: var(--gold); }
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; }
+
+        /* ============ НОВОЕ: Заявки на вывод ============ */
+        .withdrawal-card { background: #0a0a0f; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+        .withdrawal-info { font-size: 0.8rem; color: #ccc; margin-bottom: 8px; line-height: 1.6; }
+        .withdrawal-info b { color: var(--gold-light); }
+        .withdrawal-actions { display: flex; gap: 8px; }
+        .withdrawal-actions button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 700; font-size: 0.8rem; cursor: pointer; }
+        .btn-approve { background: var(--success); color: white; }
+        .btn-reject { background: var(--danger); color: white; }
+        .history-withdrawal { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px; margin-bottom: 6px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .history-withdrawal .status-approved { color: var(--success); font-weight: 700; }
+        .history-withdrawal .status-rejected { color: var(--danger); font-weight: 700; }
     </style>
 </head>
 <body>
@@ -503,22 +522,38 @@
         <span class="admin-title">👑 Админ-панель</span>
         <button class="admin-close" id="admin-close">Закрыть</button>
     </div>
-    <div class="admin-section">
-        <h3>Онлайн игроки</h3>
-        <div id="admin-players-list"></div>
+    <div class="admin-tabs">
+        <button class="admin-tab active" data-admin-tab="players">Игроки</button>
+        <button class="admin-tab" data-admin-tab="withdrawals">Выводы</button>
     </div>
-    <div class="admin-section">
-        <h3>Рулетка — победитель</h3>
-        <select class="admin-select" id="admin-roll-select">
-            <option value="">Случайный победитель</option>
-        </select>
-        <button class="admin-btn admin-btn-force" id="admin-force-roll">Установить победителя</button>
+    <div class="admin-tab-content active" id="admin-tab-players">
+        <div class="admin-section">
+            <h3>Онлайн игроки</h3>
+            <div id="admin-players-list"></div>
+        </div>
+        <div class="admin-section">
+            <h3>Рулетка — победитель</h3>
+            <select class="admin-select" id="admin-roll-select">
+                <option value="">Случайный победитель</option>
+            </select>
+            <button class="admin-btn admin-btn-force" id="admin-force-roll">Установить победителя</button>
+        </div>
+        <div class="admin-section">
+            <h3>Crash — управление</h3>
+            <input type="number" class="admin-input" id="admin-crash-multiplier" placeholder="Множитель (например 2.5)" step="0.1">
+            <button class="admin-btn admin-btn-force" id="admin-set-crash">Установить множитель</button>
+            <button class="admin-btn admin-btn-crash" id="admin-crash-now">💥 Крашнуть сейчас</button>
+        </div>
     </div>
-    <div class="admin-section">
-        <h3>Crash — управление</h3>
-        <input type="number" class="admin-input" id="admin-crash-multiplier" placeholder="Множитель (например 2.5)" step="0.1">
-        <button class="admin-btn admin-btn-force" id="admin-set-crash">Установить множитель</button>
-        <button class="admin-btn admin-btn-crash" id="admin-crash-now">💥 Крашнуть сейчас</button>
+    <div class="admin-tab-content" id="admin-tab-withdrawals">
+        <div class="admin-section">
+            <h3>Активные заявки</h3>
+            <div id="admin-withdrawals-list"></div>
+        </div>
+        <div class="admin-section">
+            <h3>История заявок</h3>
+            <div id="admin-withdrawals-history"></div>
+        </div>
     </div>
 </div>
 
@@ -860,7 +895,6 @@
 
     socket.on('ice:state', (state) => {
         iceState = state;
-        // Копируем photoUrl из bets в zones, если zones пришли без фото
         if (iceState.zones && iceState.zones.length > 0) {
             iceState.zones.forEach(zone => {
                 if (!zone.photoUrl) {
@@ -876,7 +910,6 @@
 
     socket.on('ice:zones', (zones) => {
         iceState.zones = zones;
-        // Копируем photoUrl из bets в zones
         if (iceState.zones && iceState.zones.length > 0) {
             iceState.zones.forEach(zone => {
                 if (!zone.photoUrl) {
@@ -1015,6 +1048,12 @@
     function openAdminPanel() {
         adminActive = true;
         document.getElementById('admin-overlay').classList.add('show');
+        // Сброс на вкладку "Игроки"
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('.admin-tab[data-admin-tab="players"]').classList.add('active');
+        document.getElementById('admin-tab-players').classList.add('active');
+        currentAdminTab = 'players';
         loadAdminPlayers();
     }
     function closeAdminPanel() {
@@ -1030,6 +1069,22 @@
         });
     });
     document.getElementById('admin-close').addEventListener('click', closeAdminPanel);
+
+    // ============ НОВОЕ: ВКЛАДКИ АДМИНКИ ============
+    let currentAdminTab = 'players';
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            currentAdminTab = tab.dataset.adminTab;
+            document.getElementById('admin-tab-' + currentAdminTab).classList.add('active');
+            if (currentAdminTab === 'withdrawals') {
+                loadAdminWithdrawals();
+                loadAdminWithdrawalsHistory();
+            }
+        });
+    });
 
     async function loadAdminPlayers() {
         try {
@@ -1064,6 +1119,85 @@
             }
         } catch(e) {}
     }
+
+    // ============ НОВОЕ: ЗАЯВКИ НА ВЫВОД ============
+    async function loadAdminWithdrawals() {
+        try {
+            const res = await fetch(`${API_URL}/admin/withdrawals`, {
+                headers: { 'X-Telegram-Init-Data': tg?.initData || '' }
+            });
+            const data = await res.json();
+            const listEl = document.getElementById('admin-withdrawals-list');
+            listEl.innerHTML = '';
+            if (data.requests && data.requests.length > 0) {
+                data.requests.forEach(r => {
+                    const card = document.createElement('div');
+                    card.className = 'withdrawal-card';
+                    const date = new Date(r.time);
+                    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ', ' + date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    const userStr = r.username ? `@${r.username}` : `ID: ${r.userId}`;
+                    card.innerHTML = `
+                        <div class="withdrawal-info">
+                            <b>${r.name}</b> (${userStr})<br>
+                            Сумма: <b>${r.amount} ⭐</b><br>
+                            Время: ${dateStr}
+                        </div>
+                        <div class="withdrawal-actions">
+                            <button class="btn-approve" onclick="adminWithdrawalAction('${r.id}','approve')">✅ Одобрить</button>
+                            <button class="btn-reject" onclick="adminWithdrawalAction('${r.id}','reject')">❌ Отклонить</button>
+                        </div>
+                    `;
+                    listEl.appendChild(card);
+                });
+            } else {
+                listEl.innerHTML = '<div class="admin-empty">Нет активных заявок</div>';
+            }
+        } catch(e) {}
+    }
+
+    async function loadAdminWithdrawalsHistory() {
+        try {
+            const res = await fetch(`${API_URL}/admin/withdrawals-history`, {
+                headers: { 'X-Telegram-Init-Data': tg?.initData || '' }
+            });
+            const data = await res.json();
+            const listEl = document.getElementById('admin-withdrawals-history');
+            listEl.innerHTML = '';
+            if (data.history && data.history.length > 0) {
+                data.history.forEach(r => {
+                    const row = document.createElement('div');
+                    row.className = 'history-withdrawal';
+                    const date = new Date(r.time);
+                    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    const userStr = r.username ? `@${r.username}` : `ID: ${r.userId}`;
+                    const statusClass = r.status === 'approved' ? 'status-approved' : 'status-rejected';
+                    const statusText = r.status === 'approved' ? 'Одобрено' : 'Отклонено';
+                    row.innerHTML = `
+                        <span>${r.name} (${userStr}) — <b>${r.amount} ⭐</b> — ${dateStr}</span>
+                        <span class="${statusClass}">${statusText}</span>
+                    `;
+                    listEl.appendChild(row);
+                });
+            } else {
+                listEl.innerHTML = '<div class="admin-empty">История пуста</div>';
+            }
+        } catch(e) {}
+    }
+
+    window.adminWithdrawalAction = async function(id, action) {
+        try {
+            const res = await fetch(`${API_URL}/admin/withdrawal-action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg?.initData || '' },
+                body: JSON.stringify({ id, action })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadAdminWithdrawals();
+                loadAdminWithdrawalsHistory();
+            }
+        } catch(e) {}
+    };
 
     window.adminAdjustBalance = async function(userId, action, amount) {
         try {
@@ -1117,7 +1251,13 @@
     });
 
     setInterval(() => {
-        if (adminActive) loadAdminPlayers();
+        if (adminActive) {
+            if (currentAdminTab === 'players') loadAdminPlayers();
+            else if (currentAdminTab === 'withdrawals') {
+                loadAdminWithdrawals();
+                loadAdminWithdrawalsHistory();
+            }
+        }
     }, 3000);
 
     // ============ ПРЕВЬЮ ============
@@ -1560,7 +1700,6 @@
             const zw = zone.width * scaleX;
             const zh = zone.height * scaleY;
             
-            // Закрашиваем зону
             iceCtx.fillStyle = zone.color;
             iceCtx.fillRect(x, y, zw, zh);
             
@@ -1569,7 +1708,6 @@
             const centerY = y + zh / 2;
             
             if (zone.photoUrl && zone.photoUrl.length > 0) {
-                // Есть аватарка — загружаем и рисуем
                 if (!iceAvatarCache[zone.userId]) {
                     const img = new Image();
                     img.crossOrigin = 'anonymous';
@@ -1578,7 +1716,6 @@
                         drawIceField();
                     };
                     img.onerror = () => {
-                        // Если не загрузилась — рисуем буквы
                         drawInitialsAvatar(zone, centerX, centerY, avatarSize);
                     };
                     img.src = zone.photoUrl;
@@ -1601,7 +1738,6 @@
                     iceCtx.stroke();
                 }
             } else {
-                // Нет аватарки — рисуем круг с буквами
                 drawInitialsAvatar(zone, centerX, centerY, avatarSize);
             }
         });
@@ -1610,7 +1746,6 @@
     function drawInitialsAvatar(zone, centerX, centerY, avatarSize) {
         iceCtx.save();
         
-        // Круг
         iceCtx.beginPath();
         iceCtx.arc(centerX, centerY, avatarSize / 2, 0, Math.PI * 2);
         iceCtx.fillStyle = 'rgba(255,255,255,0.15)';
@@ -1619,7 +1754,6 @@
         iceCtx.lineWidth = 2;
         iceCtx.stroke();
         
-        // Первые буквы имени
         let initials = '';
         const nameParts = zone.name.split(' ');
         if (nameParts.length >= 2) {
@@ -1839,4 +1973,4 @@
 })();
 </script>
 </body>
-</html>
+                    </html>
