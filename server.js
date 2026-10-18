@@ -26,6 +26,10 @@ const users = new Map();
 const pendingPayments = new Map();
 const onlineUsers = new Map();
 
+// Заявки на вывод
+const withdrawalRequests = [];  // активные заявки
+const withdrawalHistory = [];   // история (одобрено/отклонено)
+
 const rollGame = {
     phase: 'waiting',
     bets: [],
@@ -202,8 +206,22 @@ app.post('/api/withdraw', (req, res) => {
     if (!userData) return res.status(401).json({ success: false });
     const user = getOrCreateUser(userData);
     if (user.balance < amount) return res.status(400).json({ success: false });
+
+    // Списываем баланс сразу
     user.balance -= amount;
     addHistory(user, 'Вывод средств', amount, 'bet');
+
+    // Создаём заявку
+    const request = {
+        id: crypto.randomUUID(),
+        userId: user.id,
+        name: user.firstName || 'Player',
+        username: user.username || '',
+        amount,
+        time: Date.now(),
+    };
+    withdrawalRequests.push(request);
+
     res.json({ success: true, balance: user.balance });
 });
 
@@ -259,6 +277,43 @@ app.post('/api/admin/force-crash-multiplier', (req, res) => {
 
 app.post('/api/admin/crash-now', (req, res) => {
     crashGame.forceCrashNow = true;
+    res.json({ success: true });
+});
+
+// ============================================
+// АДМИН — ЗАЯВКИ НА ВЫВОД
+// ============================================
+
+app.get('/api/admin/withdrawals', (req, res) => {
+    const initData = req.headers['x-telegram-init-data'];
+    if (!initData) return res.status(401).json({ success: false });
+    res.json({ success: true, requests: withdrawalRequests });
+});
+
+app.get('/api/admin/withdrawals-history', (req, res) => {
+    const initData = req.headers['x-telegram-init-data'];
+    if (!initData) return res.status(401).json({ success: false });
+    res.json({ success: true, history: withdrawalHistory });
+});
+
+app.post('/api/admin/withdrawal-action', (req, res) => {
+    const initData = req.headers['x-telegram-init-data'];
+    const { id, action } = req.body;
+    if (!initData || !id || !action) return res.status(400).json({ success: false });
+    if (action !== 'approve' && action !== 'reject') return res.status(400).json({ success: false });
+
+    const index = withdrawalRequests.findIndex(r => r.id === id);
+    if (index === -1) return res.status(404).json({ success: false });
+
+    const request = withdrawalRequests[index];
+    withdrawalRequests.splice(index, 1);
+
+    withdrawalHistory.unshift({
+        ...request,
+        status: action === 'approve' ? 'approved' : 'rejected',
+        processedAt: Date.now(),
+    });
+
     res.json({ success: true });
 });
 
