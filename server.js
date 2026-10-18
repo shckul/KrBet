@@ -18,6 +18,7 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
+const CHANNEL_USERNAME = 'Kr_Bet_Up';
 
 // ============================================
 // ХРАНИЛИЩЕ
@@ -27,8 +28,8 @@ const pendingPayments = new Map();
 const onlineUsers = new Map();
 
 // Заявки на вывод
-const withdrawalRequests = [];  // активные заявки
-const withdrawalHistory = [];   // история (одобрено/отклонено)
+const withdrawalRequests = [];
+const withdrawalHistory = [];
 
 const rollGame = {
     phase: 'waiting',
@@ -78,6 +79,81 @@ const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e6
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ============================================
+// СПИСОК МИССИЙ
+// ============================================
+const MISSIONS = [
+    {
+        id: 'subscribe',
+        title: 'Подписаться на канал @Kr_Bet_Up',
+        reward: 10,
+        type: 'subscription',
+    },
+    {
+        id: 'crash_5x',
+        title: 'Поймать 5x+ в Crash',
+        reward: 20,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.maxCrashCashout || 0, 5),
+        target: 5,
+        progressText: (user) => `Макс. кэшаут: ${(user.maxCrashCashout || 0).toFixed(2)}x / 5.00x`,
+    },
+    {
+        id: 'roll_10_wins',
+        title: 'Выиграть в Рулетке 10 раз',
+        reward: 30,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.rollWins || 0, 10),
+        target: 10,
+        progressText: (user) => `Побед: ${user.rollWins || 0} / 10`,
+    },
+    {
+        id: 'ice_10_wins',
+        title: 'Выиграть в Ice Arena 10 раз',
+        reward: 30,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.iceWins || 0, 10),
+        target: 10,
+        progressText: (user) => `Побед: ${user.iceWins || 0} / 10`,
+    },
+    {
+        id: 'deposit_100',
+        title: 'Пополнить баланс на 100 ⭐',
+        reward: 10,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.totalDeposited || 0, 100),
+        target: 100,
+        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 100 ⭐`,
+    },
+    {
+        id: 'deposit_300',
+        title: 'Пополнить баланс на 300 ⭐',
+        reward: 30,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.totalDeposited || 0, 300),
+        target: 300,
+        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 300 ⭐`,
+    },
+    {
+        id: 'deposit_500',
+        title: 'Пополнить баланс на 500 ⭐',
+        reward: 50,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.totalDeposited || 0, 500),
+        target: 500,
+        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 500 ⭐`,
+    },
+    {
+        id: 'deposit_1000',
+        title: 'Пополнить баланс на 1000 ⭐',
+        reward: 100,
+        type: 'counter',
+        getProgress: (user) => Math.min(user.totalDeposited || 0, 1000),
+        target: 1000,
+        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 1000 ⭐`,
+    },
+];
+
 function getUserFromInitData(initData) {
     const data = new URLSearchParams(initData);
     const userStr = data.get('user');
@@ -107,6 +183,12 @@ function getOrCreateUser(userData) {
             history: [],
             createdAt: Date.now(),
             lastActive: Date.now(),
+            // Миссии
+            missions: {},
+            totalDeposited: 0,
+            maxCrashCashout: 0,
+            rollWins: 0,
+            iceWins: 0,
         });
     } else {
         const user = users.get(userData.id);
@@ -114,6 +196,12 @@ function getOrCreateUser(userData) {
         if (userData.photoUrl) user.photoUrl = userData.photoUrl;
         if (userData.username) user.username = userData.username;
         if (userData.firstName) user.firstName = userData.firstName;
+        // Инициализация недостающих полей (на случай апдейта)
+        if (!user.missions) user.missions = {};
+        if (user.totalDeposited === undefined) user.totalDeposited = 0;
+        if (user.maxCrashCashout === undefined) user.maxCrashCashout = 0;
+        if (user.rollWins === undefined) user.rollWins = 0;
+        if (user.iceWins === undefined) user.iceWins = 0;
     }
     return users.get(userData.id);
 }
@@ -180,6 +268,8 @@ app.post('/api/webhook/payment', async (req, res) => {
                     const user = users.get(userId);
                     if (user) {
                         user.balance += amount;
+                        user.totalDeposited = (user.totalDeposited || 0) + amount;
+                        addHistory(user, 'Пополнение баланса', amount, 'deposit');
                         onlineUsers.forEach((uid, socketId) => {
                             if (uid === userId) io.to(socketId).emit('balance:update', user.balance);
                         });
@@ -207,11 +297,9 @@ app.post('/api/withdraw', (req, res) => {
     const user = getOrCreateUser(userData);
     if (user.balance < amount) return res.status(400).json({ success: false });
 
-    // Списываем баланс сразу
     user.balance -= amount;
     addHistory(user, 'Вывод средств', amount, 'bet');
 
-    // Создаём заявку
     const request = {
         id: crypto.randomUUID(),
         userId: user.id,
@@ -223,6 +311,126 @@ app.post('/api/withdraw', (req, res) => {
     withdrawalRequests.push(request);
 
     res.json({ success: true, balance: user.balance });
+});
+
+// ============================================
+// МИССИИ — API
+// ============================================
+
+app.get('/api/missions', (req, res) => {
+    const initData = req.headers['x-telegram-init-data'];
+    if (!initData) return res.status(401).json({ success: false });
+    const userData = getUserFromInitData(initData);
+    if (!userData) return res.status(401).json({ success: false });
+    const user = getOrCreateUser(userData);
+
+    const missions = MISSIONS.map(m => {
+        const claimed = !!user.missions[m.id];
+        let progress = 0;
+        let target = 1;
+        let progressText = '';
+        let completed = false;
+
+        if (m.type === 'counter') {
+            progress = m.getProgress(user);
+            target = m.target;
+            progressText = m.progressText(user);
+            completed = progress >= target;
+        } else if (m.type === 'subscription') {
+            completed = claimed; // подписка проверяется отдельно
+            progress = claimed ? 1 : 0;
+            target = 1;
+            progressText = claimed ? 'Подписка активна' : '';
+        }
+
+        return {
+            id: m.id,
+            title: m.title,
+            reward: m.reward,
+            type: m.type,
+            claimed,
+            completed,
+            progress,
+            target,
+            progressText,
+        };
+    });
+
+    res.json({ success: true, missions });
+});
+
+app.post('/api/missions/claim', (req, res) => {
+    const initData = req.headers['x-telegram-init-data'];
+    const { missionId } = req.body;
+    if (!initData || !missionId) return res.status(400).json({ success: false });
+    const userData = getUserFromInitData(initData);
+    if (!userData) return res.status(401).json({ success: false });
+    const user = getOrCreateUser(userData);
+
+    if (user.missions[missionId]) return res.status(400).json({ success: false, error: 'Уже получено' });
+
+    const mission = MISSIONS.find(m => m.id === missionId);
+    if (!mission) return res.status(404).json({ success: false, error: 'Миссия не найдена' });
+
+    // Проверка выполнения
+    if (mission.type === 'counter') {
+        const progress = mission.getProgress(user);
+        if (progress < mission.target) return res.status(400).json({ success: false, error: 'Не выполнено' });
+    } else if (mission.type === 'subscription') {
+        // Проверка подписки идёт отдельным эндпоинтом, здесь просто помечаем
+        // Но чтобы не начислить без проверки — проверим через Bot API
+        return res.status(400).json({ success: false, error: 'Используйте /api/missions/check-subscription' });
+    }
+
+    user.missions[missionId] = true;
+    user.balance += mission.reward;
+    addHistory(user, 'Миссия: ' + mission.title, mission.reward, 'win');
+
+    onlineUsers.forEach((uid, socketId) => {
+        if (uid === user.id) {
+            io.to(socketId).emit('balance:update', user.balance);
+            io.to(socketId).emit('history:update', user.history);
+        }
+    });
+
+    res.json({ success: true, balance: user.balance, reward: mission.reward });
+});
+
+app.get('/api/missions/check-subscription', async (req, res) => {
+    const initData = req.headers['x-telegram-init-data'];
+    if (!initData) return res.status(401).json({ success: false });
+    const userData = getUserFromInitData(initData);
+    if (!userData) return res.status(401).json({ success: false });
+    const user = getOrCreateUser(userData);
+
+    if (user.missions['subscribe']) {
+        return res.json({ success: true, subscribed: true, alreadyClaimed: true });
+    }
+
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=@${CHANNEL_USERNAME}&user_id=${user.id}`);
+        const data = await response.json();
+        if (!data.ok) return res.json({ success: false, subscribed: false, error: 'Ошибка проверки' });
+        const status = data.result?.status;
+        const subscribed = ['member', 'administrator', 'creator'].includes(status);
+        if (!subscribed) return res.json({ success: true, subscribed: false });
+
+        // Подписан — начисляем награду
+        user.missions['subscribe'] = true;
+        user.balance += 10;
+        addHistory(user, 'Миссия: Подписка на канал', 10, 'win');
+
+        onlineUsers.forEach((uid, socketId) => {
+            if (uid === user.id) {
+                io.to(socketId).emit('balance:update', user.balance);
+                io.to(socketId).emit('history:update', user.history);
+            }
+        });
+
+        res.json({ success: true, subscribed: true, reward: 10, balance: user.balance });
+    } catch (e) {
+        res.json({ success: false, subscribed: false, error: 'Ошибка сервера' });
+    }
 });
 
 // ============================================
@@ -400,6 +608,11 @@ io.on('connection', (socket) => {
         currentUser.stats.wins++;
         currentUser.stats.won += win - bet.amount;
         addHistory(currentUser, 'Игровой выигрыш (Crash)', win, 'win');
+
+        // Обновление макс. кэшаута для миссии
+        if (crashGame.multiplier > (currentUser.maxCrashCashout || 0)) {
+            currentUser.maxCrashCashout = crashGame.multiplier;
+        }
 
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
@@ -664,6 +877,8 @@ function startRollSpin() {
             user.stats.wins++;
             user.stats.won += totalBank;
             addHistory(user, 'Игровой выигрыш (Рулетка)', totalBank, 'win');
+            // Миссия: победы в рулетке
+            user.rollWins = (user.rollWins || 0) + 1;
             onlineUsers.forEach((uid, socketId) => {
                 if (uid === winner.userId) {
                     io.to(socketId).emit('balance:update', user.balance);
@@ -1016,6 +1231,8 @@ function finishIceRound() {
         user.stats.wins++;
         user.stats.won += iceGame.totalBank;
         addHistory(user, 'Выигрыш (Ice Arena)', iceGame.totalBank, 'win');
+        // Миссия: победы в Ice Arena
+        user.iceWins = (user.iceWins || 0) + 1;
         onlineUsers.forEach((uid, socketId) => {
             if (uid === winner.userId) {
                 io.to(socketId).emit('balance:update', user.balance);
