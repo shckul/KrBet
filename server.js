@@ -603,25 +603,24 @@ function getRollPublicState() {
 }
 
 function startRollTimer() {
-    // === МИНИМУМ 2 ИГРОКА ===
-    if (rollGame.bets.length > 0 && rollGame.bets.length < 2) {
-        // Возврат баланса
-        rollGame.bets.forEach(bet => {
-            const user = users.get(bet.userId);
-            if (user) {
-                user.balance += bet.amount;
-                user.stats.spent -= bet.amount;
-                addHistory(user, 'Возврат (Рулетка — 1 игрок)', bet.amount, 'win');
-                onlineUsers.forEach((uid, socketId) => {
-                    if (uid === bet.userId) {
-                        io.to(socketId).emit('balance:update', user.balance);
-                        io.to(socketId).emit('history:update', user.history);
-                    }
-                });
-            }
-        });
+    // === ФИКС: возврат только если РОВНО 1 ставка (не 0) ===
+    if (rollGame.bets.length === 1) {
+        const bet = rollGame.bets[0];
+        const user = users.get(bet.userId);
+        if (user) {
+            user.balance += bet.amount;
+            user.stats.spent -= bet.amount;
+            addHistory(user, 'Возврат (Рулетка — 1 игрок)', bet.amount, 'win');
+            onlineUsers.forEach((uid, socketId) => {
+                if (uid === bet.userId) {
+                    io.to(socketId).emit('balance:update', user.balance);
+                    io.to(socketId).emit('history:update', user.history);
+                }
+            });
+        }
         io.emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
     }
+    // Если 0 ставок — просто новый раунд, БЕЗ уведомления
 
     rollGame.phase = 'waiting';
     rollGame.timerSeconds = 15;
@@ -647,22 +646,25 @@ function startRollTimer() {
 }
 
 function startRollSpin() {
-    if (rollGame.bets.length < 2) {
-        // Меньше 2 игроков — возврат и перезапуск
-        if (rollGame.bets.length === 1) {
-            const bet = rollGame.bets[0];
-            const user = users.get(bet.userId);
-            if (user) {
-                user.balance += bet.amount;
-                user.stats.spent -= bet.amount;
-                addHistory(user, 'Возврат (Рулетка — 1 игрок)', bet.amount, 'win');
-                onlineUsers.forEach((uid, socketId) => {
-                    if (uid === bet.userId) {
-                        io.to(socketId).emit('balance:update', user.balance);
-                        io.to(socketId).emit('history:update', user.history);
-                    }
-                });
-            }
+    if (rollGame.bets.length === 0) {
+        // Нет ставок — просто перезапуск БЕЗ уведомления
+        setTimeout(() => startRollTimer(), 600);
+        return;
+    }
+    if (rollGame.bets.length === 1) {
+        // 1 ставка — возврат + уведомление
+        const bet = rollGame.bets[0];
+        const user = users.get(bet.userId);
+        if (user) {
+            user.balance += bet.amount;
+            user.stats.spent -= bet.amount;
+            addHistory(user, 'Возврат (Рулетка — 1 игрок)', bet.amount, 'win');
+            onlineUsers.forEach((uid, socketId) => {
+                if (uid === bet.userId) {
+                    io.to(socketId).emit('balance:update', user.balance);
+                    io.to(socketId).emit('history:update', user.history);
+                }
+            });
         }
         io.emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
         rollGame.bets = [];
@@ -823,9 +825,8 @@ function getIcePublicState() {
 }
 
 function startIceTimer() {
-    // === МИНИМУМ 2 ИГРОКА ===
+    // === ФИКС: возврат только если РОВНО 1 ставка (не 0) ===
     if (iceGame.bets.length === 1) {
-        // Возврат
         const bet = iceGame.bets[0];
         const user = users.get(bet.userId);
         if (user) {
@@ -841,6 +842,7 @@ function startIceTimer() {
         }
         io.emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
     }
+    // Если 0 ставок — просто новый раунд, БЕЗ уведомления
 
     iceGame.phase = 'waiting';
     iceGame.timerSeconds = 15;
@@ -983,21 +985,25 @@ function pointInPolygon(x, y, points) {
 }
 
 function startIceLaunch() {
-    if (iceGame.bets.length < 2) {
-        if (iceGame.bets.length === 1) {
-            const bet = iceGame.bets[0];
-            const user = users.get(bet.userId);
-            if (user) {
-                user.balance += bet.amount;
-                user.stats.spent -= bet.amount;
-                addHistory(user, 'Возврат (Ice Arena — 1 игрок)', bet.amount, 'win');
-                onlineUsers.forEach((uid, socketId) => {
-                    if (uid === bet.userId) {
-                        io.to(socketId).emit('balance:update', user.balance);
-                        io.to(socketId).emit('history:update', user.history);
-                    }
-                });
-            }
+    if (iceGame.bets.length === 0) {
+        // Нет ставок — просто перезапуск БЕЗ уведомления
+        setTimeout(() => startIceTimer(), 600);
+        return;
+    }
+    if (iceGame.bets.length === 1) {
+        // 1 ставка — возврат + уведомление
+        const bet = iceGame.bets[0];
+        const user = users.get(bet.userId);
+        if (user) {
+            user.balance += bet.amount;
+            user.stats.spent -= bet.amount;
+            addHistory(user, 'Возврат (Ice Arena — 1 игрок)', bet.amount, 'win');
+            onlineUsers.forEach((uid, socketId) => {
+                if (uid === bet.userId) {
+                    io.to(socketId).emit('balance:update', user.balance);
+                    io.to(socketId).emit('history:update', user.history);
+                }
+            });
         }
         io.emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
         iceGame.bets = [];
@@ -1010,7 +1016,7 @@ function startIceLaunch() {
     iceGame.phase = 'launching';
     iceGame.zones = generateIceZonesFixedAngles();
 
-    // === СПАВН ШАЙБЫ В СЛУЧАЙНОМ МЕСТЕ ===
+    // СПАВН ШАЙБЫ В СЛУЧАЙНОМ МЕСТЕ
     const margin = 340 * 0.25;
     iceGame.puckX = margin + Math.random() * (340 - margin * 2);
     iceGame.puckY = margin + Math.random() * (340 - margin * 2);
@@ -1020,7 +1026,7 @@ function startIceLaunch() {
     io.emit('ice:state', getIcePublicState());
     io.emit('ice:zones', iceGame.zones);
 
-    // === СТРЕЛКА-КОМПАС (1 сек крутим, потом финальный угол) ===
+    // СТРЕЛКА-КОМПАС (1 сек крутим, потом финальный угол)
     io.emit('ice:arrow:start', { duration: 1000 });
     
     setTimeout(() => {
@@ -1035,7 +1041,6 @@ function startIceLaunch() {
 
 function launchIcePuck(angle) {
     iceGame.phase = 'sliding';
-    // Шайба уже в случайной позиции (puckX, puckY заданы в startIceLaunch)
 
     const speed = 14;
     const rad = angle * Math.PI / 180;
