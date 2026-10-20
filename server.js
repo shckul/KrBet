@@ -33,7 +33,7 @@ const withdrawalHistory = [];
 const rollGame = {
     phase: 'waiting',
     bets: [],
-    timerSeconds: 30,
+    timerSeconds: 15,
     timerInterval: null,
     winnerIndex: -1,
     forcedWinner: null,
@@ -60,7 +60,7 @@ const crashGame = {
 
 const iceGame = {
     phase: 'waiting',
-    timerSeconds: 30,
+    timerSeconds: 15,
     bets: [],
     totalBank: 0,
     timerInterval: null,
@@ -75,6 +75,9 @@ const iceGame = {
 
 const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#ff5722','#8bc34a','#3f51b5','#ff9800','#795548','#607d8b'];
 
+// Фиксированные углы для срезов зон (в градусах)
+const SLICE_ANGLES = [30, 60, 90, 120, 135, 45, 75, 105];
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -82,75 +85,14 @@ app.use(express.static(__dirname));
 // СПИСОК МИССИЙ
 // ============================================
 const MISSIONS = [
-    {
-        id: 'subscribe',
-        title: 'Подписаться на канал @Kr_Bet_Up',
-        reward: 10,
-        type: 'subscription',
-    },
-    {
-        id: 'crash_5x',
-        title: 'Поймать 5x+ в Crash',
-        reward: 20,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.maxCrashCashout || 0, 5),
-        target: 5,
-        progressText: (user) => `Макс. кэшаут: ${(user.maxCrashCashout || 0).toFixed(2)}x / 5.00x`,
-    },
-    {
-        id: 'roll_10_wins',
-        title: 'Выиграть в Рулетке 10 раз',
-        reward: 30,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.rollWins || 0, 10),
-        target: 10,
-        progressText: (user) => `Побед: ${user.rollWins || 0} / 10`,
-    },
-    {
-        id: 'ice_10_wins',
-        title: 'Выиграть в Ice Arena 10 раз',
-        reward: 30,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.iceWins || 0, 10),
-        target: 10,
-        progressText: (user) => `Побед: ${user.iceWins || 0} / 10`,
-    },
-    {
-        id: 'deposit_100',
-        title: 'Пополнить баланс на 100 ⭐',
-        reward: 10,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.totalDeposited || 0, 100),
-        target: 100,
-        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 100 ⭐`,
-    },
-    {
-        id: 'deposit_300',
-        title: 'Пополнить баланс на 300 ⭐',
-        reward: 30,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.totalDeposited || 0, 300),
-        target: 300,
-        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 300 ⭐`,
-    },
-    {
-        id: 'deposit_500',
-        title: 'Пополнить баланс на 500 ⭐',
-        reward: 50,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.totalDeposited || 0, 500),
-        target: 500,
-        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 500 ⭐`,
-    },
-    {
-        id: 'deposit_1000',
-        title: 'Пополнить баланс на 1000 ⭐',
-        reward: 100,
-        type: 'counter',
-        getProgress: (user) => Math.min(user.totalDeposited || 0, 1000),
-        target: 1000,
-        progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 1000 ⭐`,
-    },
+    { id: 'subscribe', title: 'Подписаться на канал @Kr_Bet_Up', reward: 10, type: 'subscription' },
+    { id: 'crash_5x', title: 'Поймать 5x+ в Crash', reward: 20, type: 'counter', getProgress: (user) => Math.min(user.maxCrashCashout || 0, 5), target: 5, progressText: (user) => `Макс. кэшаут: ${(user.maxCrashCashout || 0).toFixed(2)}x / 5.00x` },
+    { id: 'roll_10_wins', title: 'Выиграть в Рулетке 10 раз', reward: 30, type: 'counter', getProgress: (user) => Math.min(user.rollWins || 0, 10), target: 10, progressText: (user) => `Побед: ${user.rollWins || 0} / 10` },
+    { id: 'ice_10_wins', title: 'Выиграть в Ice Arena 10 раз', reward: 30, type: 'counter', getProgress: (user) => Math.min(user.iceWins || 0, 10), target: 10, progressText: (user) => `Побед: ${user.iceWins || 0} / 10` },
+    { id: 'deposit_100', title: 'Пополнить баланс на 100 ⭐', reward: 10, type: 'counter', getProgress: (user) => Math.min(user.totalDeposited || 0, 100), target: 100, progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 100 ⭐` },
+    { id: 'deposit_300', title: 'Пополнить баланс на 300 ⭐', reward: 30, type: 'counter', getProgress: (user) => Math.min(user.totalDeposited || 0, 300), target: 300, progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 300 ⭐` },
+    { id: 'deposit_500', title: 'Пополнить баланс на 500 ⭐', reward: 50, type: 'counter', getProgress: (user) => Math.min(user.totalDeposited || 0, 500), target: 500, progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 500 ⭐` },
+    { id: 'deposit_1000', title: 'Пополнить баланс на 1000 ⭐', reward: 100, type: 'counter', getProgress: (user) => Math.min(user.totalDeposited || 0, 1000), target: 1000, progressText: (user) => `Пополнено: ${user.totalDeposited || 0} / 1000 ⭐` },
 ];
 
 function getUserFromInitData(initData) {
@@ -159,34 +101,17 @@ function getUserFromInitData(initData) {
     if (!userStr) return null;
     try {
         const user = JSON.parse(userStr);
-        return {
-            id: user.id,
-            username: user.username || '',
-            firstName: user.first_name || 'Player',
-            lastName: user.last_name || '',
-            photoUrl: user.photo_url || '',
-        };
+        return { id: user.id, username: user.username || '', firstName: user.first_name || 'Player', lastName: user.last_name || '', photoUrl: user.photo_url || '' };
     } catch (e) { return null; }
 }
 
 function getOrCreateUser(userData) {
     if (!users.has(userData.id)) {
         users.set(userData.id, {
-            id: userData.id,
-            username: userData.username,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            photoUrl: userData.photoUrl,
-            balance: 0,
-            stats: { wins: 0, spent: 0, won: 0 },
-            history: [],
-            createdAt: Date.now(),
-            lastActive: Date.now(),
-            missions: {},
-            totalDeposited: 0,
-            maxCrashCashout: 0,
-            rollWins: 0,
-            iceWins: 0,
+            id: userData.id, username: userData.username, firstName: userData.firstName, lastName: userData.lastName, photoUrl: userData.photoUrl,
+            balance: 0, stats: { wins: 0, spent: 0, won: 0 }, history: [],
+            createdAt: Date.now(), lastActive: Date.now(),
+            missions: {}, totalDeposited: 0, maxCrashCashout: 0, rollWins: 0, iceWins: 0,
         });
     } else {
         const user = users.get(userData.id);
@@ -232,23 +157,14 @@ app.post('/api/deposit', async (req, res) => {
         const paymentId = crypto.randomUUID();
         const payload = JSON.stringify({ userId: user.id, paymentId, amount, type: 'deposit' });
         const invoiceResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: `Пополнение ${amount} ⭐`,
-                description: `Пополнение баланса KR Bet на ${amount} звезд`,
-                payload: payload,
-                currency: 'XTR',
-                prices: [{ label: `${amount} звезд`, amount: amount }],
-            }),
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: `Пополнение ${amount} ⭐`, description: `Пополнение баланса KR Bet на ${amount} звезд`, payload: payload, currency: 'XTR', prices: [{ label: `${amount} звезд`, amount: amount }] }),
         });
         const invoiceData = await invoiceResponse.json();
         if (!invoiceData.ok) return res.status(500).json({ success: false, error: 'Ошибка создания платежа' });
         pendingPayments.set(paymentId, { userId: user.id, amount, status: 'pending' });
         res.json({ success: true, invoiceLink: invoiceData.result });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/webhook/payment', async (req, res) => {
@@ -267,17 +183,14 @@ app.post('/api/webhook/payment', async (req, res) => {
                         user.balance += amount;
                         user.totalDeposited = (user.totalDeposited || 0) + amount;
                         addHistory(user, 'Пополнение баланса', amount, 'deposit');
-                        onlineUsers.forEach((uid, socketId) => {
-                            if (uid === userId) io.to(socketId).emit('balance:update', user.balance);
-                        });
+                        onlineUsers.forEach((uid, socketId) => { if (uid === userId) io.to(socketId).emit('balance:update', user.balance); });
                     }
                 }
             }
         }
         if (body.pre_checkout_query) {
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pre_checkout_query_id: body.pre_checkout_query.id, ok: true }),
             });
         }
@@ -293,66 +206,32 @@ app.post('/api/withdraw', (req, res) => {
     if (!userData) return res.status(401).json({ success: false });
     const user = getOrCreateUser(userData);
     if (user.balance < amount) return res.status(400).json({ success: false });
-
     user.balance -= amount;
     addHistory(user, 'Вывод средств', amount, 'bet');
-
-    const request = {
-        id: crypto.randomUUID(),
-        userId: user.id,
-        name: user.firstName || 'Player',
-        username: user.username || '',
-        amount,
-        time: Date.now(),
-    };
+    const request = { id: crypto.randomUUID(), userId: user.id, name: user.firstName || 'Player', username: user.username || '', amount, time: Date.now() };
     withdrawalRequests.push(request);
-
     res.json({ success: true, balance: user.balance });
 });
 
 // ============================================
 // МИССИИ
 // ============================================
-
 app.get('/api/missions', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
     const userData = getUserFromInitData(initData);
     if (!userData) return res.status(401).json({ success: false });
     const user = getOrCreateUser(userData);
-
     const missions = MISSIONS.map(m => {
         const claimed = !!user.missions[m.id];
-        let progress = 0;
-        let target = 1;
-        let progressText = '';
-        let completed = false;
-
+        let progress = 0, target = 1, progressText = '', completed = false;
         if (m.type === 'counter') {
-            progress = m.getProgress(user);
-            target = m.target;
-            progressText = m.progressText(user);
-            completed = progress >= target;
+            progress = m.getProgress(user); target = m.target; progressText = m.progressText(user); completed = progress >= target;
         } else if (m.type === 'subscription') {
-            completed = claimed;
-            progress = claimed ? 1 : 0;
-            target = 1;
-            progressText = claimed ? 'Подписка активна' : '';
+            completed = claimed; progress = claimed ? 1 : 0; target = 1; progressText = claimed ? 'Подписка активна' : '';
         }
-
-        return {
-            id: m.id,
-            title: m.title,
-            reward: m.reward,
-            type: m.type,
-            claimed,
-            completed,
-            progress,
-            target,
-            progressText,
-        };
+        return { id: m.id, title: m.title, reward: m.reward, type: m.type, claimed, completed, progress, target, progressText };
     });
-
     res.json({ success: true, missions });
 });
 
@@ -363,30 +242,24 @@ app.post('/api/missions/claim', (req, res) => {
     const userData = getUserFromInitData(initData);
     if (!userData) return res.status(401).json({ success: false });
     const user = getOrCreateUser(userData);
-
     if (user.missions[missionId]) return res.status(400).json({ success: false, error: 'Уже получено' });
-
     const mission = MISSIONS.find(m => m.id === missionId);
     if (!mission) return res.status(404).json({ success: false, error: 'Миссия не найдена' });
-
     if (mission.type === 'counter') {
         const progress = mission.getProgress(user);
         if (progress < mission.target) return res.status(400).json({ success: false, error: 'Не выполнено' });
     } else if (mission.type === 'subscription') {
         return res.status(400).json({ success: false, error: 'Используйте check-subscription' });
     }
-
     user.missions[missionId] = true;
     user.balance += mission.reward;
     addHistory(user, 'Миссия: ' + mission.title, mission.reward, 'win');
-
     onlineUsers.forEach((uid, socketId) => {
         if (uid === user.id) {
             io.to(socketId).emit('balance:update', user.balance);
             io.to(socketId).emit('history:update', user.history);
         }
     });
-
     res.json({ success: true, balance: user.balance, reward: mission.reward });
 });
 
@@ -396,11 +269,7 @@ app.get('/api/missions/check-subscription', async (req, res) => {
     const userData = getUserFromInitData(initData);
     if (!userData) return res.status(401).json({ success: false });
     const user = getOrCreateUser(userData);
-
-    if (user.missions['subscribe']) {
-        return res.json({ success: true, subscribed: true, alreadyClaimed: true });
-    }
-
+    if (user.missions['subscribe']) return res.json({ success: true, subscribed: true, alreadyClaimed: true });
     try {
         const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=@${CHANNEL_USERNAME}&user_id=${user.id}`);
         const data = await response.json();
@@ -408,28 +277,22 @@ app.get('/api/missions/check-subscription', async (req, res) => {
         const status = data.result?.status;
         const subscribed = ['member', 'administrator', 'creator'].includes(status);
         if (!subscribed) return res.json({ success: true, subscribed: false });
-
         user.missions['subscribe'] = true;
         user.balance += 10;
         addHistory(user, 'Миссия: Подписка на канал', 10, 'win');
-
         onlineUsers.forEach((uid, socketId) => {
             if (uid === user.id) {
                 io.to(socketId).emit('balance:update', user.balance);
                 io.to(socketId).emit('history:update', user.history);
             }
         });
-
         res.json({ success: true, subscribed: true, reward: 10, balance: user.balance });
-    } catch (e) {
-        res.json({ success: false, subscribed: false, error: 'Ошибка сервера' });
-    }
+    } catch (e) { res.json({ success: false, subscribed: false, error: 'Ошибка сервера' }); }
 });
 
 // ============================================
 // АДМИН
 // ============================================
-
 app.get('/api/admin/players', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
@@ -484,7 +347,6 @@ app.post('/api/admin/crash-now', (req, res) => {
 // ============================================
 // АДМИН — ВЫВОДЫ
 // ============================================
-
 app.get('/api/admin/withdrawals', (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
@@ -502,26 +364,17 @@ app.post('/api/admin/withdrawal-action', (req, res) => {
     const { id, action } = req.body;
     if (!initData || !id || !action) return res.status(400).json({ success: false });
     if (action !== 'approve' && action !== 'reject') return res.status(400).json({ success: false });
-
     const index = withdrawalRequests.findIndex(r => r.id === id);
     if (index === -1) return res.status(404).json({ success: false });
-
     const request = withdrawalRequests[index];
     withdrawalRequests.splice(index, 1);
-
-    withdrawalHistory.unshift({
-        ...request,
-        status: action === 'approve' ? 'approved' : 'rejected',
-        processedAt: Date.now(),
-    });
-
+    withdrawalHistory.unshift({ ...request, status: action === 'approve' ? 'approved' : 'rejected', processedAt: Date.now() });
     res.json({ success: true });
 });
 
 // ============================================
 // SOCKET.IO
 // ============================================
-
 io.on('connection', (socket) => {
     let currentUser = null;
 
@@ -552,15 +405,12 @@ io.on('connection', (socket) => {
         if (rollGame.phase !== 'waiting') return;
         if (currentUser.balance < amount) return;
         if (rollGame.bets.some(b => b.userId === currentUser.id)) return;
-
         currentUser.balance -= amount;
         currentUser.stats.spent += amount;
         addHistory(currentUser, 'Игровая ставка (Рулетка)', amount, 'bet');
-
         const usedColors = rollGame.bets.map(b => b.color);
         const available = colors.filter(c => !usedColors.includes(c));
         const color = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : '#c9a84c';
-
         rollGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, color });
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
@@ -575,13 +425,10 @@ io.on('connection', (socket) => {
         if (crashGame.phase !== 'waiting') return;
         if (currentUser.balance < amount) return;
         if (crashGame.bets.some(b => b.userId === currentUser.id)) return;
-
         currentUser.balance -= amount;
         currentUser.stats.spent += amount;
         addHistory(currentUser, 'Игровая ставка (Crash)', amount, 'bet');
-
         crashGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', amount, cashedOut: false, cashoutMultiplier: 0 });
-
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
         socket.emit('history:update', currentUser.history);
@@ -593,7 +440,6 @@ io.on('connection', (socket) => {
         if (crashGame.phase !== 'flying') return;
         const bet = crashGame.bets.find(b => b.userId === currentUser.id && !b.cashedOut);
         if (!bet) return;
-
         bet.cashedOut = true;
         bet.cashoutMultiplier = crashGame.multiplier;
         const win = Math.floor(bet.amount * crashGame.multiplier);
@@ -601,11 +447,7 @@ io.on('connection', (socket) => {
         currentUser.stats.wins++;
         currentUser.stats.won += win - bet.amount;
         addHistory(currentUser, 'Игровой выигрыш (Crash)', win, 'win');
-
-        if (crashGame.multiplier > (currentUser.maxCrashCashout || 0)) {
-            currentUser.maxCrashCashout = crashGame.multiplier;
-        }
-
+        if (crashGame.multiplier > (currentUser.maxCrashCashout || 0)) currentUser.maxCrashCashout = crashGame.multiplier;
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
         socket.emit('history:update', currentUser.history);
@@ -655,23 +497,19 @@ io.on('connection', (socket) => {
         if (currentUser.balance < bet) return;
         const chance = bet / target;
         if (chance > 0.75) return;
-
         currentUser.balance -= bet;
         currentUser.stats.spent += bet;
         addHistory(currentUser, 'Ставка (Upgrader)', bet, 'bet');
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
         socket.emit('history:update', currentUser.history);
-
         const won = Math.random() < chance;
         const winAmount = won ? target : 0;
         const winSectorSize = chance * 360;
         let targetAngle;
         if (won) targetAngle = Math.random() * winSectorSize;
         else targetAngle = winSectorSize + Math.random() * (360 - winSectorSize);
-
         socket.emit('upgrader:angle', { targetAngle, duration: 3000 + Math.random() * 1000 });
-
         setTimeout(() => {
             if (won) {
                 currentUser.balance += target;
@@ -702,15 +540,9 @@ io.on('connection', (socket) => {
         const available = colors.filter(c => !usedColors.includes(c));
         const color = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : '#c9a84c';
 
-        iceGame.bets.push({
-            userId: currentUser.id,
-            name: currentUser.firstName || 'Player',
-            photoUrl: currentUser.photoUrl || null,
-            amount,
-            color
-        });
+        iceGame.bets.push({ userId: currentUser.id, name: currentUser.firstName || 'Player', photoUrl: currentUser.photoUrl || null, amount, color });
         iceGame.totalBank += amount;
-        iceGame.zones = generateIceZones();
+        iceGame.zones = generateIceZonesFixedAngles();
 
         socket.emit('balance:update', currentUser.balance);
         socket.emit('stats:update', currentUser.stats);
@@ -722,13 +554,7 @@ io.on('connection', (socket) => {
     socket.on('case:open', (data) => {
         if (!currentUser) return;
         const caseId = data.caseId;
-        const casesData = {
-            trash: { price: 10 },
-            farmer: { price: 30 },
-            funny: { price: 67 },
-            okup: { price: 150 },
-            star: { price: 500 }
-        };
+        const casesData = { trash: { price: 10 }, farmer: { price: 30 }, funny: { price: 67 }, okup: { price: 150 }, star: { price: 500 } };
         const caseInfo = casesData[caseId];
         if (!caseInfo) return;
         if (currentUser.balance < caseInfo.price) return;
@@ -761,7 +587,6 @@ io.on('connection', (socket) => {
 // ============================================
 // ROLL LOOP
 // ============================================
-
 function getRollPublicState() {
     return {
         phase: rollGame.phase,
@@ -778,8 +603,28 @@ function getRollPublicState() {
 }
 
 function startRollTimer() {
+    // === МИНИМУМ 2 ИГРОКА ===
+    if (rollGame.bets.length > 0 && rollGame.bets.length < 2) {
+        // Возврат баланса
+        rollGame.bets.forEach(bet => {
+            const user = users.get(bet.userId);
+            if (user) {
+                user.balance += bet.amount;
+                user.stats.spent -= bet.amount;
+                addHistory(user, 'Возврат (Рулетка — 1 игрок)', bet.amount, 'win');
+                onlineUsers.forEach((uid, socketId) => {
+                    if (uid === bet.userId) {
+                        io.to(socketId).emit('balance:update', user.balance);
+                        io.to(socketId).emit('history:update', user.history);
+                    }
+                });
+            }
+        });
+        io.emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
+    }
+
     rollGame.phase = 'waiting';
-    rollGame.timerSeconds = 30;
+    rollGame.timerSeconds = 15;
     rollGame.bets = [];
     rollGame.winnerIndex = -1;
     rollGame.winnerData = null;
@@ -802,10 +647,31 @@ function startRollTimer() {
 }
 
 function startRollSpin() {
-    if (rollGame.bets.length === 0) { setTimeout(() => startRollTimer(), 600); return; }
+    if (rollGame.bets.length < 2) {
+        // Меньше 2 игроков — возврат и перезапуск
+        if (rollGame.bets.length === 1) {
+            const bet = rollGame.bets[0];
+            const user = users.get(bet.userId);
+            if (user) {
+                user.balance += bet.amount;
+                user.stats.spent -= bet.amount;
+                addHistory(user, 'Возврат (Рулетка — 1 игрок)', bet.amount, 'win');
+                onlineUsers.forEach((uid, socketId) => {
+                    if (uid === bet.userId) {
+                        io.to(socketId).emit('balance:update', user.balance);
+                        io.to(socketId).emit('history:update', user.history);
+                    }
+                });
+            }
+        }
+        io.emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
+        rollGame.bets = [];
+        setTimeout(() => startRollTimer(), 1500);
+        return;
+    }
+
     rollGame.phase = 'spinning';
     rollGame.winnerData = null;
-
     const totalBank = rollGame.bets.reduce((sum, b) => sum + b.amount, 0);
     let finalAngleDeg;
     let winnerIndex;
@@ -836,7 +702,6 @@ function startRollSpin() {
     const totalRotation = spins * 360 + finalAngleDeg;
     rollGame.spinAngle = totalRotation;
     rollGame.spinDuration = duration;
-
     io.emit('roll:state', getRollPublicState());
 
     setTimeout(() => {
@@ -867,7 +732,6 @@ function startRollSpin() {
 // ============================================
 // CRASH LOOP
 // ============================================
-
 function getCrashPublicState() {
     return {
         phase: crashGame.phase,
@@ -887,7 +751,6 @@ function startCrashTimer() {
     crashGame.forcedMultiplier = null;
     crashGame.forceCrashNow = false;
     io.emit('crash:state', getCrashPublicState());
-
     let countdown = 5;
     if (crashGame.countdownInterval) clearInterval(crashGame.countdownInterval);
     crashGame.countdownInterval = setInterval(() => {
@@ -901,9 +764,8 @@ function startCrashTimer() {
 function startCrashFlight() {
     crashGame.phase = 'flying';
     crashGame.multiplier = 1.00;
-    if (crashGame.forcedMultiplier) {
-        crashGame.maxMultiplier = crashGame.forcedMultiplier;
-    } else {
+    if (crashGame.forcedMultiplier) crashGame.maxMultiplier = crashGame.forcedMultiplier;
+    else {
         const r = Math.random();
         if (r < 0.40) crashGame.maxMultiplier = 1.01 + Math.random() * 0.7;
         else if (r < 0.70) crashGame.maxMultiplier = 1.2 + Math.random() * 1.3;
@@ -912,7 +774,6 @@ function startCrashFlight() {
     }
     crashGame.startedAt = Date.now();
     io.emit('crash:state', getCrashPublicState());
-
     if (crashGame.crashInterval) clearInterval(crashGame.crashInterval);
     crashGame.crashInterval = setInterval(() => {
         const elapsed = (Date.now() - crashGame.startedAt) / 1000;
@@ -931,7 +792,6 @@ function crashNow() {
     crashGame.crashedAt = crashGame.multiplier;
     crashGame.history.unshift(crashGame.multiplier);
     if (crashGame.history.length > 15) crashGame.history.pop();
-
     crashGame.bets.forEach(bet => {
         if (!bet.cashedOut) {
             const user = users.get(bet.userId);
@@ -941,16 +801,14 @@ function crashNow() {
             }
         }
     });
-
     io.emit('crash:crash', crashGame.multiplier);
     io.emit('crash:state', getCrashPublicState());
     setTimeout(() => startCrashTimer(), 5000);
 }
 
 // ============================================
-// ICE ARENA
+// ICE ARENA — НОВАЯ ЛОГИКА
 // ============================================
-
 function getIcePublicState() {
     return {
         phase: iceGame.phase,
@@ -959,13 +817,33 @@ function getIcePublicState() {
         totalBank: iceGame.totalBank,
         puckX: iceGame.puckX,
         puckY: iceGame.puckY,
+        puckAngle: iceGame.puckAngle || 0,
         zones: iceGame.zones || [],
     };
 }
 
 function startIceTimer() {
+    // === МИНИМУМ 2 ИГРОКА ===
+    if (iceGame.bets.length === 1) {
+        // Возврат
+        const bet = iceGame.bets[0];
+        const user = users.get(bet.userId);
+        if (user) {
+            user.balance += bet.amount;
+            user.stats.spent -= bet.amount;
+            addHistory(user, 'Возврат (Ice Arena — 1 игрок)', bet.amount, 'win');
+            onlineUsers.forEach((uid, socketId) => {
+                if (uid === bet.userId) {
+                    io.to(socketId).emit('balance:update', user.balance);
+                    io.to(socketId).emit('history:update', user.history);
+                }
+            });
+        }
+        io.emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
+    }
+
     iceGame.phase = 'waiting';
-    iceGame.timerSeconds = 30;
+    iceGame.timerSeconds = 15;
     iceGame.bets = [];
     iceGame.totalBank = 0;
     iceGame.winnerData = null;
@@ -973,6 +851,7 @@ function startIceTimer() {
     iceGame.puckY = 170;
     iceGame.puckVX = 0;
     iceGame.puckVY = 0;
+    iceGame.puckAngle = 0;
     iceGame.zones = [];
     io.emit('ice:state', getIcePublicState());
 
@@ -984,86 +863,185 @@ function startIceTimer() {
     }, 1000);
 }
 
-function generateIceZones() {
+// ============================================
+// ГЕНЕРАЦИЯ ЗОН (многоугольники, фиксированные углы)
+// ============================================
+function generateIceZonesFixedAngles() {
+    const bets = iceGame.bets;
+    if (bets.length === 0) return [];
+    if (bets.length === 1) {
+        const b = bets[0];
+        return [{
+            userId: b.userId, name: b.name, color: b.color, amount: b.amount,
+            photoUrl: b.photoUrl || null,
+            points: [{x:0,y:0},{x:340,y:0},{x:340,y:340},{x:0,y:340}],
+        }];
+    }
+
+    const sorted = [...bets].sort((a, b) => b.amount - a.amount);
     const zones = [];
-    if (iceGame.bets.length === 0) return zones;
-    if (iceGame.bets.length === 1) {
-        const bet = iceGame.bets[0];
-        const user = users.get(bet.userId);
-        zones.push({
-            userId: bet.userId, name: bet.name, color: bet.color,
-            photoUrl: user ? user.photoUrl : null,
-            x: 0, y: 0, width: 340, height: 340,
-        });
-        return zones;
-    }
-    const sortedBets = [...iceGame.bets].sort((a, b) => b.amount - a.amount);
+    let points = [{x:0,y:0},{x:340,y:0},{x:340,y:340},{x:0,y:340}];
+    let remainingAmount = iceGame.totalBank;
 
-    function splitZone(zone, betsList) {
-        if (betsList.length === 0) return;
-        if (betsList.length === 1) {
-            const bet = betsList[0];
-            const user = users.get(bet.userId);
-            zones.push({
-                userId: bet.userId, name: bet.name, color: bet.color,
-                photoUrl: user ? user.photoUrl : null,
-                x: zone.x, y: zone.y, width: zone.width, height: zone.height,
-            });
-            return;
-        }
-        const bet1 = betsList[0];
-        const bet2 = betsList[1];
-        const rest = betsList.slice(2);
-        const totalBet = betsList.reduce((s, b) => s + b.amount, 0);
-        const ratio = bet1.amount / totalBet;
-        const splitHorizontal = Math.random() > 0.5;
+    const lastBet = sorted[sorted.length - 1];
+    const otherBets = sorted.slice(0, -1);
 
-        if (splitHorizontal) {
-            const zone1Width = zone.width * ratio;
-            const zone2Width = zone.width - zone1Width;
-            const user = users.get(bet1.userId);
-            zones.push({
-                userId: bet1.userId, name: bet1.name, color: bet1.color,
-                photoUrl: user ? user.photoUrl : null,
-                x: zone.x, y: zone.y, width: zone1Width, height: zone.height,
-            });
-            const newZone = { x: zone.x + zone1Width, y: zone.y, width: zone2Width, height: zone.height };
-            if (rest.length > 0 || bet2) splitZone(newZone, [bet2, ...rest]);
-        } else {
-            const zone1Height = zone.height * ratio;
-            const zone2Height = zone.height - zone1Height;
-            const user = users.get(bet1.userId);
-            zones.push({
-                userId: bet1.userId, name: bet1.name, color: bet1.color,
-                photoUrl: user ? user.photoUrl : null,
-                x: zone.x, y: zone.y, width: zone.width, height: zone1Height,
-            });
-            const newZone = { x: zone.x, y: zone.y + zone1Height, width: zone.width, height: zone2Height };
-            if (rest.length > 0 || bet2) splitZone(newZone, [bet2, ...rest]);
-        }
+    for (let i = 0; i < otherBets.length; i++) {
+        const bet = otherBets[i];
+        const ratio = bet.amount / remainingAmount;
+        remainingAmount -= bet.amount;
+
+        const angleDeg = SLICE_ANGLES[i % SLICE_ANGLES.length];
+        const angleRad = angleDeg * Math.PI / 180;
+        const split = splitPolygonByAngle(points, ratio, angleRad);
+
+        zones.push({ userId: bet.userId, name: bet.name, color: bet.color, amount: bet.amount, photoUrl: bet.photoUrl || null, points: split.part1 });
+        points = split.part2;
     }
-    splitZone({ x: 0, y: 0, width: 340, height: 340 }, sortedBets);
+
+    zones.push({ userId: lastBet.userId, name: lastBet.name, color: lastBet.color, amount: lastBet.amount, photoUrl: lastBet.photoUrl || null, points: points });
     return zones;
 }
 
+function splitPolygonByAngle(poly, ratio, angleRad) {
+    const nx = -Math.sin(angleRad);
+    const ny = Math.cos(angleRad);
+
+    let minProj = Infinity, maxProj = -Infinity;
+    poly.forEach(p => {
+        const v = p.x * nx + p.y * ny;
+        if (v < minProj) minProj = v;
+        if (v > maxProj) maxProj = v;
+    });
+
+    const totalArea = polygonArea(poly);
+    const targetArea = ratio * totalArea;
+
+    let lo = minProj, hi = maxProj;
+    for (let iter = 0; iter < 60; iter++) {
+        const mid = (lo + hi) / 2;
+        const part = clipPolygonByN(poly, nx, ny, mid, true);
+        const area = polygonArea(part);
+        if (area > targetArea) lo = mid;
+        else hi = mid;
+    }
+
+    const finalProj = (lo + hi) / 2;
+    const part1 = clipPolygonByN(poly, nx, ny, finalProj, true);
+    const part2 = clipPolygonByN(poly, nx, ny, finalProj, false);
+    return { part1, part2 };
+}
+
+function clipPolygonByN(poly, nx, ny, offset, keepPositive) {
+    const result = [];
+    const inside = (p) => {
+        const v = p.x * nx + p.y * ny - offset;
+        return keepPositive ? v >= 0 : v <= 0;
+    };
+    for (let i = 0; i < poly.length; i++) {
+        const curr = poly[i];
+        const next = poly[(i + 1) % poly.length];
+        const currIn = inside(curr);
+        const nextIn = inside(next);
+        if (currIn) {
+            const last = result[result.length - 1];
+            if (!last || Math.abs(last.x - curr.x) > 0.5 || Math.abs(last.y - curr.y) > 0.5) {
+                result.push({ x: curr.x, y: curr.y });
+            }
+        }
+        if (currIn !== nextIn) {
+            const v1 = curr.x * nx + curr.y * ny - offset;
+            const v2 = next.x * nx + next.y * ny - offset;
+            if (Math.abs(v1 - v2) < 0.001) continue;
+            const t = v1 / (v1 - v2);
+            result.push({ x: curr.x + t * (next.x - curr.x), y: curr.y + t * (next.y - curr.y) });
+        }
+    }
+    return result;
+}
+
+function polygonArea(poly) {
+    if (poly.length < 3) return 0;
+    let area = 0;
+    for (let i = 0; i < poly.length; i++) {
+        const j = (i + 1) % poly.length;
+        area += poly[i].x * poly[j].y - poly[j].x * poly[i].y;
+    }
+    return Math.abs(area) / 2;
+}
+
+function pointInPolygon(x, y, points) {
+    if (!points || points.length < 3) return false;
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        const xi = points[i].x, yi = points[i].y;
+        const xj = points[j].x, yj = points[j].y;
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
 function startIceLaunch() {
-    if (iceGame.bets.length === 0) { setTimeout(() => startIceTimer(), 600); return; }
+    if (iceGame.bets.length < 2) {
+        if (iceGame.bets.length === 1) {
+            const bet = iceGame.bets[0];
+            const user = users.get(bet.userId);
+            if (user) {
+                user.balance += bet.amount;
+                user.stats.spent -= bet.amount;
+                addHistory(user, 'Возврат (Ice Arena — 1 игрок)', bet.amount, 'win');
+                onlineUsers.forEach((uid, socketId) => {
+                    if (uid === bet.userId) {
+                        io.to(socketId).emit('balance:update', user.balance);
+                        io.to(socketId).emit('history:update', user.history);
+                    }
+                });
+            }
+        }
+        io.emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
+        iceGame.bets = [];
+        iceGame.totalBank = 0;
+        iceGame.zones = [];
+        setTimeout(() => startIceTimer(), 1500);
+        return;
+    }
+
     iceGame.phase = 'launching';
-    iceGame.zones = generateIceZones();
+    iceGame.zones = generateIceZonesFixedAngles();
+
+    // === СПАВН ШАЙБЫ В СЛУЧАЙНОМ МЕСТЕ ===
+    const margin = 340 * 0.25;
+    iceGame.puckX = margin + Math.random() * (340 - margin * 2);
+    iceGame.puckY = margin + Math.random() * (340 - margin * 2);
+    iceGame.puckVX = 0;
+    iceGame.puckVY = 0;
+
     io.emit('ice:state', getIcePublicState());
     io.emit('ice:zones', iceGame.zones);
-    const finalAngle = Math.random() * 360;
-    setTimeout(() => launchIcePuck(finalAngle), 1000);
+
+    // === СТРЕЛКА-КОМПАС (1 сек крутим, потом финальный угол) ===
+    io.emit('ice:arrow:start', { duration: 1000 });
+    
+    setTimeout(() => {
+        const finalAngle = Math.random() * 360;
+        io.emit('ice:arrow:final', { angle: finalAngle });
+        
+        setTimeout(() => {
+            launchIcePuck(finalAngle);
+        }, 200);
+    }, 1000);
 }
 
 function launchIcePuck(angle) {
     iceGame.phase = 'sliding';
-    iceGame.puckX = 170;
-    iceGame.puckY = 170;
+    // Шайба уже в случайной позиции (puckX, puckY заданы в startIceLaunch)
+
     const speed = 14;
     const rad = angle * Math.PI / 180;
     iceGame.puckVX = Math.cos(rad) * speed;
     iceGame.puckVY = Math.sin(rad) * speed;
+
     const MIN_POS = 10;
     const MAX_POS = 330;
 
@@ -1071,6 +1049,7 @@ function launchIcePuck(angle) {
     iceGame.puckAnimation = setInterval(() => {
         iceGame.puckX += iceGame.puckVX;
         iceGame.puckY += iceGame.puckVY;
+
         if (iceGame.puckX < MIN_POS) { iceGame.puckX = MIN_POS; iceGame.puckVX = Math.abs(iceGame.puckVX) * 0.85; }
         else if (iceGame.puckX > MAX_POS) { iceGame.puckX = MAX_POS; iceGame.puckVX = -Math.abs(iceGame.puckVX) * 0.85; }
         if (iceGame.puckY < MIN_POS) { iceGame.puckY = MIN_POS; iceGame.puckVY = Math.abs(iceGame.puckVY) * 0.85; }
@@ -1095,9 +1074,9 @@ function launchIcePuck(angle) {
 function finishIceRound() {
     iceGame.phase = 'result';
     let winner = iceGame.bets[0];
+
     for (const zone of iceGame.zones) {
-        if (iceGame.puckX >= zone.x && iceGame.puckX <= zone.x + zone.width &&
-            iceGame.puckY >= zone.y && iceGame.puckY <= zone.y + zone.height) {
+        if (pointInPolygon(iceGame.puckX, iceGame.puckY, zone.points)) {
             const bet = iceGame.bets.find(b => b.userId === zone.userId);
             if (bet) winner = bet;
             break;
