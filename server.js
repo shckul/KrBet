@@ -603,7 +603,7 @@ function getRollPublicState() {
 }
 
 function startRollTimer() {
-    // === ФИКС: возврат только если РОВНО 1 ставка (не 0) ===
+    // Если ровно 1 ставка — возврат ТОЛЬКО этому игроку
     if (rollGame.bets.length === 1) {
         const bet = rollGame.bets[0];
         const user = users.get(bet.userId);
@@ -615,12 +615,12 @@ function startRollTimer() {
                 if (uid === bet.userId) {
                     io.to(socketId).emit('balance:update', user.balance);
                     io.to(socketId).emit('history:update', user.history);
+                    // === ФИКС: refund только этому игроку ===
+                    io.to(socketId).emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
                 }
             });
         }
-        io.emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
     }
-    // Если 0 ставок — просто новый раунд, БЕЗ уведомления
 
     rollGame.phase = 'waiting';
     rollGame.timerSeconds = 15;
@@ -652,7 +652,7 @@ function startRollSpin() {
         return;
     }
     if (rollGame.bets.length === 1) {
-        // 1 ставка — возврат + уведомление
+        // 1 ставка — возврат + уведомление ТОЛЬКО этому игроку
         const bet = rollGame.bets[0];
         const user = users.get(bet.userId);
         if (user) {
@@ -663,10 +663,11 @@ function startRollSpin() {
                 if (uid === bet.userId) {
                     io.to(socketId).emit('balance:update', user.balance);
                     io.to(socketId).emit('history:update', user.history);
+                    // === ФИКС: refund только этому игроку ===
+                    io.to(socketId).emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
                 }
             });
         }
-        io.emit('roll:refund', { message: 'Недостаточно игроков — ставки возвращены' });
         rollGame.bets = [];
         setTimeout(() => startRollTimer(), 1500);
         return;
@@ -825,7 +826,7 @@ function getIcePublicState() {
 }
 
 function startIceTimer() {
-    // === ФИКС: возврат только если РОВНО 1 ставка (не 0) ===
+    // Если ровно 1 ставка — возврат ТОЛЬКО этому игроку
     if (iceGame.bets.length === 1) {
         const bet = iceGame.bets[0];
         const user = users.get(bet.userId);
@@ -837,12 +838,12 @@ function startIceTimer() {
                 if (uid === bet.userId) {
                     io.to(socketId).emit('balance:update', user.balance);
                     io.to(socketId).emit('history:update', user.history);
+                    // === ФИКС: refund только этому игроку ===
+                    io.to(socketId).emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
                 }
             });
         }
-        io.emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
     }
-    // Если 0 ставок — просто новый раунд, БЕЗ уведомления
 
     iceGame.phase = 'waiting';
     iceGame.timerSeconds = 15;
@@ -991,7 +992,7 @@ function startIceLaunch() {
         return;
     }
     if (iceGame.bets.length === 1) {
-        // 1 ставка — возврат + уведомление
+        // 1 ставка — возврат + уведомление ТОЛЬКО этому игроку
         const bet = iceGame.bets[0];
         const user = users.get(bet.userId);
         if (user) {
@@ -1002,10 +1003,11 @@ function startIceLaunch() {
                 if (uid === bet.userId) {
                     io.to(socketId).emit('balance:update', user.balance);
                     io.to(socketId).emit('history:update', user.history);
+                    // === ФИКС: refund только этому игроку ===
+                    io.to(socketId).emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
                 }
             });
         }
-        io.emit('ice:refund', { message: 'Недостаточно игроков — ставка возвращена' });
         iceGame.bets = [];
         iceGame.totalBank = 0;
         iceGame.zones = [];
