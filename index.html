@@ -189,6 +189,7 @@
         .ice-arena-container { width: 100%; max-width: 360px; margin: 20px auto 0; display: flex; flex-direction: column; align-items: center; }
         .ice-arena-field { position: relative; width: 90%; max-width: 340px; aspect-ratio: 1; background: #0d0d18; border-radius: 16px; border: 3px solid #1a1a25; overflow: hidden; margin: 10px auto; box-shadow: 0 0 60px rgba(0,0,0,0.6); }
         .ice-arena-field canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #ice-canvas-front { z-index: 2; pointer-events: none; }
         .ice-timer { font-size: 1.5rem; font-weight: 800; color: var(--gold); text-align: center; margin: 4px 0; }
         .ice-bank { font-size: 0.9rem; color: var(--gold-light); text-align: center; margin: 2px 0; }
         .ice-players-list { width: 100%; max-width: 320px; max-height: 100px; overflow-y: auto; margin: 6px 0; }
@@ -199,10 +200,116 @@
         .ice-status { font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 4px; min-height: 16px; }
 
         .cases-title { text-align: center; color: var(--gold); font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; letter-spacing: 2px; }
-        .case-roulette-container { position: relative; width: 90%; max-width: 340px; height: 100px; margin: 20px auto; overflow: hidden; border-radius: 12px; border: 2px solid rgba(255,255,255,0.06); background: var(--surface); }
-        .case-roulette-strip { display: flex; position: relative; height: 100%; transition: none; will-change: transform; }
-        .case-item { min-width: 100px; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: white; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.08); }
-        .case-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 3px; height: 100%; background: var(--gold); z-index: 5; box-shadow: 0 0 10px rgba(201,168,76,0.8); }
+
+        .case-roulette-container {
+            position: relative;
+            width: 90%;
+            max-width: 340px;
+            height: 130px;
+            margin: 20px auto;
+            overflow: hidden;
+            border-radius: 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: linear-gradient(180deg, #0d0d18 0%, #1a1a25 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 0 30px rgba(201,168,76,0.1);
+        }
+        .case-roulette-strip { display: flex; position: relative; height: 100%; transition: none; will-change: transform; align-items: center; padding: 10px 0; }
+        .case-item {
+            min-width: 110px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: white;
+            flex-shrink: 0;
+            margin: 0 5px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: linear-gradient(145deg, #2a2a3a, #1a1a25);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .case-item::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        .case-item-star {
+            font-size: 1.6rem;
+            filter: drop-shadow(0 0 6px rgba(255,215,0,0.6));
+        }
+        .case-item-amount { font-size: 0.95rem; font-weight: 800; }
+        .case-item.rarity-common { background: linear-gradient(145deg, #3a3a4a, #1a1a25); border-color: rgba(150,150,160,0.3); }
+        .case-item.rarity-uncommon { background: linear-gradient(145deg, #2a4a2a, #1a2a1a); border-color: rgba(46,204,113,0.4); }
+        .case-item.rarity-rare { background: linear-gradient(145deg, #2a2a5a, #1a1a3a); border-color: rgba(100,140,255,0.4); }
+        .case-item.rarity-epic { background: linear-gradient(145deg, #4a2a5a, #2a1a3a); border-color: rgba(180,100,255,0.4); }
+        .case-item.rarity-legendary { background: linear-gradient(145deg, #5a4a1a, #3a2a0a); border-color: rgba(255,200,50,0.6); box-shadow: 0 4px 20px rgba(255,200,50,0.3); }
+        .case-item.winner {
+            transform: scale(1.15);
+            z-index: 3;
+            box-shadow: 0 0 30px rgba(201,168,76,0.9), 0 0 60px rgba(201,168,76,0.5);
+            border-color: var(--gold);
+        }
+        .case-pointer {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+            z-index: 5;
+            box-shadow: 0 0 15px rgba(201,168,76,1);
+        }
+        .case-pointer::before, .case-pointer::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+        }
+        .case-pointer::before { top: 0; border-top: 12px solid var(--gold); }
+        .case-pointer::after { bottom: 0; border-bottom: 12px solid var(--gold); }
+        .case-roulette-container::before, .case-roulette-container::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 40px;
+            z-index: 4;
+            pointer-events: none;
+        }
+        .case-roulette-container::before { left: 0; background: linear-gradient(90deg, #0d0d18, transparent); }
+        .case-roulette-container::after { right: 0; background: linear-gradient(-90deg, #0d0d18, transparent); }
+        .case-result-flash {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(201,168,76,0.6), transparent 70%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 6;
+            border-radius: 16px;
+        }
+        @keyframes caseFlash {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
         .case-buttons { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; justify-content: center; }
         .case-open-btn { padding: 14px 24px; background: var(--gold); color: #0a0a0f; border: none; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .case-open-btn:disabled { opacity: 0.4; pointer-events: none; }
@@ -211,7 +318,12 @@
         .case-drops-list { width: 100%; max-width: 340px; margin: 10px auto; }
         .case-drops-title { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; text-align: center; }
         .case-drops-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-        .drop-item { background: #1a1a25; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; color: #ccc; }
+        .drop-item { background: #1a1a25; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; color: #ccc; border: 1px solid transparent; }
+        .drop-item.rarity-common { border-color: rgba(150,150,160,0.3); }
+        .drop-item.rarity-uncommon { border-color: rgba(46,204,113,0.4); color: #6ee7b7; }
+        .drop-item.rarity-rare { border-color: rgba(100,140,255,0.4); color: #93c5fd; }
+        .drop-item.rarity-epic { border-color: rgba(180,100,255,0.4); color: #d8b4fe; }
+        .drop-item.rarity-legendary { border-color: rgba(255,200,50,0.6); color: #fde047; background: rgba(255,200,50,0.1); }
 
         .profile-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 20px; width: 100%; }
         .profile-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold); background: #1a1a25; }
@@ -343,7 +455,6 @@
 
     <div class="content" id="main-content">
         <div class="tab-pane active" id="tab-menu">
-            <!-- HERO Crash -->
             <div class="hero-card" onclick="openGame('crash')">
                 <canvas id="preview-crash-hero" width="400" height="200"></canvas>
                 <div class="hero-card-label">
@@ -352,7 +463,6 @@
                 </div>
             </div>
 
-            <!-- ЛУЧШИЕ РЕЖИМЫ -->
             <div class="section-title">Лучшие режимы</div>
             <div class="games-row">
                 <div class="game-card" onclick="openGame('upgrader')">
@@ -365,7 +475,6 @@
                 </div>
             </div>
 
-            <!-- БАННЕР -->
             <div class="banner-container">
                 <div class="banner-box">
                     <div class="banner-slides" id="banner-slides">
@@ -383,7 +492,6 @@
                 </div>
             </div>
 
-            <!-- ВСЕ РЕЖИМЫ -->
             <div class="section-title">Все режимы</div>
             <div class="games-row">
                 <div class="game-card" onclick="openGame('roll')">
@@ -472,6 +580,7 @@
             <div class="ice-arena-container">
                 <div class="ice-arena-field" id="ice-arena-field">
                     <canvas id="ice-canvas"></canvas>
+                    <canvas id="ice-canvas-front"></canvas>
                 </div>
                 <div class="ice-timer" id="ice-timer">15</div>
                 <div class="ice-bank" id="ice-bank">Банк: 0 ⭐</div>
@@ -523,6 +632,7 @@
             <div class="case-roulette-container" id="case-roulette-container">
                 <div class="case-pointer"></div>
                 <div class="case-roulette-strip" id="case-roulette-strip"></div>
+                <div class="case-result-flash" id="case-result-flash"></div>
             </div>
             <div class="case-buttons">
                 <button class="case-open-btn" id="case-open-btn">Открыть</button>
@@ -728,6 +838,8 @@
     let iceState = { phase: 'waiting', timerSeconds: 15, bets: [], totalBank: 0, puckX: 170, puckY: 170, puckAngle: 0, zones: [] };
     let iceArrowAngle = 0;
     let iceArrowSpinning = false;
+    let iceArrowVisible = false;
+    let iceArrowRaf = null;
     const iceAvatarCache = {};
 
     const casesData = {
@@ -772,6 +884,8 @@
     const iceCanvas=document.getElementById('ice-canvas'),iceCtx=iceCanvas.getContext('2d');
     const ICE_SCALE=2,ICE_DISPLAY=340,ICE_SIZE=ICE_DISPLAY*ICE_SCALE;
     iceCanvas.width=ICE_SIZE;iceCanvas.height=ICE_SIZE;
+    const iceCanvasFront=document.getElementById('ice-canvas-front'),iceCtxFront=iceCanvasFront.getContext('2d');
+    iceCanvasFront.width=ICE_SIZE;iceCanvasFront.height=ICE_SIZE;
     const iceField=document.getElementById('ice-arena-field');
     const iceTimerEl=document.getElementById('ice-timer');
     const iceBankEl=document.getElementById('ice-bank');
@@ -878,6 +992,15 @@
         if (strip) { strip.style.transition = 'none'; strip.style.transform = 'translateX(0)'; }
     }
 
+    function getRarityClass(amount, caseId) {
+        const price = casesData[caseId].price;
+        if (amount >= price * 2) return 'rarity-legendary';
+        if (amount >= price * 1.5) return 'rarity-epic';
+        if (amount >= price) return 'rarity-rare';
+        if (amount >= price * 0.5) return 'rarity-uncommon';
+        return 'rarity-common';
+    }
+
     function openCase(caseId) {
         currentCase = caseId;
         const data = casesData[caseId];
@@ -895,10 +1018,9 @@
         for (let repeat = 0; repeat < 10; repeat++) {
             shuffledDrops.forEach(drop => {
                 const item = document.createElement('div');
-                item.className = 'case-item';
-                const colors = ['#2c3e50','#34495e','#4a5a6a','#5d6d7e','#6c7a89','#7f8c8d','#95a5a6','#bdc3c7','#c9a84c'];
-                item.style.background = colors[drop % colors.length];
-                item.textContent = drop + ' ⭐';
+                item.className = 'case-item ' + getRarityClass(drop, caseId);
+                item.innerHTML = `<div class="case-item-star">⭐</div><div class="case-item-amount">${drop} ⭐</div>`;
+                item.dataset.amount = drop;
                 strip.appendChild(item);
             });
         }
@@ -906,7 +1028,7 @@
         dropsGrid.innerHTML = '';
         data.drops.forEach(d => {
             const item = document.createElement('div');
-            item.className = 'drop-item';
+            item.className = 'drop-item ' + getRarityClass(d, caseId);
             item.textContent = d + ' ⭐';
             dropsGrid.appendChild(item);
         });
@@ -987,7 +1109,7 @@
     });
     socket.on('ice:zones', (zones) => {
         iceState.zones = zones;
-        drawIceField();
+        drawIceZones();
     });
     socket.on('ice:timer', (seconds) => {
         iceState.timerSeconds = seconds;
@@ -996,30 +1118,33 @@
     socket.on('ice:puck', (puckData) => {
         iceState.puckX = puckData.x;
         iceState.puckY = puckData.y;
-        drawIceField();
+        drawIcePuck();
     });
     socket.on('ice:arrow:start', (data) => {
+        iceArrowVisible = true;
         iceArrowSpinning = true;
         const startTime = performance.now();
         const duration = data.duration || 1000;
+        if (iceArrowRaf) cancelAnimationFrame(iceArrowRaf);
         function spinArrow(now) {
             const elapsed = now - startTime;
             const p = Math.min(elapsed / duration, 1);
             const eased = 1 - Math.pow(1 - p, 3);
             iceArrowAngle = eased * Math.PI * 4;
-            drawIceField();
-            if (p < 1 && iceArrowSpinning) requestAnimationFrame(spinArrow);
+            drawIcePuck();
+            if (p < 1 && iceArrowSpinning) iceArrowRaf = requestAnimationFrame(spinArrow);
         }
-        requestAnimationFrame(spinArrow);
+        iceArrowRaf = requestAnimationFrame(spinArrow);
     });
     socket.on('ice:arrow:final', (data) => {
         iceArrowAngle = data.angle * Math.PI / 180;
         iceArrowSpinning = false;
+        if (iceArrowRaf) cancelAnimationFrame(iceArrowRaf);
+        drawIcePuck();
         setTimeout(() => {
-            iceArrowAngle = 0;
-            drawIceField();
+            iceArrowVisible = false;
+            drawIcePuck();
         }, 300);
-        drawIceField();
     });
     socket.on('ice:result', (data) => {
         if (data.winnerName === userInfo.firstName) showResultBanner('🎉 Вы выиграли ' + data.winnerAmount + ' ⭐!', true);
@@ -1027,7 +1152,6 @@
     });
     socket.on('ice:refund', (data) => {
         showNotification(data.message || 'Недостаточно игроков — ставка возвращена', 'error');
-        if (iceStatusEl) iceStatusEl.textContent = data.message || 'Недостаточно игроков — ставка возвращена';
     });
 
     socket.on('upgrader:angle', (data) => {
@@ -1792,7 +1916,7 @@
     });
     btnCancelBet.addEventListener('click', () => betModal.classList.remove('show'));
 
-    // ===== ICE ARENA UI =====
+    // ===== ICE ARENA UI (2 canvas) =====
     function updateIceUI() {
         iceTimerEl.textContent = iceState.timerSeconds;
         iceBankEl.textContent = 'Банк: ' + iceState.totalBank + ' ⭐';
@@ -1807,40 +1931,39 @@
                 icePlayersListEl.appendChild(row);
             });
         }
-        if (iceState.phase === 'waiting') {
-            iceBetBtn.disabled = false;
-        } else {
-            iceBetBtn.disabled = true;
-        }
+        if (iceState.phase === 'waiting') iceBetBtn.disabled = false;
+        else iceBetBtn.disabled = true;
+
         if (iceStatusEl) {
             if (iceState.phase === 'waiting') iceStatusEl.textContent = 'Приём ставок (мин. 2 игрока)';
             else if (iceState.phase === 'launching') iceStatusEl.textContent = 'Шайба выбирает направление...';
             else if (iceState.phase === 'sliding') iceStatusEl.textContent = 'Шайба летит...';
             else if (iceState.phase === 'result') iceStatusEl.textContent = 'Результат';
         }
-        drawIceField();
+
+        drawIceZones();
+        drawIcePuck();
     }
 
-    function drawIceField() {
-        const w = ICE_SIZE, h = ICE_SIZE;
-        iceCtx.clearRect(0, 0, w, h);
+    // ФОН: зоны
+    function drawIceZones() {
+        iceCtx.clearRect(0, 0, ICE_SIZE, ICE_SIZE);
 
         if (!iceState.zones || iceState.zones.length === 0) {
             iceCtx.fillStyle = '#0d0d18';
-            iceCtx.fillRect(0, 0, w, h);
+            iceCtx.fillRect(0, 0, ICE_SIZE, ICE_SIZE);
             return;
         }
 
-        const scaleX = w / 340, scaleY = h / 340;
+        const scale = ICE_SIZE / 340;
 
-        // Рисуем зоны-многоугольники
         iceState.zones.forEach(zone => {
             if (!zone.points || zone.points.length < 3) return;
 
             iceCtx.beginPath();
-            iceCtx.moveTo(zone.points[0].x * scaleX, zone.points[0].y * scaleY);
+            iceCtx.moveTo(zone.points[0].x * scale, zone.points[0].y * scale);
             for (let i = 1; i < zone.points.length; i++) {
-                iceCtx.lineTo(zone.points[i].x * scaleX, zone.points[i].y * scaleY);
+                iceCtx.lineTo(zone.points[i].x * scale, zone.points[i].y * scale);
             }
             iceCtx.closePath();
             iceCtx.fillStyle = zone.color + '99';
@@ -1849,19 +1972,17 @@
             iceCtx.lineWidth = 3;
             iceCtx.stroke();
 
-            // Центроид для текста
             let cx = 0, cy = 0;
             zone.points.forEach(p => { cx += p.x; cy += p.y; });
-            cx = (cx / zone.points.length) * scaleX;
-            cy = (cy / zone.points.length) * scaleY;
+            cx = (cx / zone.points.length) * scale;
+            cy = (cy / zone.points.length) * scale;
 
-            // Аватарка или инициалы
             const avatarSize = 40;
             if (zone.photoUrl && zone.photoUrl.length > 0) {
                 if (!iceAvatarCache[zone.userId]) {
                     const img = new Image();
                     img.crossOrigin = 'anonymous';
-                    img.onload = () => { iceAvatarCache[zone.userId] = img; drawIceField(); };
+                    img.onload = () => { iceAvatarCache[zone.userId] = img; drawIceZones(); };
                     img.onerror = () => { drawInitialsAvatar(zone, cx, cy, avatarSize); };
                     img.src = zone.photoUrl;
                 } else {
@@ -1878,7 +1999,6 @@
                 drawInitialsAvatar(zone, cx, cy, avatarSize);
             }
 
-            // Имя и ставка
             iceCtx.fillStyle = '#fff';
             iceCtx.textAlign = 'center';
             iceCtx.textBaseline = 'middle';
@@ -1888,58 +2008,60 @@
             iceCtx.fillText(zone.amount + '⭐', cx, cy + avatarSize / 2 + 28);
             iceCtx.shadowBlur = 0;
         });
+    }
 
-        // Шайба
-        const puckR = 14 * scaleX;
-        const puckX = iceState.puckX * scaleX;
-        const puckY = iceState.puckY * scaleY;
+    // ПЕРЕДНИЙ ПЛАН: шайба + стрелка
+    function drawIcePuck() {
+        iceCtxFront.clearRect(0, 0, ICE_SIZE, ICE_SIZE);
 
-        if (iceState.phase === 'launching' || iceState.phase === 'sliding' || iceState.phase === 'result') {
-            // Свечение
-            iceCtx.beginPath();
-            iceCtx.arc(puckX, puckY, puckR + 6, 0, Math.PI * 2);
-            const glow = iceCtx.createRadialGradient(puckX, puckY, puckR, puckX, puckY, puckR + 6);
-            glow.addColorStop(0, 'rgba(201,168,76,0.5)');
-            glow.addColorStop(1, 'rgba(201,168,76,0)');
-            iceCtx.fillStyle = glow;
-            iceCtx.fill();
+        const scale = ICE_SIZE / 340;
+        const puckR = 14 * scale;
+        const puckX = iceState.puckX * scale;
+        const puckY = iceState.puckY * scale;
 
-            // Шайба
-            iceCtx.beginPath();
-            iceCtx.arc(puckX, puckY, puckR, 0, Math.PI * 2);
-            const grad = iceCtx.createRadialGradient(puckX - 4, puckY - 4, 2, puckX, puckY, puckR);
-            grad.addColorStop(0, '#333');
-            grad.addColorStop(1, '#0a0a0a');
-            iceCtx.fillStyle = grad;
-            iceCtx.fill();
-            iceCtx.strokeStyle = '#c9a84c';
-            iceCtx.lineWidth = 3;
-            iceCtx.stroke();
+        const showPuck = (iceState.phase === 'launching' || iceState.phase === 'sliding' || iceState.phase === 'result');
+        if (!showPuck) return;
 
-            // Буквы KR
-            iceCtx.fillStyle = '#c9a84c';
-            iceCtx.font = 'bold ' + Math.floor(puckR * 0.9) + 'px Inter, sans-serif';
-            iceCtx.textAlign = 'center';
-            iceCtx.textBaseline = 'middle';
-            iceCtx.fillText('KR', puckX, puckY + 1);
+        iceCtxFront.beginPath();
+        iceCtxFront.arc(puckX, puckY, puckR + 6, 0, Math.PI * 2);
+        const glow = iceCtxFront.createRadialGradient(puckX, puckY, puckR, puckX, puckY, puckR + 6);
+        glow.addColorStop(0, 'rgba(201,168,76,0.5)');
+        glow.addColorStop(1, 'rgba(201,168,76,0)');
+        iceCtxFront.fillStyle = glow;
+        iceCtxFront.fill();
 
-            // Стрелка-компас (только при launching, до final)
-            if (iceState.phase === 'launching' && iceArrowAngle !== null) {
-                const arrowR = puckR + 20;
-                iceCtx.save();
-                iceCtx.translate(puckX, puckY);
-                iceCtx.rotate(iceArrowAngle);
-                iceCtx.beginPath();
-                iceCtx.moveTo(arrowR, 0);
-                iceCtx.lineTo(arrowR - 14, -10);
-                iceCtx.lineTo(arrowR - 14, 10);
-                iceCtx.closePath();
-                iceCtx.fillStyle = '#c9a84c';
-                iceCtx.shadowColor = '#c9a84c';
-                iceCtx.shadowBlur = 15;
-                iceCtx.fill();
-                iceCtx.restore();
-            }
+        iceCtxFront.beginPath();
+        iceCtxFront.arc(puckX, puckY, puckR, 0, Math.PI * 2);
+        const grad = iceCtxFront.createRadialGradient(puckX - 4, puckY - 4, 2, puckX, puckY, puckR);
+        grad.addColorStop(0, '#333');
+        grad.addColorStop(1, '#0a0a0a');
+        iceCtxFront.fillStyle = grad;
+        iceCtxFront.fill();
+        iceCtxFront.strokeStyle = '#c9a84c';
+        iceCtxFront.lineWidth = 3;
+        iceCtxFront.stroke();
+
+        iceCtxFront.fillStyle = '#c9a84c';
+        iceCtxFront.font = 'bold ' + Math.floor(puckR * 0.9) + 'px Inter, sans-serif';
+        iceCtxFront.textAlign = 'center';
+        iceCtxFront.textBaseline = 'middle';
+        iceCtxFront.fillText('KR', puckX, puckY + 1);
+
+        if (iceArrowVisible && iceState.phase === 'launching') {
+            const arrowR = puckR + 20;
+            iceCtxFront.save();
+            iceCtxFront.translate(puckX, puckY);
+            iceCtxFront.rotate(iceArrowAngle);
+            iceCtxFront.beginPath();
+            iceCtxFront.moveTo(arrowR, 0);
+            iceCtxFront.lineTo(arrowR - 14, -10);
+            iceCtxFront.lineTo(arrowR - 14, 10);
+            iceCtxFront.closePath();
+            iceCtxFront.fillStyle = '#c9a84c';
+            iceCtxFront.shadowColor = '#c9a84c';
+            iceCtxFront.shadowBlur = 15;
+            iceCtxFront.fill();
+            iceCtxFront.restore();
         }
     }
 
@@ -2063,6 +2185,7 @@
         for (let i = 0; i < weights.length; i++) { random -= weights[i]; if (random <= 0) return data.drops[i]; }
         return data.drops[0];
     }
+
     function spinCase(isDemo) {
         if (caseSpinning) return;
         if (!currentCase) return;
@@ -2074,34 +2197,65 @@
         openBtn.disabled = true;
         demoBtn.disabled = true;
         if (!isDemo) socket.emit('case:open', { caseId: currentCase });
+
         const winDrop = getRandomDrop(currentCase, isDemo);
         const strip = document.getElementById('case-roulette-strip');
-        const itemWidth = 100;
+        const itemWidth = 120;
+
         strip.style.transition = 'none';
         strip.style.transform = 'translateX(0)';
+        document.querySelectorAll('.case-item.winner').forEach(el => el.classList.remove('winner'));
+
+        strip.innerHTML = '';
+        const shuffledDrops = [...data.drops].sort(() => Math.random() - 0.5);
+        const itemsPerRepeat = shuffledDrops.length;
+        for (let repeat = 0; repeat < 10; repeat++) {
+            shuffledDrops.forEach(drop => {
+                const item = document.createElement('div');
+                item.className = 'case-item ' + getRarityClass(drop, currentCase);
+                item.innerHTML = `<div class="case-item-star">⭐</div><div class="case-item-amount">${drop} ⭐</div>`;
+                item.dataset.amount = drop;
+                strip.appendChild(item);
+            });
+        }
+
         void strip.offsetWidth;
-        const items = strip.querySelectorAll('.case-item');
-        const itemsPerRepeat = items.length / 10;
+
         let winElementIndex = -1;
-        for (let i = 0; i < itemsPerRepeat; i++) { if (items[i].textContent === winDrop + ' ⭐') { winElementIndex = i; break; } }
+        for (let i = 0; i < itemsPerRepeat; i++) {
+            if (parseInt(strip.children[i].dataset.amount) === winDrop) { winElementIndex = i; break; }
+        }
         if (winElementIndex === -1) winElementIndex = 0;
+
         const containerWidth = document.getElementById('case-roulette-container').clientWidth;
         const centerX = containerWidth / 2;
         const targetElementIndex = 5 * itemsPerRepeat + winElementIndex;
         const targetElementCenter = targetElementIndex * itemWidth + itemWidth / 2;
         const finalOffset = targetElementCenter - centerX;
-        strip.style.transition = 'transform 4s cubic-bezier(0.12, 0.8, 0.15, 1)';
+
+        strip.style.transition = 'transform 5s cubic-bezier(0.05, 0.9, 0.1, 1)';
         strip.style.transform = 'translateX(-' + finalOffset + 'px)';
+
         setTimeout(() => {
             caseSpinning = false;
             openBtn.disabled = false;
             demoBtn.disabled = false;
-            if (isDemo) showNotification('Демо: выпало ' + winDrop + ' ⭐', 'success');
-            else {
+
+            const winItem = strip.children[targetElementIndex];
+            if (winItem) winItem.classList.add('winner');
+
+            const flash = document.getElementById('case-result-flash');
+            flash.style.animation = 'none';
+            void flash.offsetWidth;
+            flash.style.animation = 'caseFlash 1s ease-out';
+
+            if (isDemo) {
+                showNotification('Демо: выпало ' + winDrop + ' ⭐', 'success');
+            } else {
                 socket.emit('case:win', { caseId: currentCase, amount: winDrop });
-                showNotification('Вы выиграли ' + winDrop + ' ⭐!', 'success');
+                setTimeout(() => showResultBanner('🎁 ' + winDrop + ' ⭐!', true), 300);
             }
-        }, 4200);
+        }, 5100);
     }
     document.getElementById('case-open-btn').addEventListener('click', () => spinCase(false));
     document.getElementById('case-demo-btn').addEventListener('click', () => spinCase(true));
@@ -2131,4 +2285,6 @@
 
     simulateLoading();
 })();
-    </script>
+</script>
+</body>
+    </html>
