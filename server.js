@@ -300,11 +300,7 @@ app.post('/api/missions/check-subscription', async (req, res) => {
     } catch (e) { res.json({ success: false, subscribed: false, error: 'Ошибка сервера' }); }
 });
 
-// ===== БЕСПЛАТНЫЙ КЕЙС =====
 const FREE_CASE_COOLDOWN = 24 * 60 * 60 * 1000;
-
-// Что показывается в ленте — те же значения, что реально падают (1-5★).
-// Никакой "красивой" лжи — лента отображает реальные возможные дропы.
 const FREE_CASE_DROPS = [1, 2, 3, 5];
 const FREE_CASE_WEIGHTS = [30, 30, 25, 15];
 
@@ -485,9 +481,6 @@ app.post('/api/admin/withdrawal-action', (req, res) => {
     res.json({ success: true });
 });
 
-// ============================================
-// РУЛЕТКА
-// ============================================
 const rollGame = {
     phase: 'waiting', bets: [], timerSeconds: 15, timerInterval: null,
     winnerIndex: -1, forcedWinner: null, winnerData: null,
@@ -604,9 +597,6 @@ function startRollSpin() {
     }, duration);
 }
 
-// ============================================
-// CRASH
-// ============================================
 const crashGame = {
     phase: 'waiting', multiplier: 1.00, maxMultiplier: 1.00, countdown: 5, bets: [],
     history: [], forcedMultiplier: null, forceCrashNow: false,
@@ -680,9 +670,6 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ============================================
-// ICE ARENA
-// ============================================
 const iceGame = {
     phase: 'waiting', timerSeconds: 15, bets: [], totalBank: 0,
     timerInterval: null, puckX: 170, puckY: 170,
@@ -817,10 +804,8 @@ function startIceLaunch() {
     iceGame.puckY = margin + Math.random() * (340 - margin * 2);
     io.emit('ice:state', getIcePublicState());
     io.emit('ice:zones', iceGame.zones);
-    io.emit('ice:arrow:start', { duration: 1000 });
     setTimeout(() => {
         const finalAngle = Math.random() * 360;
-        io.emit('ice:arrow:final', { angle: finalAngle });
         setTimeout(() => launchIcePuck(finalAngle), 200);
     }, 1000);
 }
@@ -881,9 +866,6 @@ function finishIceRound() {
     setTimeout(startIceTimer, 2200);
 }
 
-// ============================================
-// SOCKET.IO
-// ============================================
 io.on('connection', (socket) => {
     let currentUser = null;
 
@@ -921,7 +903,6 @@ io.on('connection', (socket) => {
         if (presence.has(tab)) presence.get(tab).delete(socket.id);
     });
 
-    // ===== РУЛЕТКА =====
     socket.on('roll:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -936,7 +917,6 @@ io.on('connection', (socket) => {
         io.emit('roll:state', getRollPublicState());
     });
 
-    // ===== CRASH =====
     socket.on('crash:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -969,7 +949,6 @@ io.on('connection', (socket) => {
         pushLiveWin('Ракетка', currentUser.firstName || 'Player', win);
     });
 
-    // ===== ICE =====
     socket.on('ice:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -987,7 +966,6 @@ io.on('connection', (socket) => {
         io.emit('ice:zones', iceGame.zones);
     });
 
-    // ===== КЕЙСЫ =====
     const CASES_PRICES = { trash: 10, farmer: 30, funny: 67, okup: 150, star: 500 };
     const CASES_DROPS = {
         trash: { drops: [1,2,3,5,10,20,35,50,100], weights: [5,10,25,25,15,10,5,3,1] },
@@ -1013,6 +991,7 @@ io.on('connection', (socket) => {
         const price = CASES_PRICES[caseId];
         if (!price) return;
         if (currentUser.balance < price) return;
+
         currentUser.balance -= price;
         currentUser.stats.spent += price;
         currentUser.casesOpened = (currentUser.casesOpened || 0) + 1;
@@ -1021,19 +1000,29 @@ io.on('connection', (socket) => {
         emitBalance(currentUser);
         emitStats(currentUser);
         giveReferralCut(currentUser, price);
+
         const drop = rollCase(caseId);
-        currentUser.balance += drop;
-        currentUser.stats.wins += 1;
-        currentUser.stats.won += drop;
-        currentUser.totalWins = (currentUser.totalWins || 0) + 1;
-        addHistory(currentUser, 'Выигрыш в кейсе ' + caseId, drop, 'win');
-        emitBalance(currentUser);
-        emitStats(currentUser);
-        socket.emit('case:result', { caseId, drop });
-        if (drop >= price * 2) pushLiveWin('Кейсы', currentUser.firstName || 'Player', drop);
+
+        socket.emit('case:spin', { caseId, drop });
+
+        const uid = currentUser.id;
+        setTimeout(() => {
+            const user = users.get(uid);
+            if (!user) return;
+            user.balance += drop;
+            user.stats.wins += 1;
+            user.stats.won += drop;
+            user.totalWins = (user.totalWins || 0) + 1;
+            addHistory(user, 'Выигрыш в кейсе ' + caseId, drop, 'win');
+            emitBalance(user);
+            emitStats(user);
+            onlineUsers.forEach((uId, socketId) => {
+                if (uId === uid) io.to(socketId).emit('case:result', { caseId, drop });
+            });
+            if (drop >= price * 2) pushLiveWin('Кейсы', user.firstName || 'Player', drop);
+        }, 5100);
     });
 
-    // ===== АПГРЕЙД =====
     socket.on('upgrader:play', (data) => {
         if (!currentUser) return;
         const bet = parseInt(data.bet);
@@ -1050,7 +1039,6 @@ io.on('connection', (socket) => {
         socket.emit('upgrader:result', { won, bet, target, chance });
     });
 
-    // ===== МИНЫ =====
     const minesSessions = new Map();
     socket.on('mines:start', (data) => {
         if (!currentUser) return;
@@ -1105,7 +1093,6 @@ io.on('connection', (socket) => {
         if (win >= s.bet * 2) pushLiveWin('Мины', currentUser.firstName || 'Player', win);
     });
 
-    // ===== ДОРОГА ИКСОВ =====
     const ROAD_DIFFS_SERVER = {
         easy: { survive: [0.85,0.84,0.83,0.82,0.81,0.80,0.79,0.78,0.77,0.76,0.75,0.74,0.73,0.72,0.71,0.70,0.69,0.68,0.67,0.66,0.65,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.55,0.54,0.53,0.52,0.51,0.50,0.49,0.48,0.47,0.46,0.45,0.44,0.43,0.42,0.41,0.40,0.39,0.38,0.37,0.35], multipliers: [1.2,1.4,1.6,1.9,2.2,2.5,2.9,3.3,3.8,4.3,5.0,5.7,6.5,7.5,8.6,9.9,11.4,13.1,15.1,17.4,20.0,23.1,26.6,30.7,35.4,40.8,47.0,54.2,62.5,72.0,83.0,95.7,110.3,127.2,146.6,169.0,194.8,224.6,258.9,298.4,344.0,396.6,457.2,527.0,607.5,700.4,807.4,930.7,1072.8,1236.6] },
         medium: { survive: [0.80,0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.64,0.62,0.60,0.58,0.56,0.54,0.52,0.50,0.48,0.46,0.44,0.42,0.40,0.38,0.36,0.34,0.32,0.30,0.28,0.26,0.24,0.22,0.20,0.18,0.16,0.14,0.12,0.10,0.08,0.06,0.05,0.04,0.035,0.03,0.025,0.02,0.015,0.01,0.008,0.005,0.003,0.002], multipliers: [1.5,1.8,2.2,2.7,3.3,4.0,4.8,5.8,7.0,8.5,10.3,12.5,15.1,18.3,22.1,26.8,32.4,39.2,47.4,57.3,69.3,83.8,101.3,122.5,148.1,179.0,216.4,261.6,316.2,382.2,462.0,558.5,675.1,816.1,986.5,1192.4,1441.4,1742.3,2106.0,2545.4,3077.2,3719.8,4496.8,5435.6,6570.6,7941.9,9600.0,11603.9,14026.9,16954.8] },
@@ -1165,7 +1152,6 @@ io.on('connection', (socket) => {
         if (win >= s.bet * 2) pushLiveWin('Дорога иксов', currentUser.firstName || 'Player', win);
     });
 
-    // ===== АДМИН-СОКЕТ =====
     socket.on('admin:crash-now', () => {
         if (!currentUser) return;
         if (currentUser.id !== parseInt(process.env.ADMIN_ID || '0')) return;
@@ -1182,9 +1168,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// ============================================
-// ОНЛАЙН-СЧЁТЧИКИ
-// ============================================
 setInterval(() => {
     const online = {
         menu: (presence.get('menu') || new Set()).size,
@@ -1199,9 +1182,6 @@ setInterval(() => {
     io.emit('presence:update', online);
 }, 2000);
 
-// ============================================
-// СТАРТ ЦИКЛОВ
-// ============================================
 startRollTimer();
 startCrashTimer();
 startIceTimer();
