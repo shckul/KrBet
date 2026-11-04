@@ -124,10 +124,10 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 /* Crash */
 .crash-display{width:90%;max-width:340px;aspect-ratio:1;background:var(--surface);border-radius:16px;border:1px solid rgba(249,115,22,0.3);position:relative;margin:40px auto 12px;overflow:hidden;min-width:260px;min-height:260px;box-shadow:0 0 30px rgba(249,115,22,0.15)}
 .crash-space{position:absolute;inset:0;z-index:0;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 130%,#2a0a1e 0%,#0f0508 65%)}
-#crash-space-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
-.crash-planets{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#crash-space-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block;z-index:1}
+.crash-planets{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
 .crash-planet{position:absolute;border-radius:50%;will-change:transform}
-.crash-planet-1{width:46px;height:46px;top:14%;left:78%;background:radial-gradient(circle at 35% 35%,#a8324a,#4a0a1e 60%,#1a0010);opacity:.7}
+.crash-planet-1{width:46px;height:46px;top:14%;left:78%;background:radial-gradient(circle at 35% 35%,#a8324a,#4a0a1e 60%,#1a0010);box-shadow:inset -6px -6px 16px rgba(0,0,0,.7),0 0 20px rgba(168,50,74,0.4);opacity:.7}
 .crash-planet-2{width:22px;height:22px;top:60%;left:10%;background:radial-gradient(circle at 40% 40%,#8b1e3f,#3a001a 70%);opacity:.6}
 .crash-planet-3{width:70px;height:70px;top:74%;left:82%;background:radial-gradient(circle at 30% 30%,#f97316,#3a1a00 60%,#1a0800);opacity:.5}
 #crash-rocket-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
@@ -556,7 +556,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- Roulette -->
         <div class="tab-pane" id="tab-roll">
             <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="bank-display">Банк</div>
@@ -577,7 +576,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             <div class="players-list" id="roll-players-list"></div>
         </div>
 
-        <!-- Crash -->
         <div class="tab-pane" id="tab-crash">
             <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="crash-display" id="crash-display">
@@ -648,7 +646,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             <div class="players-list" id="crash-players-list"></div>
         </div>
 
-        <!-- Mines -->
         <div class="tab-pane" id="tab-mines">
             <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="mines-settings">
@@ -667,7 +664,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             <button class="mines-btn start" id="mines-main-btn">Играть</button>
         </div>
 
-        <!-- Upgrader -->
         <div class="tab-pane" id="tab-upgrader">
             <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="upgrader-container">
@@ -703,7 +699,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- Ice -->
         <div class="tab-pane" id="tab-ice-arena">
             <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="ice-arena-container">
@@ -739,7 +734,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- Road -->
         <div class="tab-pane" id="tab-road">
             <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="road-container">
@@ -784,7 +778,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- Cases -->
         <div class="tab-pane" id="tab-cases">
             <div class="cases-page">
                 <div class="cases-page-title">Кейсы</div>
@@ -925,7 +918,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
     </div>
 </div>
 
-<!-- Bet Sheet -->
 <div class="bet-sheet-overlay" id="bet-sheet-overlay">
     <div class="bet-sheet">
         <div class="bet-sheet-title" id="bet-sheet-title">Сумма ставки</div>
@@ -946,7 +938,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
     </div>
 </div>
 
-<!-- Battles Picker -->
 <div class="battles-picker-overlay" id="battles-picker-overlay">
     <div class="battles-picker">
         <div class="battles-picker-title">Батлы</div>
@@ -967,7 +958,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
     </div>
 </div>
 
-<!-- Deposit Modal -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
         <h3><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg>Баланс: <span id="modal-balance">0</span></h3>
@@ -979,7 +969,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
     </div>
 </div>
 
-<!-- Notification -->
 <div class="notification-overlay" id="notification-overlay">
     <div class="notification-modal">
         <div class="notif-icon" id="notif-icon">💬</div>
@@ -990,7 +979,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 
 <div id="result-banner" class="result-banner" style="display:none;"></div>
 
-<!-- Subscribe Gate -->
 <div class="subscribe-gate-overlay" id="subscribe-gate-overlay">
     <div class="subscribe-gate">
         <div class="subscribe-gate-icon">🔒</div>
@@ -1003,7 +991,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
     </div>
 </div>
 
-<!-- Admin -->
 <div class="admin-overlay" id="admin-overlay">
     <div class="admin-header">
         <span class="admin-title">👑 Админ-панель</span>
@@ -1040,11 +1027,12 @@ let stats = { wins: 0, spent: 0, won: 0 };
 let history = [];
 let userMissions = { maxCrash: 0 };
 let currentTab = 'menu';
-let myBet = { roll: false, crash: null, ice: false };
 let crashStateLocal = { phase: 'waiting', multiplier: 1.0, bets: [], startedAt: 0 };
 let rollStateLocal = { phase: 'waiting', bets: [], timerSeconds: 15 };
 let iceStateLocal = { phase: 'waiting', bets: [], totalBank: 0, zones: [], puckX: 170, puckY: 170 };
 let freeCaseRemaining = 0;
+let caseSpinning = false;
+let currentCase = null;
 
 const $ = id => document.getElementById(id);
 const balanceDisplay = $('balance-display'), modalBalance = $('modal-balance'), resultBanner = $('result-banner');
@@ -1095,13 +1083,24 @@ function openTab(tab){
     const el = $('tab-' + tab);
     if (el) el.classList.add('active');
     document.querySelectorAll('.bottom-tab').forEach(b => b.classList.remove('active'));
-    if (tab === 'cases') document.querySelector('.bottom-tab[data-tab="cases"]').classList.add('active');
+    if (tab === 'cases' || tab === 'case-detail') document.querySelector('.bottom-tab[data-tab="cases"]').classList.add('active');
     else if (tab === 'profile') document.querySelector('.bottom-tab[data-tab="profile"]').classList.add('active');
     else if (tab === 'menu') document.querySelector('.bottom-tab[data-tab="menu"]').classList.add('active');
+
     if (tab === 'ice-arena') joinPresence('ice');
     else if (tab === 'cases' || tab === 'case-detail') joinPresence('cases');
     else if (tab === 'profile') joinPresence('profile');
     else joinPresence(tab);
+
+    // Критично для телефона — форсим перерисовку ракеты и космоса при открытии Crash
+    if (tab === 'crash') {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                resizeCrashSpace();
+                if (crashStateLocal.phase === 'flying') forceRocketPaint();
+            });
+        });
+    }
 }
 
 // === BET SHEET ===
@@ -1152,8 +1151,7 @@ socket.on('auth:success', (data) => {
     updateStatsUI();
     renderHistory();
     if (myUserId) {
-        const refLink = 'https://t.me/Kr_Bet_Bot?start=ref_' + myUserId;
-        $('referral-input').value = refLink;
+        $('referral-input').value = 'https://t.me/Kr_Bet_Bot?start=ref_' + myUserId;
     }
     socket.emit('presence:join', { tab: 'menu' });
     currentTab = 'menu';
@@ -1323,8 +1321,6 @@ const crashMultiplierEl = $('crash-multiplier');
 const crashFlash = $('crash-flash');
 const rocketGroup = $('crash-rocket-group');
 const timerNumber = $('crash-timer-number');
-const crashSpaceCanvas = $('crash-space-canvas');
-const crashSpaceCtx = crashSpaceCanvas.getContext('2d');
 let crashVisual = { idlePhase: Math.random() * Math.PI * 2 };
 
 socket.on('crash:state', (state) => {
@@ -1340,10 +1336,13 @@ socket.on('crash:state', (state) => {
     } else if (state.phase === 'flying') {
         $('crash-timer-wrap').classList.add('hidden');
         crashMultiplierEl.classList.add('visible');
+        rocketGroup.setAttribute('opacity', '1');
         const my = state.bets.find(b => b.userId === myUserId);
         if (my && !my.cashedOut) { crashMainBtn.className = 'crash-btn cashout'; crashMainBtn.textContent = 'Cashout'; }
         else if (my) { crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Cashed'; }
         else { crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Waiting...'; }
+        // Принудительная перерисовка — телефон часто теряет первый тик
+        setTimeout(forceRocketPaint, 50);
     } else {
         crashMainBtn.className = 'crash-btn crashed'; crashMainBtn.textContent = 'Crashed!';
         crashMultiplierEl.className = 'crash-multiplier-float visible crashed';
@@ -1356,6 +1355,7 @@ socket.on('crash:tick', (mult) => {
     crashMultiplierEl.textContent = mult.toFixed(2) + 'x';
     crashMultiplierEl.className = 'crash-multiplier-float visible' + (mult >= 5 ? ' rainbow' : '');
     rocketGroup.setAttribute('opacity', '1');
+    crashSpaceBoost = 1;
 });
 socket.on('crash:crash', (mult) => {
     crashMultiplierEl.textContent = mult.toFixed(2) + 'x';
@@ -1363,6 +1363,7 @@ socket.on('crash:crash', (mult) => {
     crashFlash.classList.remove('boom'); void crashFlash.offsetWidth; crashFlash.classList.add('boom');
     crashDisplay.classList.add('shake'); setTimeout(() => crashDisplay.classList.remove('shake'), 500);
     rocketGroup.setAttribute('opacity', '0');
+    crashSpaceBoost = 0;
 });
 socket.on('crash:cashedOut', (data) => {
     showResultBanner('✅ +' + data.win + ' ★ (x' + data.multiplier.toFixed(2) + ')', true);
@@ -1386,6 +1387,13 @@ function renderCrashPlayers(bets){
 }
 function renderCrashHistory(list){
     $('crash-history').innerHTML = list.map(v => '<div class="history-item ' + (v >= 2 ? 'green' : 'red') + '">' + v.toFixed(2) + 'x</div>').join('');
+}
+function forceRocketPaint(){
+    if (crashStateLocal.phase !== 'flying') return;
+    rocketGroup.setAttribute('opacity', '1');
+    rocketGroup.setAttribute('transform', 'translate(40,300) rotate(45) scale(0.4)');
+    crashVisual.idlePhase = Math.random() * Math.PI * 2;
+    requestAnimationFrame(updateCrashRocket);
 }
 function updateCrashRocket(){
     if (!rocketGroup) return;
@@ -1436,6 +1444,103 @@ crashMainBtn.onclick = () => {
         }, 10);
     }
 };
+
+// === CRASH SPACE (звёзды и планеты на фоне) ===
+const crashSpaceCanvas = $('crash-space-canvas');
+const crashSpaceCtx = crashSpaceCanvas.getContext('2d');
+let crashStars = [], crashSpaceOffsetX = 0, crashSpaceOffsetY = 0;
+let crashSpaceBoost = 0;
+let crashSpaceW = 0, crashSpaceH = 0, crashSpaceDpr = 1;
+let crashPlanetOffsetX = 0, crashPlanetOffsetY = 0;
+
+function resizeCrashSpace(){
+    const el = $('crash-display');
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) { crashSpaceW = 0; crashSpaceH = 0; return; }
+    crashSpaceDpr = Math.min(window.devicePixelRatio || 1, 2);
+    crashSpaceW = rect.width;
+    crashSpaceH = rect.height;
+    crashSpaceCanvas.width = Math.max(1, Math.floor(rect.width * crashSpaceDpr));
+    crashSpaceCanvas.height = Math.max(1, Math.floor(rect.height * crashSpaceDpr));
+    crashSpaceCanvas.style.width = rect.width + 'px';
+    crashSpaceCanvas.style.height = rect.height + 'px';
+    crashSpaceCtx.setTransform(crashSpaceDpr, 0, 0, crashSpaceDpr, 0, 0);
+    initCrashStars(rect.width, rect.height);
+}
+function initCrashStars(w, h){
+    crashStars = [];
+    const count = Math.max(40, Math.floor((w * h) / 900));
+    for (let i = 0; i < count; i++) {
+        const layer = Math.random() < 0.55 ? 0 : (Math.random() < 0.7 ? 1 : 2);
+        crashStars.push({
+            x: Math.random() * w, y: Math.random() * h, z: layer,
+            size: layer === 2 ? 1.4 : layer === 1 ? 1.0 : 0.6,
+            tw: Math.random() * Math.PI * 2,
+            twSpeed: 0.5 + Math.random() * 1.5
+        });
+    }
+}
+function drawCrashSpace(now){
+    if (!$('tab-crash').classList.contains('active')) {
+        requestAnimationFrame(drawCrashSpace);
+        return;
+    }
+    if (crashSpaceW === 0 || crashSpaceH === 0) {
+        resizeCrashSpace();
+        requestAnimationFrame(drawCrashSpace);
+        return;
+    }
+    const w = crashSpaceW, h = crashSpaceH;
+    const intensity = 0.1 + 0.9 * crashSpaceBoost;
+    crashSpaceOffsetX -= 2.2 * intensity;
+    crashSpaceOffsetY += 1.2 * intensity;
+    if (crashSpaceOffsetX < -w) crashSpaceOffsetX += w;
+    if (crashSpaceOffsetX > 0) crashSpaceOffsetX -= w;
+    if (crashSpaceOffsetY > h) crashSpaceOffsetY -= h;
+    if (crashSpaceOffsetY < 0) crashSpaceOffsetY += h;
+    if (crashSpaceBoost > 0 && crashStateLocal.phase !== 'flying') {
+        crashSpaceBoost = Math.max(0, crashSpaceBoost - 0.02);
+    }
+    crashSpaceCtx.clearRect(0, 0, w, h);
+    for (const s of crashStars) {
+        const twinkle = 0.35 + Math.sin(now * 0.001 * s.twSpeed + s.tw) * 0.35;
+        const px = ((s.x + crashSpaceOffsetX * (s.z + 1) * 0.6) % w + w) % w;
+        const py = ((s.y + crashSpaceOffsetY * (s.z + 1) * 0.6) % h + h) % h;
+        const pad = s.size + 1;
+        if (px < pad || px > w - pad || py < pad || py > h - pad) continue;
+        crashSpaceCtx.beginPath();
+        crashSpaceCtx.arc(px, py, s.size, 0, Math.PI * 2);
+        const alpha = s.z === 2 ? 0.9 : s.z === 1 ? 0.6 : 0.35;
+        crashSpaceCtx.fillStyle = 'rgba(255,255,255,' + (alpha * twinkle).toFixed(3) + ')';
+        crashSpaceCtx.fill();
+    }
+    requestAnimationFrame(drawCrashSpace);
+}
+requestAnimationFrame(drawCrashSpace);
+
+function updateCrashPlanets(){
+    if (!$('tab-crash').classList.contains('active')) {
+        requestAnimationFrame(updateCrashPlanets);
+        return;
+    }
+    const intensity = 0.1 + 0.9 * crashSpaceBoost;
+    crashPlanetOffsetX -= 1.2 * intensity;
+    crashPlanetOffsetY += 0.7 * intensity;
+    if (crashPlanetOffsetX < -800) crashPlanetOffsetX += 800;
+    if (crashPlanetOffsetX > 0) crashPlanetOffsetX -= 800;
+    if (crashPlanetOffsetY > 800) crashPlanetOffsetY -= 800;
+    if (crashPlanetOffsetY < 0) crashPlanetOffsetY += 800;
+    document.querySelectorAll('.crash-planet').forEach((p, i) => {
+        const k = (i + 1) * 0.5;
+        p.style.transform = 'translate(' + (crashPlanetOffsetX * k) + 'px,' + (crashPlanetOffsetY * k) + 'px)';
+    });
+    requestAnimationFrame(updateCrashPlanets);
+}
+requestAnimationFrame(updateCrashPlanets);
+
+window.addEventListener('resize', () => { resizeCrashSpace(); });
+setTimeout(resizeCrashSpace, 500);
 
 // === MINES ===
 let minesGame = { active: false, mines: 3, bet: 0, revealed: 0 };
@@ -1867,7 +1972,6 @@ const CASES_INFO = {
     okup: { name: 'Okup Case', price: 150, drops: [35,50,80,120,180,250,450] },
     star: { name: 'Star Case', price: 500, drops: [1,150,250,300,450,650,750,850,1000] }
 };
-let currentCase = null, caseSpinning = false;
 function getRarityClass(amount, caseId){
     const price = CASES_INFO[caseId]?.price || 10;
     if (amount >= price * 2) return 'rarity-legendary';
@@ -1875,6 +1979,39 @@ function getRarityClass(amount, caseId){
     if (amount >= price) return 'rarity-rare';
     if (amount >= price * 0.5) return 'rarity-uncommon';
     return 'rarity-common';
+}
+function buildStrip(drops, caseId){
+    const strip = $('case-roulette-strip');
+    strip.innerHTML = ''; strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
+    const shuffled = [...drops].sort(() => Math.random() - 0.5);
+    const perRepeat = shuffled.length;
+    for (let r = 0; r < 10; r++) shuffled.forEach(drop => {
+        const el = document.createElement('div');
+        el.className = 'case-item ' + getRarityClass(drop, caseId);
+        el.innerHTML = '<div class="case-item-star"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg></div><div class="case-item-amount">' + drop + ' ★</div>';
+        el.dataset.amount = drop;
+        strip.appendChild(el);
+    });
+    return { perRepeat, children: strip.children };
+}
+function spinStripTo(strip, perRepeat, targetDrop, cb){
+    const children = strip.children;
+    let idxInRepeat = -1;
+    for (let i = 0; i < perRepeat; i++) {
+        if (parseInt(children[i].dataset.amount) === targetDrop) { idxInRepeat = i; break; }
+    }
+    if (idxInRepeat === -1) idxInRepeat = 0;
+    const targetIdx = 5 * perRepeat + idxInRepeat;
+    const itemWidth = 120, cw = $('case-roulette-container').clientWidth;
+    const finalOffset = targetIdx * itemWidth + itemWidth / 2 - cw / 2;
+    requestAnimationFrame(() => {
+        strip.style.transition = 'transform 5s cubic-bezier(0.05,0.9,0.1,1)';
+        strip.style.transform = 'translateX(-' + finalOffset + 'px)';
+    });
+    setTimeout(() => {
+        if (children[targetIdx]) children[targetIdx].classList.add('winner');
+        if (cb) cb();
+    }, 5100);
 }
 function openCaseDetail(caseId){
     const data = CASES_INFO[caseId];
@@ -1884,16 +2021,8 @@ function openCaseDetail(caseId){
     $('tab-case-detail').classList.add('active');
     $('case-detail-name').textContent = data.name;
     $('case-open-btn').textContent = 'Открыть за ' + data.price + ' ★';
-    const strip = $('case-roulette-strip');
-    strip.innerHTML = ''; strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
-    const shuffled = [...data.drops].sort(() => Math.random() - 0.5);
-    for (let r = 0; r < 10; r++) shuffled.forEach(drop => {
-        const el = document.createElement('div');
-        el.className = 'case-item ' + getRarityClass(drop, caseId);
-        el.innerHTML = '<div class="case-item-star"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg></div><div class="case-item-amount">' + drop + ' ★</div>';
-        el.dataset.amount = drop;
-        strip.appendChild(el);
-    });
+    $('case-open-btn').style.display = '';
+    buildStrip(data.drops, caseId);
     $('case-drops-grid').innerHTML = data.drops.map(d =>
         '<div class="drop-item ' + getRarityClass(d, caseId) + '"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg>' + d + '</div>'
     ).join('');
@@ -1911,36 +2040,23 @@ $('case-open-btn').onclick = () => {
     $('case-open-btn').disabled = true;
     socket.emit('case:open', { caseId: currentCase });
 };
+socket.on('case:spin', (data) => {
+    if (!data || !data.caseId) return;
+    const info = CASES_INFO[data.caseId];
+    if (!info) { caseSpinning = false; $('case-open-btn').disabled = false; return; }
+    const { perRepeat } = buildStrip(info.drops, data.caseId);
+    spinStripTo($('case-roulette-strip'), perRepeat, data.drop);
+});
 socket.on('case:result', (data) => {
-    if (!currentCase) return;
-    const strip = $('case-roulette-strip'), itemWidth = 120;
-    strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
-    document.querySelectorAll('.case-item.winner').forEach(el => el.classList.remove('winner'));
-    const winDrop = data.drop;
-    const children = strip.children;
-    const perRepeat = CASES_INFO[data.caseId].drops.length;
-    let idxInRepeat = -1;
-    for (let i = 0; i < perRepeat; i++) {
-        if (parseInt(children[i].dataset.amount) === winDrop) { idxInRepeat = i; break; }
-    }
-    if (idxInRepeat === -1) idxInRepeat = 0;
-    const targetIdx = 5 * perRepeat + idxInRepeat;
-    const cw = $('case-roulette-container').clientWidth;
-    const finalOffset = targetIdx * itemWidth + itemWidth / 2 - cw / 2;
-    strip.style.transition = 'transform 5s cubic-bezier(0.05,0.9,0.1,1)';
-    strip.style.transform = 'translateX(-' + finalOffset + 'px)';
-    setTimeout(() => {
-        caseSpinning = false;
-        $('case-open-btn').disabled = false;
-        if (children[targetIdx]) children[targetIdx].classList.add('winner');
-        const flash = $('case-result-flash');
-        flash.style.animation = 'none'; void flash.offsetWidth; flash.style.animation = 'caseFlash 1s ease-out';
-        showResultBanner('🎁 +' + winDrop + ' ★', true);
-    }, 5100);
+    caseSpinning = false;
+    $('case-open-btn').disabled = false;
+    const flash = $('case-result-flash');
+    flash.style.animation = 'none'; void flash.offsetWidth; flash.style.animation = 'caseFlash 1s ease-out';
+    showResultBanner('🎁 +' + data.drop + ' ★', true);
 });
 
 // === FREE CASE ===
-const FREE_VISUAL_DROPS = [1, 2, 3, 5, 10, 15, 25, 50, 100, 250, 500];
+const FREE_VISUAL_DROPS = [1, 2, 3, 5];
 function fmtRemaining(ms){
     const totalMin = Math.ceil(ms / 60000);
     const h = Math.floor(totalMin / 60), m = totalMin % 60;
@@ -1995,7 +2111,21 @@ $('subscribe-gate-check').onclick = async () => {
             $('subscribe-gate-overlay').classList.remove('show');
             freeCaseRemaining = 24 * 60 * 60 * 1000;
             renderFreeCaseUI();
-            animateFreeCaseOpening(d.drop);
+            // Открываем красивую анимацию как у платного кейса
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            $('tab-case-detail').classList.add('active');
+            $('case-detail-name').textContent = 'Подарок дня';
+            $('case-open-btn').style.display = 'none';
+            const { perRepeat } = buildStrip(FREE_VISUAL_DROPS, 'free');
+            spinStripTo($('case-roulette-strip'), perRepeat, d.drop, () => {
+                const flash = $('case-result-flash');
+                flash.style.animation = 'none'; void flash.offsetWidth; flash.style.animation = 'caseFlash 1s ease-out';
+                showResultBanner('🎁 +' + d.drop + ' ★', true);
+            });
+            $('case-drops-grid').innerHTML = FREE_VISUAL_DROPS.map(d =>
+                '<div class="drop-item rarity-uncommon"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg>' + d + '</div>'
+            ).join('');
+            setTimeout(() => { $('case-open-btn').style.display = ''; openTab('cases'); }, 7000);
         } else if (d.cooldown) {
             freeCaseRemaining = d.remaining;
             renderFreeCaseUI();
@@ -2010,51 +2140,6 @@ $('subscribe-gate-check').onclick = async () => {
     } catch(e) { showNotification('Ошибка сети', 'error'); }
     btn.disabled = false; btn.textContent = 'Проверить подписку';
 };
-
-function animateFreeCaseOpening(finalDrop){
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    $('tab-case-detail').classList.add('active');
-    $('case-detail-name').textContent = 'Подарок дня';
-    $('case-open-btn').style.display = 'none';
-    const strip = $('case-roulette-strip');
-    strip.innerHTML = ''; strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
-    const shuffled = [...FREE_VISUAL_DROPS].sort(() => Math.random() - 0.5);
-    const perRepeat = FREE_VISUAL_DROPS.length;
-    for (let r = 0; r < 10; r++) shuffled.forEach(drop => {
-        const el = document.createElement('div');
-        const rarity = drop >= 50 ? 'rarity-legendary' : drop >= 15 ? 'rarity-epic' : drop >= 5 ? 'rarity-rare' : 'rarity-uncommon';
-        el.className = 'case-item ' + rarity;
-        el.innerHTML = '<div class="case-item-star"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg></div><div class="case-item-amount">' + drop + ' ★</div>';
-        el.dataset.amount = drop;
-        strip.appendChild(el);
-    });
-    $('case-drops-grid').innerHTML = FREE_VISUAL_DROPS.map(d =>
-        '<div class="drop-item ' + (d >= 50 ? 'rarity-legendary' : d >= 15 ? 'rarity-epic' : d >= 5 ? 'rarity-rare' : 'rarity-uncommon') + '"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg>' + d + '</div>'
-    ).join('');
-    const children = strip.children;
-    let idxInRepeat = -1;
-    for (let i = 0; i < perRepeat; i++) {
-        if (parseInt(children[i].dataset.amount) === finalDrop) { idxInRepeat = i; break; }
-    }
-    if (idxInRepeat === -1) idxInRepeat = 0;
-    const targetIdx = 5 * perRepeat + idxInRepeat;
-    const itemWidth = 120, cw = $('case-roulette-container').clientWidth;
-    const finalOffset = targetIdx * itemWidth + itemWidth / 2 - cw / 2;
-    requestAnimationFrame(() => {
-        strip.style.transition = 'transform 5s cubic-bezier(0.05,0.9,0.1,1)';
-        strip.style.transform = 'translateX(-' + finalOffset + 'px)';
-    });
-    setTimeout(() => {
-        if (children[targetIdx]) children[targetIdx].classList.add('winner');
-        const flash = $('case-result-flash');
-        flash.style.animation = 'none'; void flash.offsetWidth; flash.style.animation = 'caseFlash 1s ease-out';
-        showResultBanner('🎁 +' + finalDrop + ' ★', true);
-    }, 5100);
-    setTimeout(() => {
-        $('case-open-btn').style.display = '';
-        openTab('cases');
-    }, 8000);
-}
 
 // === SUBSCRIBE BANNER ===
 $('btn-subscribe-banner').onclick = async () => {
@@ -2186,13 +2271,7 @@ async function refreshBalance(){
 document.querySelectorAll('.bottom-tab').forEach(b => {
     b.addEventListener('click', () => {
         const tab = b.dataset.tab;
-        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.bottom-tab').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        $('tab-' + tab).classList.add('active');
-        if (tab === 'cases') joinPresence('cases');
-        else if (tab === 'profile') joinPresence('profile');
-        else joinPresence('menu');
+        openTab(tab);
     });
 });
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => openTab('menu')));
@@ -2317,7 +2396,7 @@ $('admin-crash-now').onclick = () => {
     showNotification('Краш!', 'success');
 };
 
-// === STAR BACKGROUND ===
+// === STAR BACKGROUND (глобальный) ===
 const starsCanvas = $('stars-canvas'), starsCtx = starsCanvas.getContext('2d');
 let bgStars = [];
 function resizeBg(){ starsCanvas.width = innerWidth; starsCanvas.height = innerHeight; }
