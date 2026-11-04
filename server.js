@@ -1,6 +1,5 @@
 // ============================================
 // KR Bet — Telegram Mini App Server
-// Синхронизирован с новым index.html
 // ============================================
 
 const express = require('express');
@@ -21,27 +20,16 @@ const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://krbet.onrender.com';
 const CHANNEL_USERNAME = 'Kr_Bet_Up';
 
-// ============================================
-// ХРАНИЛИЩЕ (in-memory)
-// ============================================
-const users = new Map();               // userId -> user
-const pendingPayments = new Map();     // paymentId -> { userId, amount, status }
-const onlineUsers = new Map();         // socketId -> userId
-const presence = new Map();            // tab -> Set(socketId)
-const withdrawalRequests = [];         // активные заявки
-const withdrawalHistory = [];          // история заявок
+const users = new Map();
+const pendingPayments = new Map();
+const onlineUsers = new Map();
+const presence = new Map();
+const withdrawalRequests = [];
+const withdrawalHistory = [];
 
-const REFFERAL_PERCENT = 0.15;         // 15% от трат друга
-
-// ============================================
-// АДМИН
-// ============================================
-const ADMIN_ID = null; // можно задать явно: process.env.ADMIN_ID || 123456789
+const REFFERAL_PERCENT = 0.15;
 const ADMIN_CODE = '22092011';
 
-// ============================================
-// ХЕЛПЕРЫ
-// ============================================
 function getUserFromInitData(initData) {
     if (!initData) return null;
     try {
@@ -59,7 +47,6 @@ function getUserFromInitData(initData) {
     } catch (e) { return null; }
 }
 
-// Проверка hash initData по BOT_TOKEN (опционально — можно убрать, если сейчас не нужна строгая проверка)
 function verifyInitData(initData) {
     if (!BOT_TOKEN || !initData) return true;
     try {
@@ -133,11 +120,8 @@ function getOrCreateUser(userData, startParam) {
 function addHistory(user, action, amount, type) {
     user.history.unshift({ action, amount, type, time: Date.now() });
     if (user.history.length > 50) user.history.pop();
-    // Отправляем обновления только владельцу
     onlineUsers.forEach((uid, socketId) => {
-        if (uid === user.id) {
-            io.to(socketId).emit('history:update', user.history);
-        }
+        if (uid === user.id) io.to(socketId).emit('history:update', user.history);
     });
 }
 
@@ -154,11 +138,9 @@ function emitStats(user) {
 }
 
 function pushLiveWin(game, name, amount) {
-    const payload = { game, name, amount, time: Date.now() };
-    io.emit('live:win', payload);
+    io.emit('live:win', { game, name, amount, time: Date.now() });
 }
 
-// Начислить рефереру 15% от ставки
 function giveReferralCut(user, betAmount) {
     if (!user.referrerId) return;
     const ref = users.get(user.referrerId);
@@ -171,7 +153,6 @@ function giveReferralCut(user, betAmount) {
     emitBalance(ref);
 }
 
-// Внутренняя функция списания ставки с проверкой и реферальным начислением
 function takeBet(user, amount, historyAction) {
     if (amount < 10) return false;
     if (user.balance < amount) return false;
@@ -196,9 +177,6 @@ function payWin(user, amount, historyAction, extraStats) {
     emitStats(user);
 }
 
-// ============================================
-// API
-// ============================================
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -298,9 +276,6 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ success: true, balance: user.balance });
 });
 
-// ============================================
-// ПОДПИСКА / БЕСПЛАТНЫЙ КЕЙС
-// ============================================
 app.post('/api/missions/check-subscription', async (req, res) => {
     const initData = req.headers['x-telegram-init-data'];
     if (!initData) return res.status(401).json({ success: false });
@@ -325,10 +300,13 @@ app.post('/api/missions/check-subscription', async (req, res) => {
     } catch (e) { res.json({ success: false, subscribed: false, error: 'Ошибка сервера' }); }
 });
 
-// Кулдаун бесплатного кейса
+// ===== БЕСПЛАТНЫЙ КЕЙС =====
 const FREE_CASE_COOLDOWN = 24 * 60 * 60 * 1000;
-const FREE_CASE_DROPS = [1,2,3,5,10,15,25,50,100,250,500];
-const FREE_CASE_WEIGHTS = [25,22,18,12,8,5,4,2.5,2,1,0.5];
+
+// Что показывается в ленте — те же значения, что реально падают (1-5★).
+// Никакой "красивой" лжи — лента отображает реальные возможные дропы.
+const FREE_CASE_DROPS = [1, 2, 3, 5];
+const FREE_CASE_WEIGHTS = [30, 30, 25, 15];
 
 function rollFreeCase() {
     const total = FREE_CASE_WEIGHTS.reduce((s, w) => s + w, 0);
@@ -337,7 +315,7 @@ function rollFreeCase() {
         random -= FREE_CASE_WEIGHTS[i];
         if (random <= 0) return FREE_CASE_DROPS[i];
     }
-    return FREE_CASE_DROPS[0];
+    return 1;
 }
 
 app.post('/api/free-case/open', async (req, res) => {
@@ -354,7 +332,6 @@ app.post('/api/free-case/open', async (req, res) => {
         return res.json({ success: false, cooldown: true, remaining: left });
     }
 
-    // Проверка подписки
     try {
         const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=@${CHANNEL_USERNAME}&user_id=${user.id}`);
         const data = await r.json();
@@ -372,7 +349,12 @@ app.post('/api/free-case/open', async (req, res) => {
     user.casesOpened = (user.casesOpened || 0) + 1;
     addHistory(user, 'Бесплатный кейс: +' + drop + ' ★', drop, 'win');
     emitBalance(user);
-    res.json({ success: true, drop, balance: user.balance });
+    res.json({
+        success: true,
+        drop,
+        drops: FREE_CASE_DROPS,
+        balance: user.balance
+    });
 });
 
 app.get('/api/free-case/status', (req, res) => {
@@ -387,19 +369,14 @@ app.get('/api/free-case/status', (req, res) => {
     res.json({ success: true, remaining, canOpen: remaining === 0 });
 });
 
-// ============================================
-// МИССИИ
-// ============================================
 const MISSIONS = [
     { id: 'subscribe', title: 'Подписаться на канал @Kr_Bet_Up', reward: 10, type: 'subscription' },
     { id: 'crash_5x', title: 'Поймать 5x+ в Ракетке', reward: 20, type: 'counter', getProgress: u => Math.min(u.maxCrashCashout || 0, 5), target: 5, progressText: u => `Макс. кэшаут: ${(u.maxCrashCashout || 0).toFixed(2)}x / 5.00x` },
     { id: 'roll_10_wins', title: 'Выиграть в Рулетке 10 раз', reward: 30, type: 'counter', getProgress: u => Math.min(u.rollWins || 0, 10), target: 10, progressText: u => `Побед: ${u.rollWins || 0} / 10` },
     { id: 'ice_10_wins', title: 'Выиграть в Ice Arena 10 раз', reward: 30, type: 'counter', getProgress: u => Math.min(u.iceWins || 0, 10), target: 10, progressText: u => `Побед: ${u.iceWins || 0} / 10` },
-    { id: 'road_5_wins', title: 'Выиграть в Дороге иксов 5 раз', reward: 25, type: 'counter', getProgress: u => Math.min(u.roadWins || 0, 5), target: 5, progressText: u => `Побед: ${u.roadWins || 0} / 5` },
     { id: 'deposit_300', title: 'Пополнить баланс на 300 ★', reward: 30, type: 'counter', getProgress: u => Math.min(u.totalDeposited || 0, 300), target: 300, progressText: u => `Пополнено: ${u.totalDeposited || 0} / 300 ★` },
     { id: 'bet_500', title: 'Сделать ставок на 500 ★', reward: 25, type: 'counter', getProgress: u => Math.min(u.totalBets || 0, 500), target: 500, progressText: u => `Потрачено: ${u.totalBets || 0} / 500 ★` },
     { id: 'bet_2000', title: 'Сделать ставок на 2000 ★', reward: 60, type: 'counter', getProgress: u => Math.min(u.totalBets || 0, 2000), target: 2000, progressText: u => `Потрачено: ${u.totalBets || 0} / 2000 ★` },
-    { id: 'wins_50', title: 'Победить 50 раз', reward: 100, type: 'counter', getProgress: u => Math.min(u.totalWins || 0, 50), target: 50, progressText: u => `Побед: ${u.totalWins || 0} / 50` },
     { id: 'case_open', title: 'Открыть 10 кейсов', reward: 40, type: 'counter', getProgress: u => Math.min(u.casesOpened || 0, 10), target: 10, progressText: u => `Открыто: ${u.casesOpened || 0} / 10` }
 ];
 
@@ -445,9 +422,6 @@ app.post('/api/missions/claim', (req, res) => {
     res.json({ success: true, balance: user.balance, reward: mission.reward });
 });
 
-// ============================================
-// АДМИН — API
-// ============================================
 function adminAuth(req, res) {
     const initData = req.headers['x-telegram-init-data'];
     const adminCode = req.headers['x-admin-code'];
@@ -500,7 +474,6 @@ app.post('/api/admin/withdrawal-action', (req, res) => {
     const request = withdrawalRequests[index];
     withdrawalRequests.splice(index, 1);
     if (action === 'reject') {
-        // возврат
         const user = users.get(request.userId);
         if (user) {
             user.balance += request.amount;
@@ -513,21 +486,12 @@ app.post('/api/admin/withdrawal-action', (req, res) => {
 });
 
 // ============================================
-// СИНХРОННЫЕ ИГРЫ
+// РУЛЕТКА
 // ============================================
-
-// ---------- РУЛЕТКА ----------
 const rollGame = {
-    phase: 'waiting',
-    bets: [],
-    timerSeconds: 15,
-    timerInterval: null,
-    winnerIndex: -1,
-    forcedWinner: null,
-    winnerData: null,
-    spinAngle: 0,
-    spinDuration: 0,
-    finalAngle: 0
+    phase: 'waiting', bets: [], timerSeconds: 15, timerInterval: null,
+    winnerIndex: -1, forcedWinner: null, winnerData: null,
+    spinAngle: 0, spinDuration: 0, finalAngle: 0
 };
 
 function getRollPublicState() {
@@ -640,19 +604,13 @@ function startRollSpin() {
     }, duration);
 }
 
-// ---------- CRASH ----------
+// ============================================
+// CRASH
+// ============================================
 const crashGame = {
-    phase: 'waiting',
-    multiplier: 1.00,
-    maxMultiplier: 1.00,
-    countdown: 5,
-    bets: [],
-    history: [],
-    forcedMultiplier: null,
-    forceCrashNow: false,
-    crashInterval: null,
-    countdownInterval: null,
-    startedAt: 0
+    phase: 'waiting', multiplier: 1.00, maxMultiplier: 1.00, countdown: 5, bets: [],
+    history: [], forcedMultiplier: null, forceCrashNow: false,
+    crashInterval: null, countdownInterval: null, startedAt: 0
 };
 
 function getCrashPublicState() {
@@ -722,18 +680,14 @@ function crashNow() {
     setTimeout(() => startCrashTimer(), 5000);
 }
 
-// ---------- ICE ARENA ----------
+// ============================================
+// ICE ARENA
+// ============================================
 const iceGame = {
-    phase: 'waiting',
-    timerSeconds: 15,
-    bets: [],
-    totalBank: 0,
-    timerInterval: null,
-    puckX: 170, puckY: 170,
-    puckVX: 0, puckVY: 0,
-    puckAnimation: null,
-    winnerData: null,
-    zones: []
+    phase: 'waiting', timerSeconds: 15, bets: [], totalBank: 0,
+    timerInterval: null, puckX: 170, puckY: 170,
+    puckVX: 0, puckVY: 0, puckAnimation: null,
+    winnerData: null, zones: []
 };
 
 const COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4','#ff5722','#8bc34a','#3f51b5','#ff9800','#795548','#607d8b'];
@@ -741,8 +695,7 @@ const SLICE_ANGLES = [30, 60, 90, 120, 135, 45, 75, 105];
 
 function getIcePublicState() {
     return {
-        phase: iceGame.phase,
-        timerSeconds: iceGame.timerSeconds,
+        phase: iceGame.phase, timerSeconds: iceGame.timerSeconds,
         bets: iceGame.bets.map(b => ({ userId: b.userId, name: b.name, amount: b.amount, color: b.color })),
         totalBank: iceGame.totalBank,
         puckX: iceGame.puckX, puckY: iceGame.puckY,
@@ -786,7 +739,7 @@ function generateIceZonesFixedAngles() {
     if (bets.length === 0) return [];
     if (bets.length === 1) {
         const b = bets[0];
-        return [{ userId: b.userId, name: b.name, color: b.color, amount: b.amount, points: [{x:0,y:0},{x:340,y:0},{x:340,y:340},{x:0,y:340}] }];
+        return [{ userId: b.userId, name: b.name, color: b.color, amount: b.amount, points: [{x:0,y:0},{x:340,y:0},{x:340,y:340},{x:0,y:340}], chance: 100 }];
     }
     const sorted = [...bets].sort((a, b) => b.amount - a.amount);
     const zones = [];
@@ -958,7 +911,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Presence — на какую вкладку клиент зашёл
     socket.on('presence:join', ({ tab }) => {
         if (!tab) return;
         presence.forEach((set, key) => { if (key !== tab) set.delete(socket.id); });
@@ -1017,7 +969,7 @@ io.on('connection', (socket) => {
         pushLiveWin('Ракетка', currentUser.firstName || 'Player', win);
     });
 
-    // ===== ICE ARENA =====
+    // ===== ICE =====
     socket.on('ice:bet', (data) => {
         if (!currentUser) return;
         const amount = parseInt(data.amount);
@@ -1035,7 +987,7 @@ io.on('connection', (socket) => {
         io.emit('ice:zones', iceGame.zones);
     });
 
-    // ===== КЕЙСЫ (платные) =====
+    // ===== КЕЙСЫ =====
     const CASES_PRICES = { trash: 10, farmer: 30, funny: 67, okup: 150, star: 500 };
     const CASES_DROPS = {
         trash: { drops: [1,2,3,5,10,20,35,50,100], weights: [5,10,25,25,15,10,5,3,1] },
@@ -1044,7 +996,6 @@ io.on('connection', (socket) => {
         okup: { drops: [35,50,80,120,180,250,450], weights: [10,25,30,15,10,5,1] },
         star: { drops: [1,150,250,300,450,650,750,850,1000], weights: [2,20,20,18,15,10,8,5,2] }
     };
-
     function rollCase(caseId) {
         const cfg = CASES_DROPS[caseId];
         if (!cfg) return 0;
@@ -1056,7 +1007,6 @@ io.on('connection', (socket) => {
         }
         return cfg.drops[0];
     }
-
     socket.on('case:open', (data) => {
         if (!currentUser) return;
         const caseId = data.caseId;
@@ -1083,8 +1033,7 @@ io.on('connection', (socket) => {
         if (drop >= price * 2) pushLiveWin('Кейсы', currentUser.firstName || 'Player', drop);
     });
 
-    // ===== SINGLE-PLAYER: UPGRADER / MINES / ROAD =====
-    // Апгрейд — клиент присылает bet, target; сервер решает
+    // ===== АПГРЕЙД =====
     socket.on('upgrader:play', (data) => {
         if (!currentUser) return;
         const bet = parseInt(data.bet);
@@ -1101,8 +1050,8 @@ io.on('connection', (socket) => {
         socket.emit('upgrader:result', { won, bet, target, chance });
     });
 
-    // Мины — клиент присылает mines, bet; сервер генерит расстановку, клиент шлёт открытия
-    const minesSessions = new Map(); // userId -> { bet, mines, bombs:Set, revealed:Set }
+    // ===== МИНЫ =====
+    const minesSessions = new Map();
     socket.on('mines:start', (data) => {
         if (!currentUser) return;
         const bet = parseInt(data.bet);
@@ -1115,7 +1064,6 @@ io.on('connection', (socket) => {
         minesSessions.set(currentUser.id, { bet, mines, bombs, revealed: new Set() });
         socket.emit('mines:started', { bet, mines });
     });
-
     socket.on('mines:open', (data) => {
         if (!currentUser) return;
         const s = minesSessions.get(currentUser.id);
@@ -1142,7 +1090,6 @@ io.on('connection', (socket) => {
         }
         socket.emit('mines:opened', { index: idx, mult: parseFloat(mult.toFixed(2)) });
     });
-
     socket.on('mines:cashout', () => {
         if (!currentUser) return;
         const s = minesSessions.get(currentUser.id);
@@ -1158,15 +1105,14 @@ io.on('connection', (socket) => {
         if (win >= s.bet * 2) pushLiveWin('Мины', currentUser.firstName || 'Player', win);
     });
 
-    // Дорога иксов — сервер решает на каждом шаге
+    // ===== ДОРОГА ИКСОВ =====
     const ROAD_DIFFS_SERVER = {
         easy: { survive: [0.85,0.84,0.83,0.82,0.81,0.80,0.79,0.78,0.77,0.76,0.75,0.74,0.73,0.72,0.71,0.70,0.69,0.68,0.67,0.66,0.65,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.55,0.54,0.53,0.52,0.51,0.50,0.49,0.48,0.47,0.46,0.45,0.44,0.43,0.42,0.41,0.40,0.39,0.38,0.37,0.35], multipliers: [1.2,1.4,1.6,1.9,2.2,2.5,2.9,3.3,3.8,4.3,5.0,5.7,6.5,7.5,8.6,9.9,11.4,13.1,15.1,17.4,20.0,23.1,26.6,30.7,35.4,40.8,47.0,54.2,62.5,72.0,83.0,95.7,110.3,127.2,146.6,169.0,194.8,224.6,258.9,298.4,344.0,396.6,457.2,527.0,607.5,700.4,807.4,930.7,1072.8,1236.6] },
         medium: { survive: [0.80,0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.64,0.62,0.60,0.58,0.56,0.54,0.52,0.50,0.48,0.46,0.44,0.42,0.40,0.38,0.36,0.34,0.32,0.30,0.28,0.26,0.24,0.22,0.20,0.18,0.16,0.14,0.12,0.10,0.08,0.06,0.05,0.04,0.035,0.03,0.025,0.02,0.015,0.01,0.008,0.005,0.003,0.002], multipliers: [1.5,1.8,2.2,2.7,3.3,4.0,4.8,5.8,7.0,8.5,10.3,12.5,15.1,18.3,22.1,26.8,32.4,39.2,47.4,57.3,69.3,83.8,101.3,122.5,148.1,179.0,216.4,261.6,316.2,382.2,462.0,558.5,675.1,816.1,986.5,1192.4,1441.4,1742.3,2106.0,2545.4,3077.2,3719.8,4496.8,5435.6,6570.6,7941.9,9600.0,11603.9,14026.9,16954.8] },
         hard: { survive: [0.75,0.72,0.69,0.66,0.63,0.60,0.57,0.54,0.51,0.48,0.45,0.42,0.39,0.36,0.33,0.30,0.27,0.24,0.21,0.18,0.16,0.14,0.12,0.10,0.08,0.07,0.06,0.05,0.04,0.03,0.025,0.02,0.015,0.01,0.008,0.006,0.005,0.004,0.003,0.002,0.0015,0.001,0.0008,0.0005,0.0003,0.0002,0.0001,0.00008,0.00005,0.00001], multipliers: [1.8,2.2,2.8,3.5,4.4,5.6,7.0,8.9,11.3,14.3,18.1,22.9,29.0,36.7,46.5,58.8,74.4,94.2,119.2,150.8,190.9,241.5,305.6,386.7,489.3,619.2,783.5,991.4,1254.5,1587.4,2008.5,2540.9,3214.4,4066.5,5144.7,6508.8,8234.0,10417.4,13180.0,16675.6,21097.7,26692.8,33770.2,42727.9,54059.4,68394.4,86537.6,109487.2,138512.9,175247.4] },
         extreme: { survive: [0.70,0.66,0.62,0.58,0.54,0.50,0.46,0.42,0.38,0.34,0.30,0.26,0.22,0.18,0.15,0.12,0.10,0.08,0.06,0.05,0.04,0.03,0.025,0.02,0.015,0.01,0.008,0.006,0.004,0.003,0.002,0.0015,0.001,0.0008,0.0005,0.0003,0.0002,0.0001,0.00008,0.00005,0.00003,0.00002,0.00001,0.000008,0.000005,0.000003,0.000002,0.000001,0.0000005,0.0000001], multipliers: [2.0,2.6,3.4,4.5,5.9,7.8,10.3,13.6,17.9,23.6,31.2,41.1,54.2,71.4,94.1,124.0,163.4,215.3,283.8,374.0,492.9,649.6,856.2,1128.4,1487.1,1960.3,2583.3,3404.6,4487.2,5913.7,7795.6,10275.0,13542.9,17850.6,23527.5,31010.4,40874.1,53876.8,71015.5,93603.6,123377.8,162630.1,214352.6,282544.4,372421.8,490849.7,646978.0,852705.7,1123855.2,1481351.6] }
     };
-    const roadSessions = new Map(); // userId -> { diff, bet, step }
-
+    const roadSessions = new Map();
     socket.on('road:start', (data) => {
         if (!currentUser) return;
         const diff = data.diff;
@@ -1174,7 +1120,6 @@ io.on('connection', (socket) => {
         if (!ROAD_DIFFS_SERVER[diff] || isNaN(bet) || bet < 10) return;
         if (roadSessions.has(currentUser.id)) return;
         if (!takeBet(currentUser, bet, 'Ставка (Дорога иксов)')) return;
-        // Первый шаг — проверка выживания
         const cfg = ROAD_DIFFS_SERVER[diff];
         const survived = Math.random() < cfg.survive[0];
         if (!survived) {
@@ -1184,7 +1129,6 @@ io.on('connection', (socket) => {
         roadSessions.set(currentUser.id, { diff, bet, step: 0 });
         socket.emit('road:started', { diff, bet, step: 0, mult: cfg.multipliers[0] });
     });
-
     socket.on('road:step', () => {
         if (!currentUser) return;
         const s = roadSessions.get(currentUser.id);
@@ -1208,7 +1152,6 @@ io.on('connection', (socket) => {
         }
         socket.emit('road:step:ok', { step: s.step, mult: cfg.multipliers[s.step] });
     });
-
     socket.on('road:cashout', () => {
         if (!currentUser) return;
         const s = roadSessions.get(currentUser.id);
@@ -1222,6 +1165,13 @@ io.on('connection', (socket) => {
         if (win >= s.bet * 2) pushLiveWin('Дорога иксов', currentUser.firstName || 'Player', win);
     });
 
+    // ===== АДМИН-СОКЕТ =====
+    socket.on('admin:crash-now', () => {
+        if (!currentUser) return;
+        if (currentUser.id !== parseInt(process.env.ADMIN_ID || '0')) return;
+        crashGame.forceCrashNow = true;
+    });
+
     socket.on('disconnect', () => {
         onlineUsers.delete(socket.id);
         presence.forEach((set) => set.delete(socket.id));
@@ -1233,7 +1183,7 @@ io.on('connection', (socket) => {
 });
 
 // ============================================
-// ПЕРИОДИЧЕСКИЙ ЭМИССИИ (онлайн-счётчики)
+// ОНЛАЙН-СЧЁТЧИКИ
 // ============================================
 setInterval(() => {
     const online = {
@@ -1250,7 +1200,7 @@ setInterval(() => {
 }, 2000);
 
 // ============================================
-// ЗАПУСК ЦИКЛОВ
+// СТАРТ ЦИКЛОВ
 // ============================================
 startRollTimer();
 startCrashTimer();
