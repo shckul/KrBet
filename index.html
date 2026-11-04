@@ -1033,6 +1033,9 @@ let iceStateLocal = { phase: 'waiting', bets: [], totalBank: 0, zones: [], puckX
 let freeCaseRemaining = 0;
 let caseSpinning = false;
 let currentCase = null;
+let adminRefreshInterval = null;
+let adminActive = false;
+let adminTab = 'players';
 
 const $ = id => document.getElementById(id);
 const balanceDisplay = $('balance-display'), modalBalance = $('modal-balance'), resultBanner = $('result-banner');
@@ -1092,12 +1095,14 @@ function openTab(tab){
     else if (tab === 'profile') joinPresence('profile');
     else joinPresence(tab);
 
-    // Критично для телефона — форсим перерисовку ракеты и космоса при открытии Crash
     if (tab === 'crash') {
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 resizeCrashSpace();
-                if (crashStateLocal.phase === 'flying') forceRocketPaint();
+                if (crashStateLocal.phase === 'flying') {
+                    forceRocketPaint();
+                    setTimeout(forceRocketPaint, 200);
+                }
             });
         });
     }
@@ -1341,12 +1346,16 @@ socket.on('crash:state', (state) => {
         if (my && !my.cashedOut) { crashMainBtn.className = 'crash-btn cashout'; crashMainBtn.textContent = 'Cashout'; }
         else if (my) { crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Cashed'; }
         else { crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Waiting...'; }
-        // Принудительная перерисовка — телефон часто теряет первый тик
-        setTimeout(forceRocketPaint, 50);
+        // Несколько попыток запустить рендер — для проблемных телефонов
+        setTimeout(forceRocketPaint, 30);
+        setTimeout(forceRocketPaint, 150);
+        setTimeout(forceRocketPaint, 400);
+        setTimeout(forceRocketPaint, 900);
     } else {
         crashMainBtn.className = 'crash-btn crashed'; crashMainBtn.textContent = 'Crashed!';
         crashMultiplierEl.className = 'crash-multiplier-float visible crashed';
         rocketGroup.setAttribute('opacity', '0');
+        crashSpaceBoost = 0;
     }
 });
 socket.on('crash:countdown', (n) => { timerNumber.textContent = n; });
@@ -1354,7 +1363,7 @@ socket.on('crash:tick', (mult) => {
     crashStateLocal.multiplier = mult;
     crashMultiplierEl.textContent = mult.toFixed(2) + 'x';
     crashMultiplierEl.className = 'crash-multiplier-float visible' + (mult >= 5 ? ' rainbow' : '');
-    rocketGroup.setAttribute('opacity', '1');
+    if (crashStateLocal.phase === 'flying') rocketGroup.setAttribute('opacity', '1');
     crashSpaceBoost = 1;
 });
 socket.on('crash:crash', (mult) => {
@@ -1388,13 +1397,8 @@ function renderCrashPlayers(bets){
 function renderCrashHistory(list){
     $('crash-history').innerHTML = list.map(v => '<div class="history-item ' + (v >= 2 ? 'green' : 'red') + '">' + v.toFixed(2) + 'x</div>').join('');
 }
-function forceRocketPaint(){
-    if (crashStateLocal.phase !== 'flying') return;
-    rocketGroup.setAttribute('opacity', '1');
-    rocketGroup.setAttribute('transform', 'translate(40,300) rotate(45) scale(0.4)');
-    crashVisual.idlePhase = Math.random() * Math.PI * 2;
-    requestAnimationFrame(updateCrashRocket);
-}
+
+// ВАЖНО: анимация ракеты как в прошлой рабочей версии
 function updateCrashRocket(){
     if (!rocketGroup) return;
     if (crashStateLocal.phase !== 'flying') return;
@@ -1408,25 +1412,42 @@ function updateCrashRocket(){
     const idleTime = Date.now() * 0.006;
     const shakeX = Math.sin(idleTime + crashVisual.idlePhase) * 1.6;
     const shakeY = Math.cos(idleTime * 1.3 + crashVisual.idlePhase) * 1.2;
+    const wobble = Math.sin(idleTime * 1.7 + crashVisual.idlePhase) * 2.5;
     const rx = baseX + shakeX, ry = baseY + shakeY;
     rocketGroup.setAttribute('opacity', '1');
-    rocketGroup.setAttribute('transform', 'translate(' + rx.toFixed(2) + ',' + ry.toFixed(2) + ') rotate(45) scale(' + scale.toFixed(3) + ')');
+    rocketGroup.setAttribute('transform', 'translate(' + rx.toFixed(2) + ',' + ry.toFixed(2) + ') rotate(' + (45 + wobble).toFixed(2) + ') scale(' + scale.toFixed(3) + ')');
     const svgRect = $('crash-rocket-svg').getBoundingClientRect();
     const dispRect = crashDisplay.getBoundingClientRect();
-    if (svgRect.width === 0 || dispRect.width === 0) return;
-    const sc = Math.min(svgRect.width / 340, svgRect.height / 340);
-    const ox = (svgRect.width - 340 * sc) / 2;
-    const oy = (svgRect.height - 340 * sc) / 2;
-    const px = ox + rx * sc, py = oy + ry * sc;
-    const w = crashMultiplierEl.offsetWidth || 80, h = crashMultiplierEl.offsetHeight || 30;
-    let left = px + 40, top = py - h / 2;
-    if (left + w > dispRect.width - 6) left = px - w - 40;
-    if (top < 4) top = 4;
-    if (top + h > dispRect.height - 4) top = dispRect.height - h - 4;
+    let left = 8, top = 8;
+    if (svgRect.width > 0 && dispRect.width > 0) {
+        const sc = Math.min(svgRect.width / 340, svgRect.height / 340);
+        const ox = (svgRect.width - 340 * sc) / 2;
+        const oy = (svgRect.height - 340 * sc) / 2;
+        const px = ox + rx * sc, py = oy + ry * sc;
+        const w = crashMultiplierEl.offsetWidth || 80, h = crashMultiplierEl.offsetHeight || 30;
+        left = px + 40; top = py - h / 2;
+        if (left + w > dispRect.width - 6) left = px - w - 40;
+        if (top < 4) top = 4;
+        if (top + h > dispRect.height - 4) top = dispRect.height - h - 4;
+    }
     crashMultiplierEl.style.left = left + 'px';
     crashMultiplierEl.style.top = top + 'px';
     if (!crashMultiplierEl.classList.contains('visible')) crashMultiplierEl.classList.add('visible');
     crashMultiplierEl.textContent = (crashStateLocal.multiplier || 1).toFixed(2) + 'x';
+}
+function forceRocketPaint(){
+    if (!rocketGroup) return;
+    if (crashStateLocal.phase !== 'flying') return;
+    void crashDisplay.offsetWidth;
+    void rocketGroup.getBoundingClientRect();
+    crashVisual.idlePhase = Math.random() * Math.PI * 2;
+    rocketGroup.setAttribute('opacity', '1');
+    rocketGroup.setAttribute('transform', 'translate(40,300) rotate(45) scale(0.4)');
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            updateCrashRocket();
+        });
+    });
 }
 function crashAnimLoop(){
     updateCrashRocket();
@@ -1445,7 +1466,7 @@ crashMainBtn.onclick = () => {
     }
 };
 
-// === CRASH SPACE (звёзды и планеты на фоне) ===
+// === CRASH SPACE ===
 const crashSpaceCanvas = $('crash-space-canvas');
 const crashSpaceCtx = crashSpaceCanvas.getContext('2d');
 let crashStars = [], crashSpaceOffsetX = 0, crashSpaceOffsetY = 0;
@@ -1994,7 +2015,8 @@ function buildStrip(drops, caseId){
     });
     return { perRepeat, children: strip.children };
 }
-function spinStripTo(strip, perRepeat, targetDrop, cb){
+function spinStripTo(perRepeat, targetDrop, cb){
+    const strip = $('case-roulette-strip');
     const children = strip.children;
     let idxInRepeat = -1;
     for (let i = 0; i < perRepeat; i++) {
@@ -2045,7 +2067,7 @@ socket.on('case:spin', (data) => {
     const info = CASES_INFO[data.caseId];
     if (!info) { caseSpinning = false; $('case-open-btn').disabled = false; return; }
     const { perRepeat } = buildStrip(info.drops, data.caseId);
-    spinStripTo($('case-roulette-strip'), perRepeat, data.drop);
+    spinStripTo(perRepeat, data.drop);
 });
 socket.on('case:result', (data) => {
     caseSpinning = false;
@@ -2111,13 +2133,12 @@ $('subscribe-gate-check').onclick = async () => {
             $('subscribe-gate-overlay').classList.remove('show');
             freeCaseRemaining = 24 * 60 * 60 * 1000;
             renderFreeCaseUI();
-            // Открываем красивую анимацию как у платного кейса
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
             $('tab-case-detail').classList.add('active');
             $('case-detail-name').textContent = 'Подарок дня';
             $('case-open-btn').style.display = 'none';
             const { perRepeat } = buildStrip(FREE_VISUAL_DROPS, 'free');
-            spinStripTo($('case-roulette-strip'), perRepeat, d.drop, () => {
+            spinStripTo(perRepeat, d.drop, () => {
                 const flash = $('case-result-flash');
                 flash.style.animation = 'none'; void flash.offsetWidth; flash.style.animation = 'caseFlash 1s ease-out';
                 showResultBanner('🎁 +' + d.drop + ' ★', true);
@@ -2270,8 +2291,7 @@ async function refreshBalance(){
 // === NAVIGATION ===
 document.querySelectorAll('.bottom-tab').forEach(b => {
     b.addEventListener('click', () => {
-        const tab = b.dataset.tab;
-        openTab(tab);
+        openTab(b.dataset.tab);
     });
 });
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => openTab('menu')));
@@ -2291,7 +2311,6 @@ document.querySelectorAll('[data-battle]').forEach(o => {
 });
 
 // === ADMIN ===
-let adminActive = false, adminTab = 'players';
 document.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener('input', () => { if (input.value === '22092011') { input.value = ''; openAdmin(); } });
 });
@@ -2300,8 +2319,18 @@ function openAdmin(){
     adminActive = true;
     $('admin-overlay').classList.add('show');
     loadAdminPlayers();
+    if (adminRefreshInterval) clearInterval(adminRefreshInterval);
+    adminRefreshInterval = setInterval(() => {
+        if (!adminActive) return;
+        if (adminTab === 'players') loadAdminPlayers();
+        else loadAdminWithdrawals();
+    }, 30000);
 }
-$('admin-close').onclick = () => { adminActive = false; $('admin-overlay').classList.remove('show'); };
+$('admin-close').onclick = () => {
+    adminActive = false;
+    $('admin-overlay').classList.remove('show');
+    if (adminRefreshInterval) { clearInterval(adminRefreshInterval); adminRefreshInterval = null; }
+};
 document.querySelectorAll('.admin-tab').forEach(t => {
     t.addEventListener('click', () => {
         document.querySelectorAll('.admin-tab').forEach(x => x.classList.remove('active'));
@@ -2320,6 +2349,7 @@ async function loadAdminPlayers(){
         if (!d.success) return;
         const list = $('admin-players-list');
         list.innerHTML = '';
+        if (!d.players.length) { list.innerHTML = '<div class="admin-empty">Нет игроков онлайн</div>'; return; }
         d.players.forEach(p => {
             const row = document.createElement('div');
             row.className = 'admin-player-row';
@@ -2396,7 +2426,7 @@ $('admin-crash-now').onclick = () => {
     showNotification('Краш!', 'success');
 };
 
-// === STAR BACKGROUND (глобальный) ===
+// === STAR BACKGROUND ===
 const starsCanvas = $('stars-canvas'), starsCtx = starsCanvas.getContext('2d');
 let bgStars = [];
 function resizeBg(){ starsCanvas.width = innerWidth; starsCanvas.height = innerHeight; }
