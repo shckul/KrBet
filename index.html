@@ -33,8 +33,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .balance-wrap{display:flex;align-items:center;gap:8px}
 .balance-badge{background:#000;border-radius:20px;padding:4px 12px 4px 4px;display:flex;align-items:center;gap:8px;font-weight:800;color:#fff;font-size:0.9rem}
 .balance-badge .coin{background:var(--gold);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
-.btn-add{width:32px;height:32px;border-radius:50%;background:var(--wine);border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;font-weight:400;line-height:1;cursor:pointer;transition:transform var(--dur-fast) var(--ease-bounce)}
-.btn-add:active{transform:scale(0.9)}
+.btn-add{width:32px;height:32px;border-radius:50%;background:var(--wine);border:none;color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;font-weight:400;line-height:1;cursor:pointer}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);padding-bottom:90px}
 .tab-pane{display:none;flex-direction:column;padding:0;min-height:100%;position:relative}
 .tab-pane.active{display:flex;animation:tabEnter .4s var(--ease-out)}
@@ -63,19 +62,16 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .banner-main::after{content:'';position:absolute;top:-30%;right:-20%;width:120px;height:120px;background:radial-gradient(circle,rgba(255,255,255,0.15),transparent 70%);pointer-events:none}
 .banner-main h2{font-size:1.4rem;font-weight:900;line-height:1.1;margin-bottom:6px;position:relative;z-index:1}
 .banner-main p{font-size:0.7rem;opacity:0.9;margin-bottom:10px;position:relative;z-index:1;line-height:1.3}
-.banner-main button{background:var(--wine);color:#fff;border:none;padding:6px 12px;border-radius:12px;font-weight:800;font-size:0.7rem;align-self:flex-start;cursor:pointer;position:relative;z-index:1;transition:transform var(--dur-fast) var(--ease-bounce)}
-.banner-main button:active{transform:scale(0.94)}
+.banner-main button{background:var(--wine);color:#fff;border:none;padding:6px 12px;border-radius:12px;font-weight:800;font-size:0.7rem;align-self:flex-start;cursor:pointer;position:relative;z-index:1}
 .banner-side{display:flex;flex-direction:column;gap:10px}
-.banner-sm{background:linear-gradient(135deg,#7a0f28,#a8324a);border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:center;position:relative;flex:1;min-height:75px;overflow:hidden;cursor:pointer;transition:transform var(--dur-fast) var(--ease-bounce)}
-.banner-sm:active{transform:scale(0.97)}
+.banner-sm{background:linear-gradient(135deg,#7a0f28,#a8324a);border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:center;position:relative;flex:1;min-height:75px;overflow:hidden;cursor:pointer}
 .banner-sm::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(255,255,255,0.15),transparent 70%);pointer-events:none}
 .banner-sm.green{background:linear-gradient(135deg,#059669,#10b981)}
 .banner-sm h3{font-size:0.85rem;font-weight:800;margin-bottom:3px;position:relative;z-index:1}
 .banner-sm p{font-size:0.6rem;opacity:0.9;margin-bottom:8px;position:relative;z-index:1;line-height:1.3}
-.banner-sm button{background:rgba(255,255,255,0.25);color:#fff;border:none;padding:4px 10px;border-radius:8px;font-size:0.65rem;font-weight:800;align-self:flex-start;cursor:pointer;position:relative;z-index:1;transition:transform var(--dur-fast) var(--ease-bounce)}
-.banner-sm button:active{transform:scale(0.94)}
+.banner-sm button{background:rgba(255,255,255,0.25);color:#fff;border:none;padding:4px 10px;border-radius:8px;font-size:0.65rem;font-weight:800;align-self:flex-start;cursor:pointer;position:relative;z-index:1}
 
-/* Games grid */
+/* Games */
 .games-section-title{font-size:1.2rem;font-weight:900;margin:8px 16px 10px;color:#fff}
 .games-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:16px}
 .game-card{position:relative;border-radius:16px;aspect-ratio:0.82;cursor:pointer;overflow:hidden;transition:transform 0.2s var(--ease-bounce),box-shadow 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;box-shadow:0 10px 25px rgba(0,0,0,0.4);transform-style:preserve-3d;will-change:transform}
@@ -97,14 +93,10 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .bottom-tabs{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:440px;display:flex;background:#1a0a10;border-radius:16px;padding:8px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.6);gap:4px;border:1px solid rgba(168,50,74,0.15)}
 .bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 0;color:var(--text-dim);border:none;background:transparent;font-size:0.6rem;font-weight:700;text-transform:uppercase;cursor:pointer;border-radius:10px;transition:all 0.2s var(--ease-out);position:relative;letter-spacing:0.5px}
 .bottom-tab.active{background:var(--wine);color:#fff}
-.bottom-tab:active{transform:scale(0.96)}
 .bottom-tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.bottom-tab .badge{position:absolute;top:4px;right:50%;margin-right:-22px;background:var(--wine);color:#fff;font-size:0.5rem;padding:1px 5px;border-radius:8px;border:2px solid #1a0a10;font-weight:900}
 
-.back-btn{position:absolute;top:12px;left:12px;background:rgba(255,255,255,0.08);border:none;border-radius:10px;color:#fff;width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:20;cursor:pointer;transition:transform var(--dur-fast) var(--ease-bounce)}
-.back-btn:active{transform:scale(0.9)}
+.back-btn{position:absolute;top:12px;left:12px;background:rgba(255,255,255,0.08);border:none;border-radius:10px;color:#fff;width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:20;cursor:pointer}
 .back-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-
 .bank-display{font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin:40px 0 4px;text-align:center}
 .bank-amount{font-size:1.6rem;font-weight:900;color:#fff;margin-bottom:8px;text-align:center}
 
@@ -119,24 +111,23 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .timer-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.2rem;font-weight:900;color:var(--orange);z-index:6;pointer-events:none;letter-spacing:2px;text-shadow:0 0 20px rgba(249,115,22,0.6)}
 .bet-controls{display:flex;gap:8px;align-items:center;margin:6px 0;justify-content:center}
 .bet-input{width:80px;padding:10px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#241018;color:white;font-size:.9rem;text-align:center;outline:none;font-weight:700}
-.bet-input:focus{border-color:var(--orange)}
-.btn-bet{padding:10px 20px;border:none;border-radius:10px;font-weight:800;font-size:.85rem;cursor:pointer;color:#fff;text-transform:uppercase;letter-spacing:1px;transition:transform var(--dur-fast) var(--ease-bounce)}
-.btn-bet:active{transform:scale(0.93)}
+.btn-bet{padding:10px 20px;border:none;border-radius:10px;font-weight:800;font-size:.85rem;cursor:pointer;color:#fff;text-transform:uppercase;letter-spacing:1px}
 .btn-bet:disabled{opacity:.35;pointer-events:none}
 .btn-bet-roulette{background:linear-gradient(90deg,#c2410c 0%,#f97316 50%,#c2410c 100%);background-size:200% 100%;animation:orangeShimmer 3s ease-in-out infinite}
+@keyframes orangeShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .my-bet-info{font-size:.75rem;color:var(--text-dim);margin:8px 0;text-align:center}
 .players-list{width:100%;max-width:320px;margin:6px auto;max-height:120px;overflow-y:auto}
 .player-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);font-size:.8rem;color:#ddd}
 .player-row.you{color:#fff;font-weight:700;background:rgba(249,115,22,0.1);border-radius:6px}
-.player-color-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;box-shadow:0 0 6px currentColor}
+.player-color-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
 
-/* CRASH */
+/* Crash */
 .crash-display{width:90%;max-width:340px;aspect-ratio:1;background:var(--surface);border-radius:16px;border:1px solid rgba(249,115,22,0.3);position:relative;margin:40px auto 12px;overflow:hidden;min-width:260px;min-height:260px;box-shadow:0 0 30px rgba(249,115,22,0.15)}
 .crash-space{position:absolute;inset:0;z-index:0;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 50% 130%,#2a0a1e 0%,#0f0508 65%)}
 #crash-space-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 .crash-planets{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .crash-planet{position:absolute;border-radius:50%;will-change:transform}
-.crash-planet-1{width:46px;height:46px;top:14%;left:78%;background:radial-gradient(circle at 35% 35%,#a8324a,#4a0a1e 60%,#1a0010);box-shadow:inset -6px -6px 16px rgba(0,0,0,.7),0 0 20px rgba(168,50,74,0.4);opacity:.7}
+.crash-planet-1{width:46px;height:46px;top:14%;left:78%;background:radial-gradient(circle at 35% 35%,#a8324a,#4a0a1e 60%,#1a0010);opacity:.7}
 .crash-planet-2{width:22px;height:22px;top:60%;left:10%;background:radial-gradient(circle at 40% 40%,#8b1e3f,#3a001a 70%);opacity:.6}
 .crash-planet-3{width:70px;height:70px;top:74%;left:82%;background:radial-gradient(circle at 30% 30%,#f97316,#3a1a00 60%,#1a0800);opacity:.5}
 #crash-rocket-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
@@ -158,23 +149,21 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .history-item{flex-shrink:0;padding:5px 10px;border-radius:6px;font-weight:800;font-size:.8rem;min-width:50px;text-align:center;background:#241018;color:#ddd}
 .history-item.green{background:rgba(168,50,74,.2);color:#fff;border:1px solid rgba(168,50,74,.4)}
 .history-item.red{background:rgba(239,68,68,.2);color:#ef4444}
-.crash-btn{width:90%;max-width:340px;padding:16px;border:none;border-radius:14px;font-weight:900;font-size:1.05rem;cursor:pointer;text-transform:uppercase;letter-spacing:1.5px;transition:transform var(--dur-fast);margin:8px auto;display:block;font-family:inherit}
+.crash-btn{width:90%;max-width:340px;padding:16px;border:none;border-radius:14px;font-weight:900;font-size:1.05rem;cursor:pointer;text-transform:uppercase;letter-spacing:1.5px;margin:8px auto;display:block;font-family:inherit}
 .crash-btn.place{background:linear-gradient(90deg,#c2410c 0%,#f97316 35%,#fb923c 50%,#f97316 65%,#c2410c 100%);background-size:200% 100%;animation:orangeShimmer 3s ease-in-out infinite;color:#fff;box-shadow:0 4px 20px rgba(249,115,22,0.5)}
-@keyframes orangeShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.crash-btn.place:active{transform:scale(0.96)}
 .crash-btn.waiting{background:#241018;color:#666;pointer-events:none}
 .crash-btn.cashout{background:var(--green);color:#fff;animation:pulse-btn .8s infinite}
 .crash-btn.crashed{background:var(--red);color:#fff;pointer-events:none}
 @keyframes pulse-btn{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 
-/* MINES */
+/* Mines */
 .mines-settings{display:flex;gap:10px;align-items:center;margin:40px 0 12px;flex-wrap:wrap;justify-content:center}
 .mines-settings label{font-size:.85rem;color:var(--text-dim);font-weight:600}
 .mines-settings select{padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#241018;color:white;font-size:.9rem;outline:none;font-weight:700}
 .mines-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:90%;max-width:300px;margin:8px auto}
-.mines-cell{aspect-ratio:1;border-radius:10px;background:#241018;border:1px solid rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.8rem;transition:transform var(--dur-fast)}
+.mines-cell{aspect-ratio:1;border-radius:10px;background:#241018;border:1px solid rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform var(--dur-fast)}
 .mines-cell:active{transform:scale(0.9)}
-.mines-cell.revealed{background:linear-gradient(145deg,#3a1a08,#4a1a10);border-color:rgba(249,115,22,0.5);box-shadow:0 0 15px rgba(249,115,22,0.3),inset 0 0 10px rgba(249,115,22,0.1)}
+.mines-cell.revealed{background:linear-gradient(145deg,#3a1a08,#4a1a10);border-color:rgba(249,115,22,0.5);box-shadow:0 0 15px rgba(249,115,22,0.3)}
 .mines-cell.bomb{background:linear-gradient(145deg,#3a0a08,#4a0a10);border-color:rgba(239,68,68,0.6);box-shadow:0 0 20px rgba(239,68,68,0.4)}
 .mines-cell.disabled{pointer-events:none}
 .mines-cell svg{width:60%;height:60%}
@@ -184,13 +173,12 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .mines-multiplier{font-size:1.6rem;font-weight:900;color:#f97316}
 .mines-multiplier.cashed{color:var(--gold)}
 .mines-multiplier.lost{color:var(--red)}
-.mines-btn{width:90%;max-width:300px;padding:14px;border:none;border-radius:14px;font-weight:900;font-size:1rem;cursor:pointer;text-transform:uppercase;letter-spacing:1.5px;margin:8px auto;display:block;font-family:inherit;transition:transform var(--dur-fast)}
+.mines-btn{width:90%;max-width:300px;padding:14px;border:none;border-radius:14px;font-weight:900;font-size:1rem;cursor:pointer;text-transform:uppercase;letter-spacing:1.5px;margin:8px auto;display:block;font-family:inherit}
 .mines-btn.start{background:linear-gradient(90deg,#c2410c 0%,#f97316 35%,#fb923c 50%,#f97316 65%,#c2410c 100%);background-size:200% 100%;animation:orangeShimmer 3s ease-in-out infinite;color:#fff;box-shadow:0 4px 20px rgba(249,115,22,0.5)}
-.mines-btn.start:active{transform:scale(0.95)}
 .mines-btn.cashout{background:var(--green);color:#fff;animation:pulse-btn .8s infinite}
 .mines-btn.over{background:#241018;color:#666;pointer-events:none}
 
-/* UPGRADER */
+/* Upgrader */
 .upgrader-container{width:100%;max-width:400px;margin:20px auto 0;display:flex;flex-direction:column;align-items:center;padding:0 16px}
 .upgrader-title{font-size:1.8rem;font-weight:900;margin-bottom:16px;background:linear-gradient(90deg,#f97316,#fbbf24,#f97316);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:orangeShimmer 3s ease-in-out infinite;letter-spacing:1px}
 .upgrader-wheel-container{position:relative;width:300px;height:300px;margin:0 auto 16px}
@@ -205,17 +193,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .upgrader-arrow-orbit{position:absolute;top:50%;left:50%;width:300px;height:300px;z-index:10;pointer-events:none;transform:translate(-50%,-50%) rotate(0deg);will-change:transform}
 .upgrader-arrow{position:absolute;top:-8px;left:50%;margin-left:-12px;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:20px solid #fbbf24;filter:drop-shadow(0 0 10px rgba(251,191,36,0.8))}
 .upgrader-arrow-line{position:absolute;top:12px;left:50%;margin-left:-1px;width:2px;height:26px;background:linear-gradient(180deg,#fbbf24,rgba(251,191,36,0.2))}
-.upgrader-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:14px}
-.upgrader-card{background:#1a0a10;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid rgba(168,50,74,0.15);display:flex;flex-direction:column;align-items:center;gap:8px}
-.upgrader-card-icon{width:50px;height:50px;border-radius:50%;background:#241018;border:1px solid rgba(168,50,74,0.3);display:flex;align-items:center;justify-content:center}
-.upgrader-card-icon svg{width:24px;height:24px;stroke:var(--wine-light);fill:none;stroke-width:2}
-.upgrader-card-label{font-size:0.65rem;color:var(--text-dim);line-height:1.2}
-.upgrader-main-row{display:flex;gap:8px;width:100%;margin-bottom:12px;align-items:center}
-.upgrader-icon-btn{width:44px;height:44px;border-radius:50%;background:#1a0a10;border:1px solid rgba(168,50,74,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text-dim)}
-.upgrader-icon-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
-.upgrader-btn{flex:1;padding:14px;border:none;border-radius:14px;background:linear-gradient(90deg,#2a1520 0%,#3a1a28 50%,#2a1520 100%);background-size:200% 100%;color:#fff;font-weight:900;font-size:0.95rem;text-transform:uppercase;letter-spacing:1.5px;cursor:pointer;border:1px solid rgba(168,50,74,0.3);font-family:inherit}
-.upgrader-btn:active{transform:scale(0.97)}
-.upgrader-btn:disabled{opacity:.5;pointer-events:none}
 .upgrader-quick-row{display:flex;gap:6px;width:100%;margin-bottom:12px}
 .quick-chance-btn{flex:1;padding:10px 0;border-radius:10px;background:#1a0a10;border:1px solid rgba(168,50,74,0.25);color:#fff;font-weight:800;font-size:0.8rem;cursor:pointer;font-family:inherit}
 .quick-chance-btn.active{border-color:var(--wine);background:rgba(168,50,74,0.2);color:var(--wine-light)}
@@ -223,9 +200,10 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .quick-chance-btn.special.active{background:rgba(251,191,36,0.15);color:#fbbf24;border-color:#fbbf24}
 .upgrader-result{font-size:1.1rem;font-weight:800;color:#fff;min-height:24px;text-align:center;width:100%}
 .upgrader-input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#1a0a10;color:white;font-size:1rem;text-align:center;outline:none;font-weight:700}
-.upgrader-input:focus{border-color:var(--wine)}
+.upgrader-btn{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(90deg,#2a1520 0%,#3a1a28 50%,#2a1520 100%);color:#fff;font-weight:900;font-size:0.95rem;text-transform:uppercase;letter-spacing:1.5px;cursor:pointer;border:1px solid rgba(168,50,74,0.3);font-family:inherit;margin-top:12px}
+.upgrader-btn:disabled{opacity:.5;pointer-events:none}
 
-/* ICE ARENA */
+/* Ice Arena */
 .ice-arena-container{width:100%;max-width:360px;margin:0 auto;display:flex;flex-direction:column;align-items:center;padding-bottom:20px}
 .ice-top-info{display:flex;flex-direction:column;align-items:center;margin-bottom:12px;padding-top:56px}
 .ice-timer-big{font-size:2rem;font-weight:900;color:var(--orange);line-height:1;margin-bottom:4px;letter-spacing:2px;text-shadow:0 0 15px rgba(249,115,22,0.4)}
@@ -239,7 +217,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .ice-bet-controls{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px;margin:0 auto;padding:0 4px}
 .ice-input-row{display:flex;gap:8px;width:100%}
 .ice-bet-input-wrap{flex:1;display:flex;align-items:center;background:#1a0a10;border-radius:12px;padding:0 12px;border:1px solid rgba(255,255,255,0.1)}
-.ice-bet-input-wrap:focus-within{border-color:var(--orange)}
 .ice-bet-input-wrap span{font-size:1.1rem;color:var(--gold);font-weight:900;margin-right:8px}
 .ice-bet-input{flex:1;background:transparent;border:none;color:#fff;font-size:1.1rem;font-weight:800;padding:12px 0;outline:none}
 .ice-max-btn{background:rgba(255,255,255,0.05);border:none;color:var(--text-dim);font-size:0.75rem;font-weight:800;padding:6px 10px;border-radius:6px;cursor:pointer}
@@ -250,7 +227,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .ice-bet-btn.waiting{background:#1a0a10;color:var(--text-dim);pointer-events:none}
 .ice-players-list{width:100%;max-width:320px;max-height:100px;overflow-y:auto;margin:10px 0 0}
 
-/* ROAD */
+/* Road */
 .road-container{width:100%;max-width:440px;margin:0 auto;padding:56px 12px 20px;display:flex;flex-direction:column;align-items:center}
 .road-diff-row{display:flex;gap:6px;width:100%;margin-bottom:14px}
 .road-diff-btn{flex:1;padding:10px 4px;border-radius:10px;background:#1a0a10;border:1px solid rgba(168,50,74,0.25);color:#fff;font-weight:800;font-size:0.72rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-family:inherit}
@@ -262,7 +239,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .road-cell{flex-shrink:0;width:70px;height:70px;border-radius:12px;background:linear-gradient(145deg,#241018,#1a0a10);border:1.5px solid rgba(168,50,74,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 .road-cell.passed{border-color:rgba(16,185,129,0.6);background:linear-gradient(145deg,#0a2018,#061410)}
 .road-cell.current{border-color:var(--gold);background:linear-gradient(145deg,#3a2a0a,#1a1000);box-shadow:0 0 20px rgba(251,191,36,0.4);transform:scale(1.08);z-index:2}
-.road-cell.exploded{border-color:var(--red);background:linear-gradient(145deg,#3a0a08,#1a0505);box-shadow:0 0 20px rgba(239,68,68,0.5);animation:roadExplodeCell .6s var(--ease-out)}
+.road-cell.exploded{border-color:var(--red);background:linear-gradient(145deg,#3a0a08,#1a0505);animation:roadExplodeCell .6s var(--ease-out)}
 @keyframes roadExplodeCell{0%{transform:scale(1)}30%{transform:scale(1.3)}100%{transform:scale(1)}}
 .road-cell-num{font-size:0.55rem;color:var(--text-dim);font-weight:700;margin-bottom:2px}
 .road-cell-mult{font-size:0.95rem;font-weight:900;color:#fff;line-height:1}
@@ -295,7 +272,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .road-status.win{color:var(--green);font-weight:800}
 .road-status.lose{color:var(--red);font-weight:800}
 
-/* CASES */
+/* Cases */
 .cases-page{width:100%;max-width:440px;margin:0 auto;padding:16px}
 .cases-page-title{text-align:center;font-size:1.4rem;font-weight:900;color:#fff;margin:16px 0 20px}
 .cases-section{margin-bottom:24px}
@@ -310,7 +287,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .case-card-info{padding:10px 12px 0}
 .case-card-name{font-size:0.85rem;font-weight:800;color:#fff;margin-bottom:2px}
 .case-card-sub{font-size:0.65rem;color:var(--text-dim);margin-bottom:8px}
-.case-card-btn{width:100%;padding:10px;border:none;font-weight:900;font-size:0.85rem;cursor:pointer;color:#fff;background:var(--wine);letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:5px}
+.case-card-btn{width:100%;padding:10px;border:none;font-weight:900;font-size:0.85rem;cursor:pointer;color:#fff;background:var(--wine);display:flex;align-items:center;justify-content:center;gap:5px}
 .case-card-btn svg{width:14px;height:14px;fill:#fff}
 .case-card.free .case-card-btn{background:linear-gradient(90deg,#c94a63,#a8324a)}
 .case-card.free .case-card-btn:disabled{opacity:.5;cursor:not-allowed}
@@ -350,7 +327,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .drop-item.rarity-epic{border-color:#f97316;color:#f97316}
 .drop-item.rarity-legendary{border-color:#fbbf24;color:#fbbf24;background:rgba(251,191,36,.1)}
 
-/* PROFILE */
+/* Profile */
 .profile-card{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 16px;width:100%}
 .profile-header{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 0 12px}
 .profile-avatar{width:88px;height:88px;border-radius:50%;border:3px solid var(--wine);background:#241018}
@@ -396,15 +373,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .mission-btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* Modals */
-.bet-modal,.mines-bet-modal{position:fixed;bottom:0;left:0;right:0;background:#1a0a10;padding:24px 20px 30px;border-radius:20px 20px 0 0;z-index:150;display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s var(--ease-out);pointer-events:none;border-top:1px solid rgba(168,50,74,0.3)}
-.bet-modal.show,.mines-bet-modal.show{transform:translateY(0);pointer-events:auto}
-.bet-modal input,.mines-bet-modal input{padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#0f0508;color:white;font-size:1.2rem;text-align:center;outline:none;font-weight:800}
-.bet-modal .quick-bets,.mines-bet-modal .quick-bets{display:flex;gap:8px}
-.bet-modal .quick-bets button,.mines-bet-modal .quick-bets button{flex:1;padding:14px 0;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#241018;color:white;cursor:pointer;font-weight:800;font-size:1rem}
-.bet-modal .modal-actions,.mines-bet-modal .modal-actions{display:flex;gap:10px}
-.bet-modal .modal-actions button,.mines-bet-modal .modal-actions button{flex:1;padding:16px;border-radius:12px;border:none;font-weight:800;font-size:1rem;cursor:pointer}
-.bet-modal .btn-confirm,.mines-bet-modal .btn-confirm{background:var(--wine);color:#fff}
-.bet-modal .btn-cancel,.mines-bet-modal .btn-cancel{background:transparent;border:1px solid #4a3838;color:var(--text-dim)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center}
 .modal-overlay.show{display:flex}
 .modal{background:#1a0a10;border-radius:16px;padding:24px;width:85%;max-width:340px;text-align:center}
@@ -426,6 +394,23 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .result-banner{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a0a10;border:1px solid var(--wine);color:#fff;padding:12px 24px;border-radius:10px;font-weight:800;z-index:150;text-align:center;pointer-events:none}
 @keyframes fadeInOut{0%{opacity:0;top:0}15%{opacity:1;top:20px}75%{opacity:1;top:20px}100%{opacity:0;top:0}}
 
+/* Bet Sheet */
+.bet-sheet-overlay{position:fixed;inset:0;background:rgba(15,5,8,0.75);z-index:240;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.bet-sheet-overlay.show{display:flex;animation:fadeIn 0.2s var(--ease-out)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.bet-sheet{width:100%;max-width:480px;background:#1a0a10;border-radius:20px 20px 0 0;padding:20px 18px 26px;border-top:1px solid rgba(168,50,74,0.3);display:flex;flex-direction:column;gap:12px;animation:slideUp 0.25s var(--ease-out)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.bet-sheet-title{font-size:1rem;font-weight:900;color:#fff;text-align:center;letter-spacing:0.5px}
+.bet-sheet-input-wrap{display:flex;align-items:center;background:#0f0508;border-radius:12px;padding:0 14px;border:1px solid rgba(255,255,255,0.1)}
+.bet-sheet-input-wrap span{font-size:1.2rem;color:var(--gold);font-weight:900;margin-right:8px}
+.bet-sheet-input{flex:1;background:transparent;border:none;color:#fff;font-size:1.2rem;font-weight:800;padding:14px 0;outline:none}
+.bet-sheet-quick{display:flex;gap:6px}
+.bet-sheet-quick button{flex:1;background:#241018;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:10px 0;border-radius:10px;font-weight:800;font-size:0.85rem;cursor:pointer;font-family:inherit}
+.bet-sheet-actions{display:flex;gap:10px;margin-top:4px}
+.bet-sheet-actions button{flex:1;padding:14px;border-radius:12px;font-weight:900;font-size:0.95rem;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1px;border:none}
+.bet-sheet-actions .cancel{background:transparent;border:1px solid #4a3838;color:var(--text-dim)}
+.bet-sheet-actions .confirm{background:linear-gradient(90deg,#c2410c 0%,#f97316 50%,#c2410c 100%);background-size:200% 100%;animation:orangeShimmer 3s ease-in-out infinite;color:#fff}
+
 /* Subscribe gate */
 .subscribe-gate-overlay{position:fixed;inset:0;background:rgba(15,5,8,0.92);z-index:260;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px}
 .subscribe-gate-overlay.show{display:flex}
@@ -439,6 +424,19 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .subscribe-gate-btn.primary{background:linear-gradient(90deg,#c2410c 0%,#f97316 50%,#c2410c 100%);background-size:200% 100%;animation:orangeShimmer 3s ease-in-out infinite;color:#fff}
 .subscribe-gate-btn.primary:disabled{opacity:.5;pointer-events:none;animation:none;background:var(--wine-dark)}
 .subscribe-gate-btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--text-dim)}
+
+/* Battles picker */
+.battles-picker-overlay{position:fixed;inset:0;background:rgba(15,5,8,0.92);z-index:250;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px}
+.battles-picker-overlay.show{display:flex}
+.battles-picker{width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px}
+.battles-picker-title{font-size:1.3rem;font-weight:900;text-align:center;color:#fff}
+.battles-picker-sub{font-size:0.75rem;text-align:center;color:var(--text-dim);margin-bottom:8px}
+.battles-picker-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.battle-option{position:relative;aspect-ratio:0.9;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.4)}
+.battle-option canvas{width:100%;height:100%;object-fit:cover;display:block}
+.battle-option-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(transparent 40%,rgba(0,0,0,0.9));pointer-events:none}
+.battle-option-title{position:absolute;bottom:12px;left:0;right:0;z-index:2;text-align:center;font-size:1.05rem;font-weight:900;color:#fff}
+.battles-picker-close{width:100%;padding:12px;background:rgba(255,255,255,0.1);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;margin-top:4px}
 
 /* Admin */
 .admin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:400;display:none;flex-direction:column;padding:20px;overflow-y:auto}
@@ -464,10 +462,8 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 .admin-player-btn{padding:8px 12px;border:none;border-radius:6px;font-weight:800;font-size:.75rem;cursor:pointer;white-space:nowrap}
 .admin-player-btn.add{background:var(--green);color:#fff}
 .admin-player-btn.sub{background:var(--red);color:#fff}
-.admin-input{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#0f0508;color:white;text-align:center;outline:none;margin-bottom:8px}
 .admin-btn{width:100%;padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem}
 .admin-btn-crash{background:var(--red);color:white}
-.admin-select{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#0f0508;color:white;outline:none;margin-bottom:8px}
 .withdrawal-card{background:#0f0508;border-radius:10px;padding:12px;margin-bottom:8px}
 .withdrawal-info{font-size:.8rem;color:#ddd;margin-bottom:8px;line-height:1.6}
 .withdrawal-info b{color:#fff}
@@ -560,17 +556,15 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- ROULETTE -->
+        <!-- Roulette -->
         <div class="tab-pane" id="tab-roll">
-            <button class="back-btn" data-back>
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
+            <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="bank-display">Банк</div>
             <div class="bank-amount" id="bank-amount">0 ★</div>
             <div class="roulette-container">
                 <div class="pointer-layer" id="pointer-layer"><div class="pointer-arrow"></div></div>
                 <div class="roulette-outer">
-                    <div class="roulette-wheel" id="roulette-wheel"><canvas id="wheel-canvas"></canvas></div>
+                    <div class="roulette-wheel"><canvas id="wheel-canvas"></canvas></div>
                     <div class="roulette-center"></div>
                     <div class="timer-overlay" id="timer-overlay">15</div>
                 </div>
@@ -583,11 +577,9 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             <div class="players-list" id="roll-players-list"></div>
         </div>
 
-        <!-- CRASH -->
+        <!-- Crash -->
         <div class="tab-pane" id="tab-crash">
-            <button class="back-btn" data-back>
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
+            <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="crash-display" id="crash-display">
                 <div class="crash-space">
                     <canvas id="crash-space-canvas"></canvas>
@@ -599,20 +591,12 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
                 </div>
                 <svg id="crash-rocket-svg" viewBox="0 0 340 340" preserveAspectRatio="xMidYMid meet">
                     <defs>
-                        <radialGradient id="trail-grad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#ffcc99" stop-opacity="0.9"/>
-                            <stop offset="35%" stop-color="#fb923c" stop-opacity="0.5"/>
-                            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
-                        </radialGradient>
                         <radialGradient id="flame-core" cx="50%" cy="15%" r="85%">
-                            <stop offset="0%" stop-color="#ffffff"/>
-                            <stop offset="25%" stop-color="#fff2c0"/>
-                            <stop offset="55%" stop-color="#fb923c"/>
-                            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+                            <stop offset="0%" stop-color="#ffffff"/><stop offset="25%" stop-color="#fff2c0"/>
+                            <stop offset="55%" stop-color="#fb923c"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
                         </radialGradient>
                         <radialGradient id="flame-mid" cx="50%" cy="15%" r="85%">
-                            <stop offset="0%" stop-color="#fbbf24"/>
-                            <stop offset="45%" stop-color="#f97316"/>
+                            <stop offset="0%" stop-color="#fbbf24"/><stop offset="45%" stop-color="#f97316"/>
                             <stop offset="100%" stop-color="#a8324a" stop-opacity="0"/>
                         </radialGradient>
                         <radialGradient id="flame-outer" cx="50%" cy="15%" r="85%">
@@ -629,23 +613,14 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
                             <stop offset="55%" stop-color="#fbbf24"/><stop offset="85%" stop-color="#8a6f2c"/>
                             <stop offset="100%" stop-color="#5a4520"/>
                         </linearGradient>
-                        <linearGradient id="wing-grad-left" x1="100%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#a8324a"/><stop offset="100%" stop-color="#4c0d20"/>
-                        </linearGradient>
-                        <linearGradient id="wing-grad-right" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <linearGradient id="wing-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#a8324a"/><stop offset="100%" stop-color="#4c0d20"/>
                         </linearGradient>
                         <linearGradient id="nozzle-grad" x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop offset="0%" stop-color="#3a3a45"/><stop offset="50%" stop-color="#6a6a78"/>
                             <stop offset="100%" stop-color="#2a2a32"/>
                         </linearGradient>
-                        <radialGradient id="explode-particle" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#fbbf24"/>
-                            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
-                        </radialGradient>
                     </defs>
-                    <g id="crash-trail-layer"></g>
-                    <g id="crash-explode-layer"></g>
                     <g id="crash-rocket-group" transform="translate(60,280) rotate(45) scale(0.4)" opacity="0">
                         <g id="crash-flame">
                             <ellipse id="crash-flame-outer" cx="0" cy="26" rx="8" ry="18" fill="url(#flame-outer)"/>
@@ -653,18 +628,13 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
                             <ellipse id="crash-flame-core" cx="0" cy="19" rx="3" ry="9" fill="url(#flame-core)"/>
                         </g>
                         <path d="M -6,20 L -4,26 L 4,26 L 6,20 Z" fill="url(#nozzle-grad)" stroke="#1a1a22" stroke-width="0.6"/>
-                        <rect x="-4" y="24" width="8" height="2" fill="#1a1a22" rx="0.5"/>
-                        <path d="M 7,8 L 17,19 L 17,22 L 7,17 Z" fill="url(#wing-grad-right)" stroke="#4c0d20" stroke-width="0.5"/>
-                        <path d="M -7,8 L -17,19 L -17,22 L -7,17 Z" fill="url(#wing-grad-left)" stroke="#4c0d20" stroke-width="0.5"/>
+                        <path d="M 7,8 L 17,19 L 17,22 L 7,17 Z" fill="url(#wing-grad)" stroke="#4c0d20" stroke-width="0.5"/>
+                        <path d="M -7,8 L -17,19 L -17,22 L -7,17 Z" fill="url(#wing-grad)" stroke="#4c0d20" stroke-width="0.5"/>
                         <path d="M 0,-26 C 6,-22 8,-10 8,2 L 8,20 L -8,20 L -8,2 C -8,-10 -6,-22 0,-26 Z" fill="url(#body-grad)" stroke="#3a3a44" stroke-width="0.7"/>
-                        <path d="M -8,-3 L 8,-3 L 8,1 L -8,1 Z" fill="#a8324a" opacity="0.95"/>
+                        <path d="M -8,-3 L 8,-3 L 8,1 L -8,1 Z" fill="#a8324a"/>
                         <path d="M 0,-26 C 4.5,-23 6.5,-15 7,-9 L -7,-9 C -6.5,-15 -4.5,-23 0,-26 Z" fill="url(#nose-grad)" stroke="#5a4520" stroke-width="0.5"/>
                         <circle cx="0" cy="-1" r="2.6" fill="#0a0010" stroke="#fbbf24" stroke-width="0.7"/>
                         <circle cx="0" cy="-1" r="1.8" fill="#c94a63"/>
-                    </g>
-                    <g id="crash-timer-ring" opacity="0">
-                        <circle cx="170" cy="170" r="78" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
-                        <circle id="crash-timer-arc" cx="170" cy="170" r="78" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" transform="rotate(-90 170 170)"/>
                     </g>
                 </svg>
                 <div class="crash-timer-wrap" id="crash-timer-wrap">
@@ -678,11 +648,9 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             <div class="players-list" id="crash-players-list"></div>
         </div>
 
-        <!-- MINES -->
+        <!-- Mines -->
         <div class="tab-pane" id="tab-mines">
-            <button class="back-btn" data-back>
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
+            <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="mines-settings">
                 <label>Мин:</label>
                 <select id="mines-count">
@@ -699,11 +667,9 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             <button class="mines-btn start" id="mines-main-btn">Играть</button>
         </div>
 
-        <!-- UPGRADER -->
+        <!-- Upgrader -->
         <div class="tab-pane" id="tab-upgrader">
-            <button class="back-btn" data-back>
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
+            <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="upgrader-container">
                 <div class="upgrader-title">Upgrade</div>
                 <div class="upgrader-wheel-container">
@@ -733,15 +699,13 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
                 <div class="upgrader-result" id="upgrader-result"></div>
                 <input type="number" class="upgrader-input" id="upgrader-bet-input" placeholder="Ставка (мин. 10)" value="10" min="10" style="margin-top:8px">
                 <input type="number" class="upgrader-input" id="upgrader-target-input" placeholder="Цель" value="100" min="1" style="margin-top:6px">
-                <button class="upgrader-btn" id="upgrader-btn" style="margin-top:12px;width:100%">Крутить колесо</button>
+                <button class="upgrader-btn" id="upgrader-btn">Крутить колесо</button>
             </div>
         </div>
 
-        <!-- ICE -->
+        <!-- Ice -->
         <div class="tab-pane" id="tab-ice-arena">
-            <button class="back-btn" data-back>
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
+            <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="ice-arena-container">
                 <div class="ice-top-info">
                     <div class="ice-timer-big" id="ice-timer">15</div>
@@ -775,11 +739,9 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- ROAD -->
+        <!-- Road -->
         <div class="tab-pane" id="tab-road">
-            <button class="back-btn" data-back>
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
+            <button class="back-btn" data-back><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="road-container">
                 <div class="road-diff-row">
                     <button class="road-diff-btn easy" data-diff="easy">Легкая</button>
@@ -822,7 +784,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- CASES -->
+        <!-- Cases -->
         <div class="tab-pane" id="tab-cases">
             <div class="cases-page">
                 <div class="cases-page-title">Кейсы</div>
@@ -836,7 +798,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
                             <div class="case-card-preview"><canvas id="case-preview-free" width="200" height="200"></canvas></div>
                             <div class="case-card-info">
                                 <div class="case-card-name">Подарок дня</div>
-                                <div class="case-card-sub" id="free-case-card-sub">раз в сутки · до 500 ★</div>
+                                <div class="case-card-sub" id="free-case-card-sub">раз в сутки · до 5 ★</div>
                             </div>
                             <button class="case-card-btn" id="free-case-card-btn">
                                 <svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>
@@ -902,7 +864,6 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
             </div>
         </div>
 
-        <!-- PROFILE -->
         <div class="tab-pane" id="tab-profile">
             <div class="profile-card">
                 <div class="profile-header">
@@ -964,26 +925,49 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
     </div>
 </div>
 
-<!-- Battles picker -->
-<div class="battles-picker-overlay" id="battles-picker-overlay" style="position:fixed;inset:0;background:rgba(15,5,8,0.92);z-index:250;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px">
-    <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px">
-        <div style="font-size:1.3rem;font-weight:900;text-align:center;color:#fff;margin-bottom:4px">Батлы</div>
-        <div style="font-size:0.75rem;text-align:center;color:var(--text-dim);margin-bottom:8px">Выбери режим</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="battle-option" data-battle="roll" style="position:relative;aspect-ratio:0.9;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.4);background:#1a0a10">
-                <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(transparent 40%,rgba(0,0,0,0.9));pointer-events:none"></div>
-                <div style="position:absolute;bottom:12px;left:0;right:0;z-index:2;text-align:center;font-size:1.05rem;font-weight:900;color:#fff">Рулетка</div>
-            </div>
-            <div class="battle-option" data-battle="ice-arena" style="position:relative;aspect-ratio:0.9;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.4);background:#1a0a10">
-                <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(transparent 40%,rgba(0,0,0,0.9));pointer-events:none"></div>
-                <div style="position:absolute;bottom:12px;left:0;right:0;z-index:2;text-align:center;font-size:1.05rem;font-weight:900;color:#fff">Айс Арена</div>
-            </div>
+<!-- Bet Sheet -->
+<div class="bet-sheet-overlay" id="bet-sheet-overlay">
+    <div class="bet-sheet">
+        <div class="bet-sheet-title" id="bet-sheet-title">Сумма ставки</div>
+        <div class="bet-sheet-input-wrap">
+            <span>★</span>
+            <input type="number" class="bet-sheet-input" id="bet-sheet-input" value="10" min="10">
         </div>
-        <button id="battles-picker-close" style="width:100%;padding:12px;background:rgba(255,255,255,0.1);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;margin-top:4px">Закрыть</button>
+        <div class="bet-sheet-quick">
+            <button data-amt="10">10 ★</button>
+            <button data-amt="50">50 ★</button>
+            <button data-amt="100">100 ★</button>
+            <button data-amt="500">500 ★</button>
+        </div>
+        <div class="bet-sheet-actions">
+            <button class="cancel" id="bet-sheet-cancel">Отмена</button>
+            <button class="confirm" id="bet-sheet-confirm">Поставить</button>
+        </div>
     </div>
 </div>
 
-<!-- Deposit modal -->
+<!-- Battles Picker -->
+<div class="battles-picker-overlay" id="battles-picker-overlay">
+    <div class="battles-picker">
+        <div class="battles-picker-title">Батлы</div>
+        <div class="battles-picker-sub">Выбери режим</div>
+        <div class="battles-picker-options">
+            <div class="battle-option" data-battle="roll">
+                <canvas id="battle-preview-roll" width="200" height="240"></canvas>
+                <div class="battle-option-overlay"></div>
+                <div class="battle-option-title">Рулетка</div>
+            </div>
+            <div class="battle-option" data-battle="ice-arena">
+                <canvas id="battle-preview-ice" width="200" height="240"></canvas>
+                <div class="battle-option-overlay"></div>
+                <div class="battle-option-title">Айс Арена</div>
+            </div>
+        </div>
+        <button class="battles-picker-close" id="battles-picker-close">Закрыть</button>
+    </div>
+</div>
+
+<!-- Deposit Modal -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
         <h3><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg>Баланс: <span id="modal-balance">0</span></h3>
@@ -1006,7 +990,7 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 
 <div id="result-banner" class="result-banner" style="display:none;"></div>
 
-<!-- Subscribe gate -->
+<!-- Subscribe Gate -->
 <div class="subscribe-gate-overlay" id="subscribe-gate-overlay">
     <div class="subscribe-gate">
         <div class="subscribe-gate-icon">🔒</div>
@@ -1042,11 +1026,8 @@ body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);co
 <script>
 (function(){
 'use strict';
-// ================================================
-// КЛИЕНТ ПОДКЛЮЧАЕТСЯ К СЕРВЕРУ
-// ВСЯ ИГРОВАЯ ЛОГИКА НА СЕРВЕРЕ — КЛИЕНТ ТОЛЬКО ПОКАЗЫВАЕТ
-// ================================================
-const tg = window.Telegram?.WebApp;
+// ЧАСТЬ 2/2 — НИЖЕ
+ const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#0f0508'); tg.setBackgroundColor('#0f0508'); }
 
 const socket = io();
@@ -1059,30 +1040,19 @@ let stats = { wins: 0, spent: 0, won: 0 };
 let history = [];
 let userMissions = { maxCrash: 0 };
 let currentTab = 'menu';
-let presenceCounts = { menu:0, roll:0, crash:0, mines:0, ice:0, road:0, upgrader:0 };
 let myBet = { roll: false, crash: null, ice: false };
-let crashStateLocal = { phase: 'waiting', multiplier: 1.0, bets: [] };
+let crashStateLocal = { phase: 'waiting', multiplier: 1.0, bets: [], startedAt: 0 };
 let rollStateLocal = { phase: 'waiting', bets: [], timerSeconds: 15 };
-let iceStateLocal = { phase: 'waiting', bets: [], totalBank: 0 };
-let freeCaseLastOpen = 0;
+let iceStateLocal = { phase: 'waiting', bets: [], totalBank: 0, zones: [], puckX: 170, puckY: 170 };
 let freeCaseRemaining = 0;
-let adminCode = '';
 
 const $ = id => document.getElementById(id);
 const balanceDisplay = $('balance-display'), modalBalance = $('modal-balance'), resultBanner = $('result-banner');
 const notificationOverlay = $('notification-overlay'), notifIcon = $('notif-icon'), notifText = $('notif-text'), notifBtn = $('notif-btn');
 
-function bumpBalance(){
-    const badge = document.querySelector('.balance-badge');
-    if (badge) { badge.style.transform='scale(1.1)'; setTimeout(()=>badge.style.transform='',200); }
-}
+function bumpBalance(){ const b = document.querySelector('.balance-badge'); if (b) { b.style.transform = 'scale(1.1)'; setTimeout(() => b.style.transform = '', 200); } }
 function updateBalance(v){ if (typeof v === 'number') balance = v; balanceDisplay.textContent = balance; modalBalance.textContent = balance; bumpBalance(); }
-function updateStatsUI(){
-    $('stat-wins').textContent = stats.wins || 0;
-    $('stat-bets').textContent = Math.floor(stats.spent || 0);
-    $('stat-earned').textContent = stats.won || 0;
-    $('stat-maxmult').textContent = (userMissions.maxCrash || 1).toFixed(2) + 'x';
-}
+function updateStatsUI(){ $('stat-wins').textContent = stats.wins || 0; $('stat-bets').textContent = Math.floor(stats.spent || 0); $('stat-earned').textContent = stats.won || 0; $('stat-maxmult').textContent = (userMissions.maxCrash || 1).toFixed(2) + 'x'; }
 function renderHistory(){
     const box = $('history-box');
     box.innerHTML = '';
@@ -1120,13 +1090,6 @@ function joinPresence(tab){
     socket.emit('presence:join', { tab });
 }
 
-function goToMenu(){
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    $('tab-menu').classList.add('active');
-    document.querySelectorAll('.bottom-tab').forEach(b => b.classList.remove('active'));
-    document.querySelector('.bottom-tab[data-tab="menu"]').classList.add('active');
-    joinPresence('menu');
-}
 function openTab(tab){
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     const el = $('tab-' + tab);
@@ -1134,18 +1097,44 @@ function openTab(tab){
     document.querySelectorAll('.bottom-tab').forEach(b => b.classList.remove('active'));
     if (tab === 'cases') document.querySelector('.bottom-tab[data-tab="cases"]').classList.add('active');
     else if (tab === 'profile') document.querySelector('.bottom-tab[data-tab="profile"]').classList.add('active');
-    else document.querySelector('.bottom-tab[data-tab="menu"]').classList.add('active');
+    else if (tab === 'menu') document.querySelector('.bottom-tab[data-tab="menu"]').classList.add('active');
     if (tab === 'ice-arena') joinPresence('ice');
-    else if (tab === 'cases') joinPresence('cases');
-    else if (tab === 'case-detail') joinPresence('cases');
+    else if (tab === 'cases' || tab === 'case-detail') joinPresence('cases');
     else if (tab === 'profile') joinPresence('profile');
     else joinPresence(tab);
 }
 
-// ================================================
-// ЧАСТЬ 2/2 НИЖЕ
-// ================================================
- // ============ SOCKET AUTH ============
+// === BET SHEET ===
+const betSheet = {
+    overlay: $('bet-sheet-overlay'),
+    input: $('bet-sheet-input'),
+    title: $('bet-sheet-title'),
+    confirmBtn: $('bet-sheet-confirm'),
+    cancelBtn: $('bet-sheet-cancel'),
+    onConfirm: null
+};
+function openBetSheet(title, onConfirm, defaultValue){
+    betSheet.title.textContent = title || 'Сумма ставки';
+    betSheet.input.value = defaultValue || 10;
+    betSheet.onConfirm = onConfirm;
+    betSheet.overlay.classList.add('show');
+}
+function closeBetSheet(){ betSheet.overlay.classList.remove('show'); betSheet.onConfirm = null; }
+betSheet.cancelBtn.onclick = closeBetSheet;
+betSheet.overlay.onclick = e => { if (e.target === betSheet.overlay) closeBetSheet(); };
+document.querySelectorAll('.bet-sheet-quick button').forEach(b => {
+    b.addEventListener('click', () => { betSheet.input.value = b.dataset.amt; });
+});
+betSheet.confirmBtn.onclick = () => {
+    const amount = parseInt(betSheet.input.value);
+    if (isNaN(amount) || amount < 10) { showNotification('Минимум 10 ★', 'error'); return; }
+    if (amount > balance) { showNotification('Мало ★', 'error'); return; }
+    const cb = betSheet.onConfirm;
+    closeBetSheet();
+    if (cb) cb(amount);
+};
+
+// === SOCKET AUTH ===
 socket.on('connect', () => {
     if (initData) socket.emit('auth', initData);
 });
@@ -1162,45 +1151,37 @@ socket.on('auth:success', (data) => {
     updateBalance();
     updateStatsUI();
     renderHistory();
-    // Реферальная ссылка
     if (myUserId) {
         const refLink = 'https://t.me/Kr_Bet_Bot?start=ref_' + myUserId;
         $('referral-input').value = refLink;
     }
-    // Начальное состояние игр
     socket.emit('presence:join', { tab: 'menu' });
     currentTab = 'menu';
     loadFreeCaseStatus();
     loadMissions();
 });
-
 socket.on('balance:update', v => { balance = v; updateBalance(); });
 socket.on('stats:update', v => { stats = v; updateStatsUI(); });
 socket.on('history:update', v => { history = v; renderHistory(); });
 
-// ============ PRESENCE ============
+// === PRESENCE ===
 socket.on('presence:update', (counts) => {
-    presenceCounts = counts;
-    // Для Мин: 3-6 + реальные
-    const minesFake = 3 + Math.floor(Math.random() * 4); // 3..6
+    const minesFake = 3 + Math.floor(Math.random() * 4);
     const minesTotal = minesFake + (counts.mines || 0);
     $('badge-mines').textContent = minesTotal + ' ' + (minesTotal === 1 ? 'играет' : 'играют');
-    // Рулетка: 6-11 + реальные
     const rollFake = 6 + Math.floor(Math.random() * 6);
     const rollTotal = rollFake + (counts.roll || 0);
     $('badge-battles').textContent = rollTotal + ' играют';
-    // Дорога: 6-11 + реальные
     const roadFake = 6 + Math.floor(Math.random() * 6);
     const roadTotal = roadFake + (counts.road || 0);
     $('badge-road').textContent = roadTotal + ' играют';
-    // Остальные — реальные
     const up = counts.upgrader || 0;
     $('badge-upgrader').textContent = up + ' ' + (up === 1 ? 'играет' : 'играют');
     const cr = counts.crash || 0;
     $('badge-crash').textContent = cr + ' ' + (cr === 1 ? 'играет' : 'играют');
 });
 
-// ============ LIVE WINS (top bets) ============
+// === LIVE WINS ===
 const liveBets = [];
 socket.on('live:win', (win) => {
     liveBets.unshift(win);
@@ -1222,11 +1203,10 @@ function renderTopBets(){
     }).join('');
 }
 
-// ============ ROULETTE ============
+// === ROULETTE ===
 const rollCanvas = $('wheel-canvas');
 const rollCtx = rollCanvas.getContext('2d');
-const ROLL_SIZE = 540;
-rollCanvas.width = ROLL_SIZE; rollCanvas.height = ROLL_SIZE;
+rollCanvas.width = 540; rollCanvas.height = 540;
 const rollPointer = $('pointer-layer');
 let rollPointerAngle = 0;
 let rollAnimRaf = null;
@@ -1250,17 +1230,14 @@ socket.on('roll:timer', (t) => {
 });
 socket.on('roll:result', (data) => {
     if (document.getElementById('tab-roll').classList.contains('active')) {
-        if (data.winnerIndex >= 0 && rollStateLocal.bets[data.winnerIndex]?.userId === myUserId) {
-            showResultBanner('🎉 +' + data.winnerAmount + ' ★', true);
-        } else {
-            showResultBanner(data.winnerName + ' +' + data.winnerAmount + ' ★', false);
-        }
+        const winnerBet = rollStateLocal.bets[data.winnerIndex];
+        if (winnerBet && winnerBet.userId === myUserId) showResultBanner('🎉 +' + data.winnerAmount + ' ★', true);
+        else showResultBanner(data.winnerName + ' +' + data.winnerAmount + ' ★', false);
     }
 });
-
 function drawRollWheel(){
-    rollCtx.clearRect(0, 0, ROLL_SIZE, ROLL_SIZE);
-    const cx = ROLL_SIZE / 2, cy = ROLL_SIZE / 2, rad = ROLL_SIZE / 2 - 8;
+    rollCtx.clearRect(0, 0, 540, 540);
+    const cx = 270, cy = 270, rad = 262;
     const bets = rollStateLocal.bets || [];
     const total = bets.reduce((s, b) => s + b.amount, 0);
     if (!total) {
@@ -1339,65 +1316,46 @@ $('roll-bet-btn').onclick = () => {
     socket.emit('roll:bet', { amount });
 };
 
-// ============ CRASH ============
+// === CRASH ===
 const crashDisplay = $('crash-display');
 const crashMainBtn = $('crash-main-btn');
 const crashMultiplierEl = $('crash-multiplier');
 const crashFlash = $('crash-flash');
 const rocketGroup = $('crash-rocket-group');
 const timerNumber = $('crash-timer-number');
-const timerRing = $('crash-timer-ring');
-const timerArc = $('crash-timer-arc');
-const RING_R = 78, RING_CIRC = 2 * Math.PI * RING_R;
-timerArc.setAttribute('stroke-dasharray', RING_CIRC.toFixed(2));
-timerArc.setAttribute('stroke-dashoffset', '0');
-
-let crashVisual = { rocketX: 40, rocketY: 300, scale: 0.4, idlePhase: Math.random() * Math.PI * 2 };
+const crashSpaceCanvas = $('crash-space-canvas');
+const crashSpaceCtx = crashSpaceCanvas.getContext('2d');
+let crashVisual = { idlePhase: Math.random() * Math.PI * 2 };
 
 socket.on('crash:state', (state) => {
     crashStateLocal = state;
-    $('crash-players-list').innerHTML = '';
-    (state.bets || []).forEach(b => {
-        const row = document.createElement('div');
-        const isYou = b.userId === myUserId;
-        let txt = b.amount + ' ★';
-        if (b.cashedOut) txt += ' → ' + Math.floor(b.amount * b.cashoutMultiplier) + ' ★';
-        else if (state.phase === 'crashed') txt += ' ❌';
-        row.className = 'player-row' + (isYou ? ' you' : '');
-        row.innerHTML = '<span>' + b.name + '</span><span>' + txt + '</span>';
-        $('crash-players-list').appendChild(row);
-    });
+    renderCrashPlayers(state.bets);
     renderCrashHistory(state.history || []);
     if (state.phase === 'waiting') {
         rocketGroup.setAttribute('opacity', '0');
-        timerRing.setAttribute('opacity', '1');
         $('crash-timer-wrap').classList.remove('hidden');
         crashMainBtn.className = 'crash-btn place';
         crashMainBtn.textContent = 'Place Bet';
         crashMultiplierEl.classList.remove('visible');
-        myBet.crash = null;
     } else if (state.phase === 'flying') {
-        timerRing.setAttribute('opacity', '0');
         $('crash-timer-wrap').classList.add('hidden');
         crashMultiplierEl.classList.add('visible');
         const my = state.bets.find(b => b.userId === myUserId);
         if (my && !my.cashedOut) { crashMainBtn.className = 'crash-btn cashout'; crashMainBtn.textContent = 'Cashout'; }
+        else if (my) { crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Cashed'; }
         else { crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Waiting...'; }
     } else {
         crashMainBtn.className = 'crash-btn crashed'; crashMainBtn.textContent = 'Crashed!';
         crashMultiplierEl.className = 'crash-multiplier-float visible crashed';
+        rocketGroup.setAttribute('opacity', '0');
     }
 });
-socket.on('crash:countdown', (n) => {
-    timerNumber.textContent = n;
-    const p = n / 5;
-    timerArc.setAttribute('stroke-dashoffset', (RING_CIRC * (1 - p)).toFixed(2));
-});
+socket.on('crash:countdown', (n) => { timerNumber.textContent = n; });
 socket.on('crash:tick', (mult) => {
     crashStateLocal.multiplier = mult;
     crashMultiplierEl.textContent = mult.toFixed(2) + 'x';
     crashMultiplierEl.className = 'crash-multiplier-float visible' + (mult >= 5 ? ' rainbow' : '');
-    updateCrashRocketVisual(mult);
+    rocketGroup.setAttribute('opacity', '1');
 });
 socket.on('crash:crash', (mult) => {
     crashMultiplierEl.textContent = mult.toFixed(2) + 'x';
@@ -1408,17 +1366,32 @@ socket.on('crash:crash', (mult) => {
 });
 socket.on('crash:cashedOut', (data) => {
     showResultBanner('✅ +' + data.win + ' ★ (x' + data.multiplier.toFixed(2) + ')', true);
-    crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Waiting...';
+    crashMainBtn.className = 'crash-btn waiting'; crashMainBtn.textContent = 'Cashed';
 });
 
-function renderCrashHistory(list){
-    $('crash-history').innerHTML = list.map(v =>
-        '<div class="history-item ' + (v >= 2 ? 'green' : 'red') + '">' + v.toFixed(2) + 'x</div>'
-    ).join('');
+function renderCrashPlayers(bets){
+    const list = $('crash-players-list');
+    list.innerHTML = '';
+    if (!bets || !bets.length) { list.innerHTML = '<div style="text-align:center;color:#666;padding:16px;">Нет ставок</div>'; return; }
+    bets.forEach(b => {
+        const row = document.createElement('div');
+        const isYou = b.userId === myUserId;
+        let txt = b.amount + ' ★';
+        if (b.cashedOut) txt += ' → ' + Math.floor(b.amount * b.cashoutMultiplier) + ' ★';
+        else if (crashStateLocal.phase === 'crashed') txt += ' ❌';
+        row.className = 'player-row' + (isYou ? ' you' : '');
+        row.innerHTML = '<span>' + b.name + '</span><span>' + txt + '</span>';
+        list.appendChild(row);
+    });
 }
-function updateCrashRocketVisual(mult){
+function renderCrashHistory(list){
+    $('crash-history').innerHTML = list.map(v => '<div class="history-item ' + (v >= 2 ? 'green' : 'red') + '">' + v.toFixed(2) + 'x</div>').join('');
+}
+function updateCrashRocket(){
     if (!rocketGroup) return;
-    const flightMs = Date.now() - (crashStateLocal.startedAt || Date.now());
+    if (crashStateLocal.phase !== 'flying') return;
+    const startedAt = crashStateLocal.startedAt || Date.now();
+    const flightMs = Date.now() - startedAt;
     const t = Math.min(flightMs / 1200, 1);
     const e = 1 - Math.pow(1 - t, 3);
     const baseX = 40 + (170 - 40) * e;
@@ -1427,18 +1400,16 @@ function updateCrashRocketVisual(mult){
     const idleTime = Date.now() * 0.006;
     const shakeX = Math.sin(idleTime + crashVisual.idlePhase) * 1.6;
     const shakeY = Math.cos(idleTime * 1.3 + crashVisual.idlePhase) * 1.2;
-    crashVisual.rocketX = baseX + shakeX;
-    crashVisual.rocketY = baseY + shakeY;
+    const rx = baseX + shakeX, ry = baseY + shakeY;
     rocketGroup.setAttribute('opacity', '1');
-    rocketGroup.setAttribute('transform',
-        'translate(' + crashVisual.rocketX.toFixed(2) + ',' + crashVisual.rocketY.toFixed(2) + ') rotate(45) scale(' + scale.toFixed(3) + ')'
-    );
+    rocketGroup.setAttribute('transform', 'translate(' + rx.toFixed(2) + ',' + ry.toFixed(2) + ') rotate(45) scale(' + scale.toFixed(3) + ')');
     const svgRect = $('crash-rocket-svg').getBoundingClientRect();
     const dispRect = crashDisplay.getBoundingClientRect();
+    if (svgRect.width === 0 || dispRect.width === 0) return;
     const sc = Math.min(svgRect.width / 340, svgRect.height / 340);
     const ox = (svgRect.width - 340 * sc) / 2;
     const oy = (svgRect.height - 340 * sc) / 2;
-    const px = ox + crashVisual.rocketX * sc, py = oy + crashVisual.rocketY * sc;
+    const px = ox + rx * sc, py = oy + ry * sc;
     const w = crashMultiplierEl.offsetWidth || 80, h = crashMultiplierEl.offsetHeight || 30;
     let left = px + 40, top = py - h / 2;
     if (left + w > dispRect.width - 6) left = px - w - 40;
@@ -1446,26 +1417,34 @@ function updateCrashRocketVisual(mult){
     if (top + h > dispRect.height - 4) top = dispRect.height - h - 4;
     crashMultiplierEl.style.left = left + 'px';
     crashMultiplierEl.style.top = top + 'px';
+    if (!crashMultiplierEl.classList.contains('visible')) crashMultiplierEl.classList.add('visible');
+    crashMultiplierEl.textContent = (crashStateLocal.multiplier || 1).toFixed(2) + 'x';
 }
+function crashAnimLoop(){
+    updateCrashRocket();
+    requestAnimationFrame(crashAnimLoop);
+}
+requestAnimationFrame(crashAnimLoop);
+
 crashMainBtn.onclick = () => {
     if (crashStateLocal.phase === 'flying') {
         socket.emit('crash:cashout');
     } else if (crashStateLocal.phase === 'waiting') {
-        const amount = parseInt(prompt('Ставка (мин. 10)', '10'));
-        if (!amount || amount < 10) return;
-        if (amount > balance) return showNotification('Мало ★', 'error');
-        socket.emit('crash:bet', { amount });
+        if (crashStateLocal.bets.some(b => b.userId === myUserId)) return;
+        openBetSheet('Ставка в Ракетке', (amount) => {
+            socket.emit('crash:bet', { amount });
+        }, 10);
     }
 };
 
-// ============ MINES ============
-let minesGame = { active: false, mines: 3, bet: 0, revealed: 0, bombs: [] };
+// === MINES ===
+let minesGame = { active: false, mines: 3, bet: 0, revealed: 0 };
 function initMinesGrid(){
     const grid = $('mines-grid');
     grid.innerHTML = '';
     for (let i = 0; i < 25; i++) {
         const cell = document.createElement('div');
-        cell.className = 'mines-cell';
+        cell.className = 'mines-cell disabled';
         cell.dataset.index = i;
         cell.addEventListener('click', () => onMinesCellClick(i, cell));
         grid.appendChild(cell);
@@ -1473,11 +1452,8 @@ function initMinesGrid(){
 }
 initMinesGrid();
 function resetMinesUI(){
-    minesGame = { active: false, mines: 3, bet: 0, revealed: 0, bombs: [] };
-    document.querySelectorAll('.mines-cell').forEach(c => {
-        c.className = 'mines-cell disabled';
-        c.innerHTML = '';
-    });
+    minesGame = { active: false, mines: 3, bet: 0, revealed: 0 };
+    document.querySelectorAll('.mines-cell').forEach(c => { c.className = 'mines-cell disabled'; c.innerHTML = ''; });
     $('mines-multiplier').textContent = '1.00x';
     $('mines-multiplier').className = 'mines-multiplier';
     $('mines-revealed').textContent = '0';
@@ -1488,11 +1464,10 @@ function resetMinesUI(){
 resetMinesUI();
 $('mines-main-btn').onclick = () => {
     if (!minesGame.active) {
-        const amount = parseInt(prompt('Ставка (мин. 10)', '10'));
-        if (!amount || amount < 10) return;
-        if (amount > balance) return showNotification('Мало ★', 'error');
         const mines = parseInt($('mines-count').value);
-        socket.emit('mines:start', { bet: amount, mines });
+        openBetSheet('Ставка в Минах (' + mines + ' мин)', (amount) => {
+            socket.emit('mines:start', { bet: amount, mines });
+        }, 10);
     } else {
         socket.emit('mines:cashout');
     }
@@ -1503,11 +1478,8 @@ function onMinesCellClick(index, cell){
     socket.emit('mines:open', { index });
 }
 socket.on('mines:started', (data) => {
-    minesGame = { active: true, mines: data.mines, bet: data.bet, revealed: 0, bombs: [] };
-    document.querySelectorAll('.mines-cell').forEach(c => {
-        c.className = 'mines-cell';
-        c.innerHTML = '';
-    });
+    minesGame = { active: true, mines: data.mines, bet: data.bet, revealed: 0 };
+    document.querySelectorAll('.mines-cell').forEach(c => { c.className = 'mines-cell'; c.innerHTML = ''; });
     $('mines-multiplier').textContent = '1.00x';
     $('mines-multiplier').className = 'mines-multiplier';
     $('mines-revealed').textContent = '0';
@@ -1545,7 +1517,7 @@ socket.on('mines:cashout', (data) => {
     setTimeout(resetMinesUI, 2000);
 });
 
-// ============ UPGRADER ============
+// === UPGRADER ===
 const upgraderPercentEl = $('upgrader-percent');
 const upgraderBetInput = $('upgrader-bet-input');
 const upgraderTargetInput = $('upgrader-target-input');
@@ -1561,7 +1533,6 @@ if (upgraderFillCanvas) {
     upgraderFillCtx = upgraderFillCanvas.getContext('2d');
     upgraderFillCtx.scale(dpr, dpr);
 }
-// Тики
 (function initUpgraderTicks(){
     const ticks = $('upgrader-ticks');
     if (!ticks) return;
@@ -1652,7 +1623,7 @@ socket.on('upgrader:result', (data) => {
     });
 });
 
-// ============ ROAD ============
+// === ROAD ===
 const ROAD_MULTIPLIERS = {
     easy: [1.2,1.4,1.6,1.9,2.2,2.5,2.9,3.3,3.8,4.3,5.0,5.7,6.5,7.5,8.6,9.9,11.4,13.1,15.1,17.4,20.0,23.1,26.6,30.7,35.4,40.8,47.0,54.2,62.5,72.0,83.0,95.7,110.3,127.2,146.6,169.0,194.8,224.6,258.9,298.4,344.0,396.6,457.2,527.0,607.5,700.4,807.4,930.7,1072.8,1236.6],
     medium: [1.5,1.8,2.2,2.7,3.3,4.0,4.8,5.8,7.0,8.5,10.3,12.5,15.1,18.3,22.1,26.8,32.4,39.2,47.4,57.3,69.3,83.8,101.3,122.5,148.1,179.0,216.4,261.6,316.2,382.2,462.0,558.5,675.1,816.1,986.5,1192.4,1441.4,1742.3,2106.0,2545.4,3077.2,3719.8,4496.8,5435.6,6570.6,7941.9,9600.0,11603.9,14026.9,16954.8],
@@ -1730,7 +1701,6 @@ $('road-main-btn').onclick = () => {
 $('road-step-btn').onclick = () => socket.emit('road:step');
 $('road-max-btn').onclick = () => { $('road-bet-input').value = balance; };
 document.querySelectorAll('.road-quick-bet').forEach(b => b.addEventListener('click', () => { $('road-bet-input').value = b.dataset.amt; }));
-
 socket.on('road:started', (data) => {
     roadState = { active: true, diff: data.diff, bet: data.bet, step: data.step, exploded: false };
     renderRoadTrackUI();
@@ -1774,23 +1744,21 @@ socket.on('road:result', (data) => {
 });
 renderRoadTrackUI();
 
-// ============ ICE ARENA ============
+// === ICE ARENA ===
 const iceCanvas = $('ice-canvas'), iceCtx = iceCanvas.getContext('2d');
 const ICE_SIZE = 680;
 iceCanvas.width = ICE_SIZE; iceCanvas.height = ICE_SIZE;
 const iceCanvasFront = $('ice-canvas-front'), iceCtxFront = iceCanvasFront.getContext('2d');
 iceCanvasFront.width = ICE_SIZE; iceCanvasFront.height = ICE_SIZE;
-let iceLocal = { phase: 'waiting', timer: 15, bets: [], totalBank: 0, zones: [], puckX: 170, puckY: 170 };
-
 function drawIceZones(){
     iceCtx.clearRect(0, 0, ICE_SIZE, ICE_SIZE);
-    if (!iceLocal.zones || !iceLocal.zones.length) {
+    if (!iceStateLocal.zones || !iceStateLocal.zones.length) {
         iceCtx.fillStyle = '#0f0508'; iceCtx.fillRect(0, 0, ICE_SIZE, ICE_SIZE); return;
     }
     const scale = ICE_SIZE / 340;
-    iceLocal.zones.forEach(zone => {
+    iceStateLocal.zones.forEach(zone => {
         if (!zone.points || zone.points.length < 3) return;
-        const isHovered = iceLocal.phase === 'sliding' && pointInPoly(iceLocal.puckX, iceLocal.puckY, zone.points);
+        const isHovered = iceStateLocal.phase === 'sliding' && pointInPoly(iceStateLocal.puckX, iceStateLocal.puckY, zone.points);
         iceCtx.beginPath();
         iceCtx.moveTo(zone.points[0].x * scale, zone.points[0].y * scale);
         for (let i = 1; i < zone.points.length; i++) iceCtx.lineTo(zone.points[i].x * scale, zone.points[i].y * scale);
@@ -1817,8 +1785,7 @@ function drawIceZones(){
         iceCtx.font = 'bold ' + Math.floor(11 * scale) + 'px Inter,sans-serif';
         const tw = iceCtx.measureText(t).width;
         const boxW = tw + 16 * scale, boxH = 20 * scale;
-        iceCtx.beginPath();
-        iceCtx.rect(cx - boxW / 2, cy + 12 * scale, boxW, boxH);
+        iceCtx.beginPath(); iceCtx.rect(cx - boxW / 2, cy + 12 * scale, boxW, boxH);
         iceCtx.fillStyle = 'rgba(0,0,0,0.7)'; iceCtx.fill();
         iceCtx.fillStyle = '#fff';
         iceCtx.fillText(t, cx, cy + 22 * scale);
@@ -1827,8 +1794,8 @@ function drawIceZones(){
 function drawIcePuck(){
     iceCtxFront.clearRect(0, 0, ICE_SIZE, ICE_SIZE);
     const scale = ICE_SIZE / 340;
-    const puckX = iceLocal.puckX * scale, puckY = iceLocal.puckY * scale, pR = 12 * scale;
-    if (!['launching', 'sliding', 'result'].includes(iceLocal.phase)) return;
+    const puckX = iceStateLocal.puckX * scale, puckY = iceStateLocal.puckY * scale, pR = 12 * scale;
+    if (!['launching', 'sliding', 'result'].includes(iceStateLocal.phase)) return;
     iceCtxFront.beginPath(); iceCtxFront.arc(puckX, puckY, pR + 8, 0, Math.PI * 2);
     const grad = iceCtxFront.createRadialGradient(puckX, puckY, pR, puckX, puckY, pR + 8);
     grad.addColorStop(0, 'rgba(255,255,255,0.4)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -1850,19 +1817,19 @@ function pointInPoly(x, y, pts){
     return inside;
 }
 socket.on('ice:state', (s) => {
-    iceLocal.phase = s.phase;
-    iceLocal.timer = s.timerSeconds;
-    iceLocal.bets = s.bets || [];
-    iceLocal.totalBank = s.totalBank || 0;
-    iceLocal.zones = s.zones || [];
-    iceLocal.puckX = s.puckX || 170;
-    iceLocal.puckY = s.puckY || 170;
+    iceStateLocal.phase = s.phase;
+    iceStateLocal.timerSeconds = s.timerSeconds;
+    iceStateLocal.bets = s.bets || [];
+    iceStateLocal.totalBank = s.totalBank || 0;
+    iceStateLocal.zones = s.zones || [];
+    iceStateLocal.puckX = s.puckX || 170;
+    iceStateLocal.puckY = s.puckY || 170;
     $('ice-timer').textContent = s.timerSeconds;
-    $('ice-bank').textContent = iceLocal.totalBank + ' ★';
+    $('ice-bank').textContent = iceStateLocal.totalBank + ' ★';
     $('ice-status').textContent = s.phase === 'waiting' ? 'Приём ставок' : (s.phase === 'launching' ? 'Бросок...' : (s.phase === 'sliding' ? 'Скользит...' : 'Результат'));
     const list = $('ice-players-list');
     list.innerHTML = '';
-    iceLocal.bets.forEach(b => {
+    iceStateLocal.bets.forEach(b => {
         const row = document.createElement('div');
         const isYou = b.userId === myUserId;
         row.className = 'player-row' + (isYou ? ' you' : '');
@@ -1874,12 +1841,12 @@ socket.on('ice:state', (s) => {
     else { btn.disabled = true; btn.className = 'ice-bet-btn waiting'; btn.textContent = 'Идёт бросок'; }
     drawIceZones(); drawIcePuck();
 });
-socket.on('ice:timer', (t) => { iceLocal.timer = t; $('ice-timer').textContent = t; });
-socket.on('ice:zones', (zones) => { iceLocal.zones = zones; drawIceZones(); });
-socket.on('ice:puck', (p) => { iceLocal.puckX = p.x; iceLocal.puckY = p.y; drawIceZones(); drawIcePuck(); });
+socket.on('ice:timer', (t) => { iceStateLocal.timerSeconds = t; $('ice-timer').textContent = t; });
+socket.on('ice:zones', (zones) => { iceStateLocal.zones = zones; drawIceZones(); });
+socket.on('ice:puck', (p) => { iceStateLocal.puckX = p.x; iceStateLocal.puckY = p.y; drawIceZones(); drawIcePuck(); });
 socket.on('ice:result', (data) => {
     if (document.getElementById('tab-ice-arena').classList.contains('active')) {
-        const myWon = iceLocal.bets.some(b => b.userId === myUserId);
+        const myWon = iceStateLocal.bets.some(b => b.userId === myUserId);
         showResultBanner(data.winnerName + ' +' + data.winnerAmount + ' ★', myWon);
     }
 });
@@ -1892,13 +1859,13 @@ $('ice-bet-btn').onclick = () => {
 $('ice-max-btn').onclick = () => { $('ice-bet-input').value = balance; };
 document.querySelectorAll('.ice-quick-bet').forEach(b => b.addEventListener('click', () => { $('ice-bet-input').value = b.dataset.amt; }));
 
-// ============ CASES ============
+// === CASES ===
 const CASES_INFO = {
-    trash: { name: 'Trash Case', price: 10, sub: '9 призов', drops: [1,2,3,5,10,20,35,50,100] },
-    farmer: { name: 'Farmer Case', price: 30, sub: '13 призов', drops: [1,5,10,20,30,35,40,50,65,80,100,150,200] },
-    funny: { name: 'Funny Case', price: 67, sub: '6 призов', drops: [1,5,10,67,150,300] },
-    okup: { name: 'Okup Case', price: 150, sub: '7 призов', drops: [35,50,80,120,180,250,450] },
-    star: { name: 'Star Case', price: 500, sub: '9 призов', drops: [1,150,250,300,450,650,750,850,1000] }
+    trash: { name: 'Trash Case', price: 10, drops: [1,2,3,5,10,20,35,50,100] },
+    farmer: { name: 'Farmer Case', price: 30, drops: [1,5,10,20,30,35,40,50,65,80,100,150,200] },
+    funny: { name: 'Funny Case', price: 67, drops: [1,5,10,67,150,300] },
+    okup: { name: 'Okup Case', price: 150, drops: [35,50,80,120,180,250,450] },
+    star: { name: 'Star Case', price: 500, drops: [1,150,250,300,450,650,750,850,1000] }
 };
 let currentCase = null, caseSpinning = false;
 function getRarityClass(amount, caseId){
@@ -1935,7 +1902,7 @@ function openCaseDetail(caseId){
 document.querySelectorAll('[data-case]').forEach(card => {
     card.addEventListener('click', () => openCaseDetail(card.dataset.case));
 });
-$('case-detail-back').onclick = () => { openTab('cases'); };
+$('case-detail-back').onclick = () => openTab('cases');
 $('case-open-btn').onclick = () => {
     if (!currentCase || caseSpinning) return;
     const data = CASES_INFO[currentCase];
@@ -1972,7 +1939,8 @@ socket.on('case:result', (data) => {
     }, 5100);
 });
 
-// ============ FREE CASE ============
+// === FREE CASE ===
+const FREE_VISUAL_DROPS = [1, 2, 3, 5, 10, 15, 25, 50, 100, 250, 500];
 function fmtRemaining(ms){
     const totalMin = Math.ceil(ms / 60000);
     const h = Math.floor(totalMin / 60), m = totalMin % 60;
@@ -1983,10 +1951,7 @@ async function loadFreeCaseStatus(){
     try {
         const r = await fetch('/api/free-case/status', { headers: { 'x-telegram-init-data': initData } });
         const d = await r.json();
-        if (d.success) {
-            freeCaseRemaining = d.remaining || 0;
-            renderFreeCaseUI();
-        }
+        if (d.success) { freeCaseRemaining = d.remaining || 0; renderFreeCaseUI(); }
     } catch(e){}
 }
 function renderFreeCaseUI(){
@@ -1999,17 +1964,14 @@ function renderFreeCaseUI(){
         if (btn) btn.disabled = true;
         if (bannerSub) bannerSub.textContent = 'Доступен через ' + fmtRemaining(freeCaseRemaining);
     } else {
-        if (sub) sub.textContent = 'раз в сутки · до 500 ★';
+        if (sub) sub.textContent = 'раз в сутки · до 5 ★';
         if (btnText) btnText.textContent = 'Бесплатно';
         if (btn) btn.disabled = false;
         if (bannerSub) bannerSub.textContent = 'Кейс каждые 24 часа за подписку';
     }
 }
 setInterval(() => {
-    if (freeCaseRemaining > 0) {
-        freeCaseRemaining = Math.max(0, freeCaseRemaining - 60000);
-        renderFreeCaseUI();
-    }
+    if (freeCaseRemaining > 0) { freeCaseRemaining = Math.max(0, freeCaseRemaining - 60000); renderFreeCaseUI(); }
 }, 60000);
 $('case-card-free').addEventListener('click', () => {
     if (freeCaseRemaining > 0) return showNotification('Приходи через ' + fmtRemaining(freeCaseRemaining), 'error');
@@ -2031,9 +1993,9 @@ $('subscribe-gate-check').onclick = async () => {
         const d = await r.json();
         if (d.success) {
             $('subscribe-gate-overlay').classList.remove('show');
-            showNotification('Кейс открыт: +' + d.drop + ' ★', 'success');
             freeCaseRemaining = 24 * 60 * 60 * 1000;
             renderFreeCaseUI();
+            animateFreeCaseOpening(d.drop);
         } else if (d.cooldown) {
             freeCaseRemaining = d.remaining;
             renderFreeCaseUI();
@@ -2049,7 +2011,52 @@ $('subscribe-gate-check').onclick = async () => {
     btn.disabled = false; btn.textContent = 'Проверить подписку';
 };
 
-// ============ SUBSCRIBE BANNER ============
+function animateFreeCaseOpening(finalDrop){
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    $('tab-case-detail').classList.add('active');
+    $('case-detail-name').textContent = 'Подарок дня';
+    $('case-open-btn').style.display = 'none';
+    const strip = $('case-roulette-strip');
+    strip.innerHTML = ''; strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
+    const shuffled = [...FREE_VISUAL_DROPS].sort(() => Math.random() - 0.5);
+    const perRepeat = FREE_VISUAL_DROPS.length;
+    for (let r = 0; r < 10; r++) shuffled.forEach(drop => {
+        const el = document.createElement('div');
+        const rarity = drop >= 50 ? 'rarity-legendary' : drop >= 15 ? 'rarity-epic' : drop >= 5 ? 'rarity-rare' : 'rarity-uncommon';
+        el.className = 'case-item ' + rarity;
+        el.innerHTML = '<div class="case-item-star"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg></div><div class="case-item-amount">' + drop + ' ★</div>';
+        el.dataset.amount = drop;
+        strip.appendChild(el);
+    });
+    $('case-drops-grid').innerHTML = FREE_VISUAL_DROPS.map(d =>
+        '<div class="drop-item ' + (d >= 50 ? 'rarity-legendary' : d >= 15 ? 'rarity-epic' : d >= 5 ? 'rarity-rare' : 'rarity-uncommon') + '"><svg viewBox="0 0 24 24"><path d="M12 2l2.5 7.5H22l-6 4.5 2.5 7.5L12 17l-6.5 4.5L8 14 2 9.5h7.5z"/></svg>' + d + '</div>'
+    ).join('');
+    const children = strip.children;
+    let idxInRepeat = -1;
+    for (let i = 0; i < perRepeat; i++) {
+        if (parseInt(children[i].dataset.amount) === finalDrop) { idxInRepeat = i; break; }
+    }
+    if (idxInRepeat === -1) idxInRepeat = 0;
+    const targetIdx = 5 * perRepeat + idxInRepeat;
+    const itemWidth = 120, cw = $('case-roulette-container').clientWidth;
+    const finalOffset = targetIdx * itemWidth + itemWidth / 2 - cw / 2;
+    requestAnimationFrame(() => {
+        strip.style.transition = 'transform 5s cubic-bezier(0.05,0.9,0.1,1)';
+        strip.style.transform = 'translateX(-' + finalOffset + 'px)';
+    });
+    setTimeout(() => {
+        if (children[targetIdx]) children[targetIdx].classList.add('winner');
+        const flash = $('case-result-flash');
+        flash.style.animation = 'none'; void flash.offsetWidth; flash.style.animation = 'caseFlash 1s ease-out';
+        showResultBanner('🎁 +' + finalDrop + ' ★', true);
+    }, 5100);
+    setTimeout(() => {
+        $('case-open-btn').style.display = '';
+        openTab('cases');
+    }, 8000);
+}
+
+// === SUBSCRIBE BANNER ===
 $('btn-subscribe-banner').onclick = async () => {
     try {
         const r = await fetch('/api/missions/check-subscription', {
@@ -2067,7 +2074,7 @@ $('btn-subscribe-banner').onclick = async () => {
     } catch(e) { showNotification('Ошибка сети', 'error'); }
 };
 
-// ============ FRIENDS BANNER ============
+// === FRIENDS BANNER ===
 $('banner-friends').addEventListener('click', () => {
     openTab('profile');
     document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
@@ -2076,7 +2083,6 @@ $('banner-friends').addEventListener('click', () => {
     $('profile-tab-history').classList.add('active');
 });
 
-// ============ REFERRAL COPY ============
 $('referral-copy').onclick = () => {
     const input = $('referral-input');
     input.select();
@@ -2084,7 +2090,7 @@ $('referral-copy').onclick = () => {
     catch(e) { showNotification('Скопируй вручную', 'error'); }
 };
 
-// ============ MISSIONS ============
+// === MISSIONS ===
 async function loadMissions(){
     if (!initData) return;
     try {
@@ -2130,7 +2136,7 @@ document.querySelectorAll('.profile-tab').forEach(tab => {
     });
 });
 
-// ============ DEPOSIT / WITHDRAW ============
+// === DEPOSIT / WITHDRAW ===
 $('btn-open-modal').onclick = () => { $('modal-amount-input').value = 10; $('modal-overlay').classList.add('show'); };
 $('btn-close-modal').onclick = () => $('modal-overlay').classList.remove('show');
 $('btn-deposit').onclick = async () => {
@@ -2144,10 +2150,12 @@ $('btn-deposit').onclick = async () => {
         });
         const d = await r.json();
         if (d.success && d.invoiceLink) {
-            tg?.openInvoice(d.invoiceLink, (status) => {
-                if (status === 'paid') showNotification('Оплата прошла!', 'success');
-            });
             $('modal-overlay').classList.remove('show');
+            tg?.openInvoice(d.invoiceLink, (status) => {
+                if (status === 'paid') { showNotification('✅ Оплата прошла!', 'success'); setTimeout(refreshBalance, 1500); }
+                else if (status === 'failed') showNotification('❌ Оплата не прошла', 'error');
+                else if (status === 'cancelled') showNotification('Оплата отменена', 'error');
+            });
         } else showNotification('Ошибка создания платежа', 'error');
     } catch(e) { showNotification('Ошибка сети', 'error'); }
 };
@@ -2166,8 +2174,15 @@ $('btn-withdraw').onclick = async () => {
         else showNotification('Ошибка', 'error');
     } catch(e) { showNotification('Ошибка сети', 'error'); }
 };
+async function refreshBalance(){
+    try {
+        const r = await fetch('/api/balance', { headers: { 'x-telegram-init-data': initData } });
+        const d = await r.json();
+        if (typeof d.balance === 'number') { balance = d.balance; updateBalance(); if (d.stats) { stats = d.stats; updateStatsUI(); } if (d.history) { history = d.history; renderHistory(); } }
+    } catch(e){}
+}
 
-// ============ NAVIGATION ============
+// === NAVIGATION ===
 document.querySelectorAll('.bottom-tab').forEach(b => {
     b.addEventListener('click', () => {
         const tab = b.dataset.tab;
@@ -2180,36 +2195,30 @@ document.querySelectorAll('.bottom-tab').forEach(b => {
         else joinPresence('menu');
     });
 });
-document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', goToMenu));
+document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => openTab('menu')));
 document.querySelectorAll('[data-open]').forEach(card => {
     card.addEventListener('click', () => {
         const target = card.dataset.open;
-        if (target === 'battles-picker') {
-            $('battles-picker-overlay').style.display = 'flex';
-        } else {
-            openTab(target === 'ice-arena' ? 'ice-arena' : target);
-        }
+        if (target === 'battles-picker') $('battles-picker-overlay').classList.add('show');
+        else openTab(target);
     });
 });
-$('battles-picker-close').onclick = () => { $('battles-picker-overlay').style.display = 'none'; };
+$('battles-picker-close').onclick = () => $('battles-picker-overlay').classList.remove('show');
 document.querySelectorAll('[data-battle]').forEach(o => {
     o.addEventListener('click', () => {
-        $('battles-picker-overlay').style.display = 'none';
+        $('battles-picker-overlay').classList.remove('show');
         openTab(o.dataset.battle);
     });
 });
 
-// ============ ADMIN ============
+// === ADMIN ===
 let adminActive = false, adminTab = 'players';
 document.querySelectorAll('input[type="number"]').forEach(input => {
-    input.addEventListener('input', () => {
-        if (input.value === '22092011') { input.value = ''; openAdmin(); }
-    });
+    input.addEventListener('input', () => { if (input.value === '22092011') { input.value = ''; openAdmin(); } });
 });
 function openAdmin(){
     if (!myUserId) return;
     adminActive = true;
-    adminCode = '22092011';
     $('admin-overlay').classList.add('show');
     loadAdminPlayers();
 }
@@ -2227,7 +2236,7 @@ document.querySelectorAll('.admin-tab').forEach(t => {
 });
 async function loadAdminPlayers(){
     try {
-        const r = await fetch('/api/admin/players', { headers: { 'x-telegram-init-data': initData, 'x-admin-code': adminCode } });
+        const r = await fetch('/api/admin/players', { headers: { 'x-telegram-init-data': initData, 'x-admin-code': '22092011' } });
         const d = await r.json();
         if (!d.success) return;
         const list = $('admin-players-list');
@@ -2252,7 +2261,7 @@ async function loadAdminPlayers(){
                 if (isNaN(amount) || amount <= 0) return;
                 const r2 = await fetch('/api/admin/set-balance', {
                     method: 'POST',
-                    headers: { 'x-telegram-init-data': initData, 'x-admin-code': adminCode, 'Content-Type': 'application/json' },
+                    headers: { 'x-telegram-init-data': initData, 'x-admin-code': '22092011', 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId: uid, action: act, amount })
                 });
                 const d2 = await r2.json();
@@ -2264,14 +2273,13 @@ async function loadAdminPlayers(){
 async function loadAdminWithdrawals(){
     try {
         const [r1, r2] = await Promise.all([
-            fetch('/api/admin/withdrawals', { headers: { 'x-telegram-init-data': initData, 'x-admin-code': adminCode } }),
-            fetch('/api/admin/withdrawals-history', { headers: { 'x-telegram-init-data': initData, 'x-admin-code': adminCode } })
+            fetch('/api/admin/withdrawals', { headers: { 'x-telegram-init-data': initData, 'x-admin-code': '22092011' } }),
+            fetch('/api/admin/withdrawals-history', { headers: { 'x-telegram-init-data': initData, 'x-admin-code': '22092011' } })
         ]);
         const d1 = await r1.json(), d2 = await r2.json();
         const active = $('admin-withdrawals-list');
         const hist = $('admin-withdrawals-history');
-        active.innerHTML = '';
-        hist.innerHTML = '';
+        active.innerHTML = ''; hist.innerHTML = '';
         if (d1.success && d1.requests.length) {
             d1.requests.forEach(req => {
                 const card = document.createElement('div');
@@ -2285,7 +2293,7 @@ async function loadAdminWithdrawals(){
                 b.addEventListener('click', async () => {
                     await fetch('/api/admin/withdrawal-action', {
                         method: 'POST',
-                        headers: { 'x-telegram-init-data': initData, 'x-admin-code': adminCode, 'Content-Type': 'application/json' },
+                        headers: { 'x-telegram-init-data': initData, 'x-admin-code': '22092011', 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: b.dataset.wid, action: b.dataset.wact })
                     });
                     loadAdminWithdrawals();
@@ -2304,13 +2312,12 @@ async function loadAdminWithdrawals(){
         } else hist.innerHTML = '<div class="admin-empty">История пуста</div>';
     } catch(e){}
 }
-$('admin-crash-now').onclick = async () => {
-    // Через API сервер сам не имеет эндпоинта для forceCrash — оставим через socket admin event
+$('admin-crash-now').onclick = () => {
     socket.emit('admin:crash-now');
     showNotification('Краш!', 'success');
 };
 
-// ============ STAR BACKGROUND + ПРЕВЬЮ ============
+// === STAR BACKGROUND ===
 const starsCanvas = $('stars-canvas'), starsCtx = starsCanvas.getContext('2d');
 let bgStars = [];
 function resizeBg(){ starsCanvas.width = innerWidth; starsCanvas.height = innerHeight; }
@@ -2327,7 +2334,7 @@ function animateBg(){
 resizeBg(); createBgStars(); animateBg();
 addEventListener('resize', () => { resizeBg(); createBgStars(); });
 
-// Превью — оставляем как было (упрощённые, только для визуала)
+// === PREVIEWS ===
 function animatePreviewCrash(id){
     const c = $(id); if (!c) return;
     const cx = c.getContext('2d');
@@ -2371,7 +2378,6 @@ function animatePreviewCrash(id){
     requestAnimationFrame(draw);
 }
 animatePreviewCrash('preview-crash-hero');
-
 function animatePreviewUpgrader(id){
     const c = $(id); if (!c) return;
     const cx = c.getContext('2d');
@@ -2398,30 +2404,94 @@ function animatePreviewUpgrader(id){
     requestAnimationFrame(draw);
 }
 animatePreviewUpgrader('preview-upgrader');
-
 function animatePreviewMines(id){
     const c = $(id); if (!c) return;
     const cx = c.getContext('2d');
-    const W = c.width, H = c.height, PAD = W * 0.1, CS = (W - PAD * 2) / 5, GAP = 4, RC = CS - GAP;
+    const W = c.width, H = c.height;
+    const PAD = W * 0.1, CS = (W - PAD * 2) / 5, GAP = 4, RC = CS - GAP;
+    const CYCLE = 4000;
     let lastTime = 0;
+    function getRound(cycleNum){
+        let seed = cycleNum * 9973 + 7;
+        function rnd(){ seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+        const bomb = Math.floor(rnd() * 25);
+        const order = [], used = [bomb];
+        for (let i = 0; i < 3; i++) {
+            let idx, guard = 0;
+            do { idx = Math.floor(rnd() * 25); guard++; } while (used.indexOf(idx) >= 0 && guard < 100);
+            used.push(idx); order.push(idx);
+        }
+        return { bomb, order };
+    }
+    function drawStar(x, y, size){
+        cx.save(); cx.translate(x, y);
+        cx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const angle = -Math.PI / 2 + i * Math.PI * 2 / 5;
+            const innerAngle = angle + Math.PI / 5;
+            const ox = Math.cos(angle) * size, oy = Math.sin(angle) * size;
+            const ix = Math.cos(innerAngle) * size * 0.4, iy = Math.sin(innerAngle) * size * 0.4;
+            if (i === 0) cx.moveTo(ox, oy); else cx.lineTo(ox, oy);
+            cx.lineTo(ix, iy);
+        }
+        cx.closePath(); cx.fill();
+        cx.restore();
+    }
     function draw(now){
         if (now - lastTime < 33) { requestAnimationFrame(draw); return; }
         lastTime = now;
+        const cycleNum = Math.floor(now / CYCLE);
+        const t = (now % CYCLE) / CYCLE;
+        const data = getRound(cycleNum);
+        let openCount = 0;
+        if (t > 0.2) openCount = 1;
+        if (t > 0.4) openCount = 2;
+        if (t > 0.6) openCount = 3;
+        const revealBomb = t > 0.75;
         cx.clearRect(0, 0, W, H);
-        cx.fillStyle = '#0f0508'; cx.fillRect(0, 0, W, H);
+        const bg = cx.createRadialGradient(W / 2, H / 2, 10, W / 2, H / 2, W * 0.8);
+        bg.addColorStop(0, '#0a1a3a'); bg.addColorStop(1, '#0f0508');
+        cx.fillStyle = bg; cx.fillRect(0, 0, W, H);
         for (let i = 0; i < 25; i++) {
             const col = i % 5, row = Math.floor(i / 5);
             const x = PAD + col * CS + GAP / 2, y = PAD + row * CS + GAP / 2;
-            cx.beginPath(); cx.rect(x, y, RC, RC);
-            cx.fillStyle = '#241018'; cx.fill();
-            cx.strokeStyle = 'rgba(255,255,255,0.05)'; cx.lineWidth = 1; cx.stroke();
+            let showStar = false, showBomb = false;
+            if (i === data.bomb) { if (revealBomb) showBomb = true; }
+            else { const pos = data.order.indexOf(i); if (pos >= 0 && pos < openCount) showStar = true; }
+            cx.beginPath();
+            if (cx.roundRect) cx.roundRect(x, y, RC, RC, RC * 0.2); else cx.rect(x, y, RC, RC);
+            if (showStar) {
+                cx.fillStyle = '#3a1a08'; cx.fill();
+                cx.strokeStyle = '#fb923c'; cx.lineWidth = 2; cx.stroke();
+                cx.save(); cx.fillStyle = '#fb923c'; cx.shadowColor = '#fb923c'; cx.shadowBlur = 10;
+                drawStar(x + RC / 2, y + RC / 2, RC * 0.3);
+                cx.restore();
+            } else if (showBomb) {
+                cx.fillStyle = '#3a0a08'; cx.fill();
+                cx.strokeStyle = '#ef4444'; cx.lineWidth = 2; cx.stroke();
+                cx.beginPath(); cx.arc(x + RC / 2, y + RC / 2 + 2, RC * 0.25, 0, Math.PI * 2); cx.fillStyle = '#fff'; cx.fill();
+            } else {
+                cx.fillStyle = '#241018'; cx.fill();
+                cx.strokeStyle = 'rgba(255,255,255,0.05)'; cx.lineWidth = 1; cx.stroke();
+            }
+        }
+        if (revealBomb) {
+            const ft = (t - 0.75) / 0.25;
+            if (ft < 1) {
+                const bCol = data.bomb % 5, bRow = Math.floor(data.bomb / 5);
+                const bx = PAD + bCol * CS + GAP / 2 + RC / 2;
+                const by = PAD + bRow * CS + GAP / 2 + RC / 2;
+                const rg = cx.createRadialGradient(bx, by, 0, bx, by, W * 0.5);
+                rg.addColorStop(0, 'rgba(239,68,68,' + ((1 - ft) * 0.8) + ')');
+                rg.addColorStop(1, 'rgba(239,68,68,0)');
+                cx.fillStyle = rg; cx.fillRect(0, 0, W, H);
+            }
         }
         requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
 }
 animatePreviewMines('preview-mines');
-
 function animatePreviewIce(id){
     const c = $(id); if (!c) return;
     const cx = c.getContext('2d');
@@ -2441,7 +2511,80 @@ function animatePreviewIce(id){
     requestAnimationFrame(draw);
 }
 animatePreviewIce('preview-ice');
-
+function drawBattleRollPreview(id){
+    const c = $(id); if (!c) return;
+    const cx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    const CCX = W/2, CCY = H/2, R = Math.min(W,H)/2 - 20;
+    const colors = ['#a8324a','#f97316','#fbbf24','#8b5cf6'];
+    const CYCLE = 4000, SPIN_START = 600, SPIN_DUR = 2000;
+    let lastCycle = -1, finalAngle = 0, lastTime = 0;
+    function draw(now){
+        if (!document.getElementById('battles-picker-overlay').classList.contains('show')) { requestAnimationFrame(draw); return; }
+        if (now - lastTime < 33) { requestAnimationFrame(draw); return; }
+        lastTime = now;
+        const cycleNum = Math.floor(now / CYCLE);
+        if (cycleNum !== lastCycle) { finalAngle = 360*4 + Math.random()*360; lastCycle = cycleNum; }
+        const t = now % CYCLE;
+        let angleDeg = 0;
+        if (t > SPIN_START) { const p = Math.min((t - SPIN_START) / SPIN_DUR, 1); const eased = 1 - Math.pow(1 - p, 3); angleDeg = finalAngle * eased; }
+        cx.clearRect(0, 0, W, H);
+        cx.fillStyle = '#0f0508'; cx.fillRect(0, 0, W, H);
+        cx.save(); cx.translate(CCX, CCY); cx.rotate((angleDeg * Math.PI) / 180);
+        for (let i = 0; i < colors.length; i++) {
+            const sa = -Math.PI/2 + i*Math.PI/2, ea = sa + Math.PI/2;
+            cx.beginPath(); cx.moveTo(0,0); cx.arc(0,0,R,sa,ea); cx.closePath();
+            cx.fillStyle = colors[i]; cx.fill();
+            cx.strokeStyle = 'rgba(0,0,0,0.4)'; cx.lineWidth = 2; cx.stroke();
+        }
+        cx.restore();
+        cx.beginPath(); cx.arc(CCX, CCY, R*0.2, 0, Math.PI*2);
+        cx.fillStyle = '#1a0a10'; cx.fill();
+        cx.strokeStyle = '#f97316'; cx.lineWidth = 2; cx.stroke();
+        cx.beginPath(); cx.moveTo(CCX, CCY-R-2); cx.lineTo(CCX-6, CCY-R+10); cx.lineTo(CCX+6, CCY-R+10); cx.closePath();
+        cx.fillStyle = '#f97316'; cx.fill();
+        requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+}
+function drawBattleIcePreview(id){
+    const c = $(id); if (!c) return;
+    const cx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    const ball = { x: W/2, y: H/2, vx: 2, vy: 1.6, r: 6 };
+    const CYCLE = 4000;
+    let lastCycle = -1, lastTime = 0;
+    function draw(now){
+        if (!document.getElementById('battles-picker-overlay').classList.contains('show')) { requestAnimationFrame(draw); return; }
+        if (now - lastTime < 33) { requestAnimationFrame(draw); return; }
+        lastTime = now;
+        const cycleNum = Math.floor(now / CYCLE);
+        if (cycleNum !== lastCycle) {
+            ball.x = W/2 + (Math.random()-0.5)*20; ball.y = H/2 + (Math.random()-0.5)*20;
+            ball.vx = (Math.random()<0.5?1:-1)*(1.5+Math.random()*1.5);
+            ball.vy = (Math.random()<0.5?1:-1)*(1.5+Math.random()*1.5);
+            lastCycle = cycleNum;
+        }
+        cx.clearRect(0, 0, W, H);
+        cx.fillStyle = '#0f0508'; cx.fillRect(0, 0, W, H);
+        cx.beginPath(); cx.moveTo(0,0); cx.lineTo(W/2,H/2); cx.lineTo(0,H); cx.closePath(); cx.fillStyle = 'rgba(16,185,129,0.2)'; cx.fill();
+        cx.beginPath(); cx.moveTo(W,0); cx.lineTo(W/2,H/2); cx.lineTo(W,H); cx.closePath(); cx.fillStyle = 'rgba(168,50,74,0.25)'; cx.fill();
+        cx.font = 'bold 20px Inter,sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        cx.fillStyle = '#fff'; cx.fillText('VS', W/2, H/2);
+        ball.x += ball.vx; ball.y += ball.vy;
+        if (ball.x-ball.r<0){ball.x=ball.r;ball.vx=-ball.vx;}
+        if (ball.x+ball.r>W){ball.x=W-ball.r;ball.vx=-ball.vx;}
+        if (ball.y-ball.r<0){ball.y=ball.r;ball.vy=-ball.vy;}
+        if (ball.y+ball.r>H){ball.y=H-ball.r;ball.vy=-ball.vy;}
+        cx.beginPath(); cx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+        cx.fillStyle = '#00ccff'; cx.fill();
+        cx.strokeStyle = '#fff'; cx.lineWidth = 1.5; cx.stroke();
+        requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+}
+drawBattleRollPreview('battle-preview-roll');
+drawBattleIcePreview('battle-preview-ice');
 function drawCasePreview(id, colors){
     const c = $(id); if (!c) return;
     const cx = c.getContext('2d');
@@ -2461,7 +2604,6 @@ drawCasePreview('case-preview-funny', { body1: '#1a0a1a', lid1: '#3a0a1a' });
 drawCasePreview('case-preview-okup', { body1: '#2a1a0a', lid1: '#4a2a0a' });
 drawCasePreview('case-preview-star', { body1: '#3a2a0a', lid1: '#5a4a1a' });
 
-// Road preview (упрощённо)
 (function roadPreview(){
     const c = $('preview-road'); if (!c) return;
     const cx = c.getContext('2d');
@@ -2493,7 +2635,7 @@ drawCasePreview('case-preview-star', { body1: '#3a2a0a', lid1: '#5a4a1a' });
     requestAnimationFrame(draw);
 })();
 
-// ============ LOADING ============
+// === LOADING ===
 function simulateLoading(){
     let p = 0;
     const iv = setInterval(() => {
@@ -2506,11 +2648,6 @@ function simulateLoading(){
     }, 60);
 }
 simulateLoading();
-
-// Тик, чтобы крутить анимацию ракеты между socket-тиками
-setInterval(() => {
-    if (crashStateLocal.phase === 'flying') updateCrashRocketVisual(crashStateLocal.multiplier);
-}, 50);
 
 })();
 </script>
