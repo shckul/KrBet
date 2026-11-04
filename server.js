@@ -427,11 +427,13 @@ function adminAuth(req, res) {
 
 app.get('/api/admin/players', (req, res) => {
     if (!adminAuth(req, res)) return;
+    const onlineIds = new Set(onlineUsers.values());
     const players = [];
     users.forEach(u => {
+        if (!onlineIds.has(u.id)) return;
         players.push({
             userId: u.id, name: u.firstName || 'Player', username: u.username, balance: u.balance,
-            online: [...onlineUsers.values()].includes(u.id)
+            online: true
         });
     });
     players.sort((a, b) => b.balance - a.balance);
@@ -469,14 +471,7 @@ app.post('/api/admin/withdrawal-action', (req, res) => {
     if (index === -1) return res.status(404).json({ success: false });
     const request = withdrawalRequests[index];
     withdrawalRequests.splice(index, 1);
-    if (action === 'reject') {
-        const user = users.get(request.userId);
-        if (user) {
-            user.balance += request.amount;
-            addHistory(user, 'Возврат вывода', request.amount, 'win');
-            emitBalance(user);
-        }
-    }
+    // При отклонении звёзды НЕ возвращаются на баланс
     withdrawalHistory.unshift({ ...request, status: action === 'approve' ? 'approved' : 'rejected', processedAt: Date.now() });
     res.json({ success: true });
 });
@@ -1032,11 +1027,18 @@ io.on('connection', (socket) => {
         if (!takeBet(currentUser, bet, 'Ставка (Upgrader)')) return;
         const chance = bet / target;
         const won = Math.random() < chance;
-        if (won) {
-            payWin(currentUser, target, 'Выигрыш (Upgrader)');
-            pushLiveWin('Апгрейд', currentUser.firstName || 'Player', target);
-        }
+
         socket.emit('upgrader:result', { won, bet, target, chance });
+
+        const uid = currentUser.id;
+        if (won) {
+            setTimeout(() => {
+                const user = users.get(uid);
+                if (!user) return;
+                payWin(user, target, 'Выигрыш (Upgrader)');
+                pushLiveWin('Апгрейд', user.firstName || 'Player', target);
+            }, 3200);
+        }
     });
 
     const minesSessions = new Map();
